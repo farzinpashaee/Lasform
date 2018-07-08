@@ -1,2 +1,2 @@
 # Lasform
-Location Base Platform
+Lasform is a Location Base Platform implemented by Spring Boot.
