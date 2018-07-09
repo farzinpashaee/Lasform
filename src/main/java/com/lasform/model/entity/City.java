@@ -1,4 +1,4 @@
-package com.lasform.model;
+package com.lasform.model.entity;
 
 import javax.persistence.*;
 
