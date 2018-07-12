@@ -11,11 +11,19 @@ public class Location {
     private String latitude;
     private String longitude;
     private String name;
+    private String description;
     private String address;
+    private String additionalData;
+    private boolean cover;
+    private short imageSlide = 0;
+    private short rating = 0;
     @OneToOne
+    @JoinColumn(name = "CITY_ID")
     private City city;
     @OneToOne
+    @JoinColumn(name = "LOCATION_TYPE_ID")
     private LocationType locationType;
+
 
     public long getId() {
         return id;
@@ -71,5 +79,45 @@ public class Location {
 
     public void setLocationType(LocationType locationType) {
         this.locationType = locationType;
+    }
+
+    public String getAdditionalData() {
+        return additionalData;
+    }
+
+    public void setAdditionalData(String additionalData) {
+        this.additionalData = additionalData;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public boolean isCover() {
+        return cover;
+    }
+
+    public void setCover(boolean cover) {
+        this.cover = cover;
+    }
+
+    public short getImageSlide() {
+        return imageSlide;
+    }
+
+    public void setImageSlide(short imageSlide) {
+        this.imageSlide = imageSlide;
+    }
+
+    public short getRating() {
+        return rating;
+    }
+
+    public void setRating(short rating) {
+        this.rating = rating;
     }
 }

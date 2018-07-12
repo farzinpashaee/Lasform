@@ -10,6 +10,7 @@ public class State {
     private long id;
     private String name;
     @OneToOne
+    @JoinColumn(name = "COUNTRY_ID")
     private Country country;
 
 }

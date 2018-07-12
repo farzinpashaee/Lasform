@@ -35,9 +35,18 @@ public class LocationService {
 
     public List<Location> getLocationsInBoundary(LocationBoundary locationBoundary){
         return locationRepository.getLocationsInBoundary( locationBoundary.getNortheast().getLatitude() ,
-                                                            locationBoundary.getNortheast().getLongitude() ,
-                                                            locationBoundary.getSouthwest().getLatitude() ,
-                                                            locationBoundary.getSouthwest().getLongitude() );
+                locationBoundary.getNortheast().getLongitude() ,
+                locationBoundary.getSouthwest().getLatitude() ,
+                locationBoundary.getSouthwest().getLongitude() );
     }
+
+    public long getLocationsCountInBoundary(LocationBoundary locationBoundary){
+        return locationRepository.getLocationsCountInBoundary( locationBoundary.getNortheast().getLatitude() ,
+                locationBoundary.getNortheast().getLongitude() ,
+                locationBoundary.getSouthwest().getLatitude() ,
+                locationBoundary.getSouthwest().getLongitude() );
+    }
+
+
 
 }

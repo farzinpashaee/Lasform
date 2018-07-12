@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" type="image/png" href="images/logo-favicon.png"/>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/lasform.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <script src="js/lasform.core.js"></script>
+
+    <title>Lasform v0.0.1</title>
+
+</head>
+<body>
+
+    <div id="main-pan" >
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <img src="images/logo-small.png" class="logo" />
+                    <div style="float:right;">
+                        <i class="fas fa-user-circle user-area-icon"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div style="border-top:1px solid #efefef;width: 100%;">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div id="markers-list">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="map">
+
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQz41w41dpAu2o9lPssyUCnDgd4rxGpYA&callback=initMap" async defer></script>
+</body>
+</html>

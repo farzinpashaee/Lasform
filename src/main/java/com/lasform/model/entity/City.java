@@ -10,6 +10,7 @@ public class City {
     private long id;
     private String name;
     @OneToOne
+    @JoinColumn(name = "STATE_ID")
     private State state;
 
 }

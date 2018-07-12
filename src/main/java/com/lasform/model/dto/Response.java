@@ -3,14 +3,14 @@ package com.lasform.model.dto;
 public class Response {
 
     private boolean state;
-    private Object paylaod;
+    private Object payload;
 
     public Response() {
     }
 
-    public Response(boolean state, Object paylaod) {
+    public Response(boolean state, Object payload) {
         this.state = state;
-        this.paylaod = paylaod;
+        this.payload = payload;
     }
 
     public boolean isState() {
@@ -21,11 +21,11 @@ public class Response {
         this.state = state;
     }
 
-    public Object getPaylaod() {
-        return paylaod;
+    public Object getPayload() {
+        return payload;
     }
 
-    public void setPaylaod(Object paylaod) {
-        this.paylaod = paylaod;
+    public void setPayload(Object payload) {
+        this.payload = payload;
     }
 }

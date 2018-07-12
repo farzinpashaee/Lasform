@@ -5,6 +5,14 @@ public class LatLng {
     private String latitude;
     private String longitude;
 
+    public LatLng() {
+    }
+
+    public LatLng(String latitude, String longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
     public String getLatitude() {
         return latitude;
     }

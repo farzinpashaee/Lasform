@@ -19,4 +19,9 @@ public interface LocationRepository extends JpaRepository<Location,Long> {
                                                   String southWestLat ,
                                                   String southWestLng );
 
+    @Query("SELECT count(l) FROM Location l WHERE l.latitude < ?1 AND l.latitude < ?2 and l.latitude > ?3 and l.longitude > ?4 ")
+    public Long getLocationsCountInBoundary( String northEastLat ,
+                                                  String northEastLng ,
+                                                  String southWestLat ,
+                                                  String southWestLng );
 }
