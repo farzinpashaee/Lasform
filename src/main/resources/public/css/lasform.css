@@ -19,11 +19,13 @@
 #markers-list{
     margin-top: 20px;
     margin-bottom: 10px;
+    overflow-y: scroll;
+    height: auto;
 }
 
 .user-area-icon{
     font-size: 1.5em;
-    margin-top: 18px;
+    margin-top: 14px;
     margin-right: 5px;
     cursor: pointer;
 }
@@ -35,9 +37,15 @@
     height: auto;
 }
 
+.main-pan-header{
+    width: 100%;
+    height: 50px;
+}
+
 .marker-list-item{
-    padding: 5px;
+    padding: 10px;
     border-bottom: 1px solid #f4f4f4;
+    cursor: pointer;
 }
 
 .marker-list-item-header{

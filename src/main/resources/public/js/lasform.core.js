@@ -3,29 +3,48 @@ var userLocationAvailble = false;
 var boundChangeTimeoutId = 0;
 var markers = [];
 
-function initMap() {
-    getLocation();
+$(window).ready(function() {
     resizeMapConatiner();
-    map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: -34.397, lng: 150.644},
-        zoom: 14,
-        disableDefaultUI: true
-    });
-    google.maps.event.addListener(map, 'bounds_changed', function() {
-        clearTimeout(boundChangeTimeoutId);
-        boundChangeTimeoutId = setTimeout(function(){
-            reloadMapView(map);
-        },1000);
-    });
-
-}
+    resizeMainPan();
+    $("#markers-list").niceScroll();
+});
 
 $(window).resize(function() {
     resizeMapConatiner();
+    resizeMainPan();
 });
+
+function initMap() {
+        getLocation();
+        resizeMapConatiner();
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: -34.397, lng: 150.644},
+            zoom: 14,
+            disableDefaultUI: true
+        });
+        google.maps.event.addListener(map, 'bounds_changed', function() {
+            clearTimeout(boundChangeTimeoutId);
+            boundChangeTimeoutId = setTimeout(function(){
+                reloadMapView(map);
+            },1000);
+        });
+
+    }
+
 
 function resizeMapConatiner(){
     $("#map").height($(window).height());
+}
+
+function resizeMainPan(){
+    if($(window).height()>200){
+        $("#main-pan").height($(window).height()-100);
+        $("#markers-list").height($(window).height()-180);
+    } else {
+        $("#main-pan").height($(window).height()-50);
+        $("#markers-list").height($(window).height()-130);
+    }
+    $("#markers-list").niceScroll();
 }
 
 function getLocation() {
