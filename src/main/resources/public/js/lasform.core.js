@@ -31,6 +31,9 @@ function initMap() {
 
     }
 
+function itemClicked( lat , lng ){
+    map.panTo({lat: lat, lng: lng});
+}
 
 function resizeMapConatiner(){
     $("#map").height($(window).height());
@@ -64,9 +67,12 @@ function updateUserLocation(position){
 function prepareMarkers(map,locations){
     clearMarkers();
     for (i = 0; i < locations.length; i++) {
-        marker = new google.maps.Marker({
+        var marker = new google.maps.Marker({
             position: new google.maps.LatLng( locations[i].latitude , locations[i].longitude ),
             map: map
+        });
+        google.maps.event.addListener(marker,'click',function() {
+            map.panTo(this.position);
         });
         markers.push(marker);
     }
@@ -85,7 +91,8 @@ function prepareMarkersList(locations){
         markersListCotent = "No location found in the area";
     } else {
         for ( i = 0; i < locations.length; i++ ) {
-            markersListCotent += "<div class='marker-list-item'><span class='marker-list-item-header'>"
+            markersListCotent += "<div class='marker-list-item' onclick='itemClicked("+locations[i].latitude+","+locations[i].longitude+")'>"
+                + "<span class='marker-list-item-header'>"
                 + locations[i].name + "</span><br/><span class='marker-list-item-description' >"
                 + locations[i].description + "</span></div>";
         }
