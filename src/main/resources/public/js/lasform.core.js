@@ -70,7 +70,7 @@ function prepareMarkers(map,locations){
     for (i = 0; i < locations.length; i++) {
         if(markers[locations[i].id]==null){
             var infowindow = new google.maps.InfoWindow({
-                content: locations[i].name + '<br/>'+
+                content: locations[i].name + '<br/>'+ locations[i].description
             });
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng( locations[i].latitude , locations[i].longitude ),
