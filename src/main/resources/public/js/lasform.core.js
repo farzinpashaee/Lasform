@@ -2,6 +2,7 @@ var map;
 var userLocationAvailble = false;
 var boundChangeTimeoutId = 0;
 var markers = [];
+var lastInfoWindow = null;
 
 $(window).ready(function() {
     resizeMapConatiner();
@@ -31,9 +32,11 @@ function initMap() {
     }
 
 function itemClicked( lat , lng , id ){
+    if(lastInfoWindow!=null) lastInfoWindow.close();
     map.panTo({lat: lat, lng: lng});
     var infowindow = markers[id].contentInfo;
     infowindow.open(map,markers[id]);
+    lastInfoWindow = infowindow;
 }
 
 function resizeMapConatiner(){
@@ -78,8 +81,10 @@ function prepareMarkers(map,locations){
                 contentInfo: infowindow
             });
             google.maps.event.addListener(marker,'click',function() {
+                if(lastInfoWindow!=null) lastInfoWindow.close();
                 map.panTo(this.position);
                 infowindow.open(map,this);
+                lastInfoWindow = infowindow;
             });
             console.log("-"+locations[i].id);
             markers[locations[i].id] = marker;
