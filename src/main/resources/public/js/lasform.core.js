@@ -28,11 +28,12 @@ function initMap() {
                 reloadMapView(map);
             },1000);
         });
-
     }
 
-function itemClicked( lat , lng ){
+function itemClicked( lat , lng , id ){
     map.panTo({lat: lat, lng: lng});
+    var infowindow = markers[id].contentInfo;
+    infowindow.open(map,markers[id]);
 }
 
 function resizeMapConatiner(){
@@ -67,22 +68,27 @@ function updateUserLocation(position){
 function prepareMarkers(map,locations){
     clearMarkers();
     for (i = 0; i < locations.length; i++) {
-        var marker = new google.maps.Marker({
-            position: new google.maps.LatLng( locations[i].latitude , locations[i].longitude ),
-            map: map
-        });
-        google.maps.event.addListener(marker,'click',function() {
-            map.panTo(this.position);
-        });
-        markers.push(marker);
+        if(markers[locations[i].id]==null){
+            var infowindow = new google.maps.InfoWindow({
+                content: locations[i].name + '<br/>'+
+            });
+            var marker = new google.maps.Marker({
+                position: new google.maps.LatLng( locations[i].latitude , locations[i].longitude ),
+                map: map,
+                contentInfo: infowindow
+            });
+            google.maps.event.addListener(marker,'click',function() {
+                map.panTo(this.position);
+                infowindow.open(map,this);
+            });
+            console.log("-"+locations[i].id);
+            markers[locations[i].id] = marker;
+            //markers.push(marker);
+        }
     }
 }
 
-function clearMarkers(){
-    for(i=0; i<markers.length; i++){
-        markers[i].setMap(null);
-    }
-}
+function clearMarkers(){}
 
 function prepareMarkersList(locations){
     $("#markers-list").html("");
@@ -91,7 +97,7 @@ function prepareMarkersList(locations){
         markersListCotent = "No location found in the area";
     } else {
         for ( i = 0; i < locations.length; i++ ) {
-            markersListCotent += "<div class='marker-list-item' onclick='itemClicked("+locations[i].latitude+","+locations[i].longitude+")'>"
+            markersListCotent += "<div class='marker-list-item' onclick='itemClicked("+locations[i].latitude+","+locations[i].longitude+","+locations[i].id+")'>"
                 + "<span class='marker-list-item-header'>"
                 + locations[i].name + "</span><br/><span class='marker-list-item-description' >"
                 + locations[i].description + "</span></div>";
