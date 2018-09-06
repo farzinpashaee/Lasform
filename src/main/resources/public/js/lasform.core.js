@@ -3,6 +3,7 @@ var userLocationAvailble = false;
 var boundChangeTimeoutId = 0;
 var markers = [];
 var lastInfoWindow = null;
+var currentMarkersListCount = 0;
 
 $(window).ready(function() {
     resizeMapConatiner();
@@ -44,12 +45,18 @@ function resizeMapConatiner(){
 }
 
 function resizeMainPan(){
-    if($(window).height()>200){
-        $("#main-pan").height($(window).height()-100);
-        $("#markers-list").height($(window).height()-180);
+    realHeight = currentMarkersListCount * 50;
+    if( realHeight > $(window).height() ){
+        if($(window).height()>200){
+            $("#main-pan").height($(window).height()-100);
+            $("#markers-list").height($(window).height()-180);
+        } else {
+            $("#main-pan").height($(window).height()-50);
+            $("#markers-list").height($(window).height()-130);
+        }
     } else {
-        $("#main-pan").height($(window).height()-50);
-        $("#markers-list").height($(window).height()-130);
+        $("#main-pan").height(realHeight+130);
+        $("#markers-list").height(realHeight+50);
     }
     $("#markers-list").niceScroll();
 }
@@ -73,7 +80,7 @@ function prepareMarkers(map,locations){
     for (i = 0; i < locations.length; i++) {
         if(markers[locations[i].id]==null){
             var infowindow = new google.maps.InfoWindow({
-                content: locations[i].name + '<br/>'+ locations[i].description
+                content: '<span class="infowindow-header">' + locations[i].name + '</span><p>'+ locations[i].description + '</p>'
             });
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng( locations[i].latitude , locations[i].longitude ),
@@ -86,9 +93,7 @@ function prepareMarkers(map,locations){
                 infowindow.open(map,this);
                 lastInfoWindow = infowindow;
             });
-            console.log("-"+locations[i].id);
             markers[locations[i].id] = marker;
-            //markers.push(marker);
         }
     }
 }
@@ -98,10 +103,12 @@ function clearMarkers(){}
 function prepareMarkersList(locations){
     $("#markers-list").html("");
     markersListCotent = "";
+    currentMarkersListCount = 0;
     if( locations.length == 0){
         markersListCotent = "No location found in the area";
     } else {
         for ( i = 0; i < locations.length; i++ ) {
+            currentMarkersListCount ++;
             markersListCotent += "<div class='marker-list-item' onclick='itemClicked("+locations[i].latitude+","+locations[i].longitude+","+locations[i].id+")'>"
                 + "<span class='marker-list-item-header'>"
                 + locations[i].name + "</span><br/><span class='marker-list-item-description' >"
@@ -129,6 +136,7 @@ function reloadMapView(map){
             if(data.state){
                 prepareMarkers(map,data.payload);
                 prepareMarkersList(data.payload);
+                resizeMainPan();
             } else {
                 console.log("failed");
             }
