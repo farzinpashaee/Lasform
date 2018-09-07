@@ -4,7 +4,13 @@ var boundChangeTimeoutId = 0;
 var markers = [];
 var lastInfoWindow = null;
 var currentMarkersListCount = 0;
-var infoWindowTemplate = "";
+var infoWindowTemplate = "ttttt";
+
+$(window).ready(function() {
+    resizeMapConatiner();
+    resizeMainPan();
+    $("#markers-list").niceScroll();
+});
 
 $(window).resize(function() {
     resizeMapConatiner();
@@ -20,7 +26,7 @@ function initPage() {
         getLocation();
         resizeMapConatiner();
         resizeMainPan();
-        debug("template:"+templates.infoWindow)
+        debug("template:"+templates.infoWindow.replace("::infoWindowTitle::","Helooooo"));
         $("#markers-list").niceScroll();
             map = new google.maps.Map(document.getElementById('map'), {
                 center: {lat: -34.397, lng: 150.644},
@@ -48,7 +54,7 @@ function resizeMapConatiner(){
 }
 
 function resizeMainPan(){
-    realHeight = currentMarkersListCount * $("#marker-list-item").height();
+    realHeight = currentMarkersListCount * 50;
     if( realHeight > $(window).height() ){
         if($(window).height()>200){
             $("#main-pan").height($(window).height()-100);
@@ -83,7 +89,7 @@ function prepareMarkers(map,locations){
     for (i = 0; i < locations.length; i++) {
         if(markers[locations[i].id]==null){
             var infowindow = new google.maps.InfoWindow({
-                content: '<span class="infowindow-header">' + locations[i].name + '</span><p>'+ locations[i].description + '</p>'
+                content: templates.infoWindow.replace("::infoWindowTitle::",locations[i].name).replace("::infoWindowDescription::",locations[i].description )
             });
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng( locations[i].latitude , locations[i].longitude ),
