@@ -26,7 +26,6 @@ function initPage() {
         getLocation();
         resizeMapConatiner();
         resizeMainPan();
-        debug("template:"+templates.infoWindow.replace("::infoWindowTitle::","Helooooo"));
         $("#markers-list").niceScroll();
             map = new google.maps.Map(document.getElementById('map'), {
                 center: {lat: -34.397, lng: 150.644},
@@ -89,7 +88,7 @@ function prepareMarkers(map,locations){
     for (i = 0; i < locations.length; i++) {
         if(markers[locations[i].id]==null){
             var infowindow = new google.maps.InfoWindow({
-                content: templates.infoWindow.replace("::infoWindowTitle::",locations[i].name).replace("::infoWindowDescription::",locations[i].description )
+                content: templates.infoWindow.replace("::title::",locations[i].name).replace("::description::",locations[i].description )
             });
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng( locations[i].latitude , locations[i].longitude ),
@@ -119,9 +118,8 @@ function prepareMarkersList(locations){
         for ( i = 0; i < locations.length; i++ ) {
             currentMarkersListCount ++;
             markersListCotent += "<div class='marker-list-item' onclick='itemClicked("+locations[i].latitude+","+locations[i].longitude+","+locations[i].id+")'>"
-                + "<span class='marker-list-item-header'>"
-                + locations[i].name + "</span><br/><span class='marker-list-item-description' >"
-                + locations[i].description + "</span></div>";
+                + templates.markerListItem.replace("::title::",locations[i].name).replace("::description::",locations[i].description )
+                + "</div>";
         }
     }
     $("#markers-list").html(markersListCotent);
