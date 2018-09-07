@@ -4,33 +4,36 @@ var boundChangeTimeoutId = 0;
 var markers = [];
 var lastInfoWindow = null;
 var currentMarkersListCount = 0;
+var infoWindowTemplate = "";
 
-$(window).ready(function() {
+$(window).resize(function() {
     resizeMapConatiner();
     resizeMainPan();
     $("#markers-list").niceScroll();
 });
 
-$(window).resize(function() {
-    resizeMapConatiner();
-    resizeMainPan();
-});
+function debug( description ){
+    console.log( description );
+}
 
-function initMap() {
+function initPage() {
         getLocation();
         resizeMapConatiner();
-        map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: -34.397, lng: 150.644},
-            zoom: 14,
-            disableDefaultUI: true
-        });
-        google.maps.event.addListener(map, 'bounds_changed', function() {
-            clearTimeout(boundChangeTimeoutId);
-            boundChangeTimeoutId = setTimeout(function(){
-                reloadMapView(map);
-            },1000);
-        });
-    }
+        resizeMainPan();
+        debug("template:"+templates.infoWindow)
+        $("#markers-list").niceScroll();
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: -34.397, lng: 150.644},
+                zoom: 14,
+                disableDefaultUI: true
+            });
+            google.maps.event.addListener(map, 'bounds_changed', function() {
+                clearTimeout(boundChangeTimeoutId);
+                boundChangeTimeoutId = setTimeout(function(){
+                    reloadMapView(map);
+                },1000);
+            });
+}
 
 function itemClicked( lat , lng , id ){
     if(lastInfoWindow!=null) lastInfoWindow.close();
@@ -45,7 +48,7 @@ function resizeMapConatiner(){
 }
 
 function resizeMainPan(){
-    realHeight = currentMarkersListCount * 50;
+    realHeight = currentMarkersListCount * $("#marker-list-item").height();
     if( realHeight > $(window).height() ){
         if($(window).height()>200){
             $("#main-pan").height($(window).height()-100);
@@ -67,7 +70,7 @@ function getLocation() {
         userLocationAvailble = true;
     } else {
         userLocationAvailble = false;
-        console.log("Geolocation is not supported by this browser")
+        debug("Geolocation is not supported by this browser");
     }
 }
 
@@ -119,7 +122,7 @@ function prepareMarkersList(locations){
 }
 
 function reloadMapView(map){
-    console.log("Reloading map view data...");
+    debug("Reloading map view data...");
     northeastCurrent = map.getBounds().getNorthEast();
     southwestCurrent = map.getBounds().getSouthWest();
     $.ajax({
@@ -132,17 +135,17 @@ function reloadMapView(map){
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function(data){
-            console.log(data);
+            debug( data );
             if(data.state){
                 prepareMarkers(map,data.payload);
                 prepareMarkersList(data.payload);
                 resizeMainPan();
             } else {
-                console.log("failed");
+                console.error("Failed loading data!");
             }
         },
         failure: function(err) {
-            console.log(err);
+            console.error( err );
         }
     });
 }
