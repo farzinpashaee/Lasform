@@ -4,7 +4,6 @@ var boundChangeTimeoutId = 0;
 var markers = [];
 var lastInfoWindow = null;
 var currentMarkersListCount = 0;
-var infoWindowTemplate = "ttttt";
 
 $(window).ready(function() {
     resizeMapConatiner();
@@ -84,7 +83,6 @@ function updateUserLocation(position){
 }
 
 function prepareMarkers(map,locations){
-    clearMarkers();
     for (i = 0; i < locations.length; i++) {
         if(markers[locations[i].id]==null){
             var infowindow = new google.maps.InfoWindow({
@@ -106,7 +104,7 @@ function prepareMarkers(map,locations){
     }
 }
 
-function clearMarkers(){}
+function markerFocus(){}
 
 function prepareMarkersList(locations){
     $("#markers-list").html("");

@@ -7,10 +7,12 @@ import com.lasform.model.dto.LocationBoundary;
 import com.lasform.model.dto.LocationDto;
 import com.lasform.model.dto.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/location")
+@EnableWebSecurity
 public class LocationDelegate {
 
     @Autowired
