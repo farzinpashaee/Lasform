@@ -4,11 +4,13 @@ var boundChangeTimeoutId = 0;
 var markers = [];
 var lastInfoWindow = null;
 var currentMarkersListCount = 0;
+var tokenCsrf = "";
 
 $(window).ready(function() {
     resizeMapConatiner();
     resizeMainPan();
     $("#markers-list").niceScroll();
+    tokenCsrf = $("meta[name='_csrf']").attr("content");
 });
 
 $(window).resize(function() {
@@ -136,6 +138,9 @@ function reloadMapView(map){
         }),
         contentType: "application/json; charset=utf-8",
         dataType: "json",
+        headers: {
+            _csrf :tokenCsrf,
+        },
         success: function(data){
             debug( data );
             if(data.state){

@@ -16,12 +16,19 @@ public class LasformSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                    .antMatchers("/**","/api/**").permitAll()
-                    .antMatchers("/manage/**").hasRole("USER")
-                    .anyRequest().authenticated()
-                    .and()
+                .antMatchers("/**").permitAll()
+                .antMatchers("/api/location/**").permitAll()
+                .antMatchers("/manage/**").hasRole("USER")
+                .anyRequest().authenticated()
+                .and()
                 .formLogin()
-                    .loginPage("/login").permitAll();
+                .loginPage("/login")
+                .permitAll()
+                .and()
+                .logout()
+                .permitAll();
+        http
+                .csrf().disable();
     }
 
     @Bean
