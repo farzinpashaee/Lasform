@@ -1,10 +1,15 @@
 var map;
+var contextMenu;
 var userLocationAvailble = false;
 var boundChangeTimeoutId = 0;
 var markers = [];
 var lastInfoWindow = null;
 var currentMarkersListCount = 0;
 var tokenCsrf = "";
+
+document.oncontextmenu = function() {
+    return false;
+}
 
 $(window).ready(function() {
     resizeMapConatiner();
@@ -39,6 +44,19 @@ function initPage() {
                     reloadMapView(map);
                 },1000);
             });
+
+        contextMenu = google.maps.event.addListener(
+            map,
+            "rightclick",
+            function( event ) {
+                $(".contextMenu").offset({top:event.pixel.y,left:event.pixel.x});
+                $(".contextMenu").show();
+                // use JS Dom methods to create the menu
+                // use event.pixel.x and event.pixel.y
+                // to position menu at mouse position
+                console.log( event );
+            }
+        );
 }
 
 function itemClicked( lat , lng , id ){
