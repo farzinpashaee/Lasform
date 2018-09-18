@@ -15,6 +15,9 @@ $(window).ready(function() {
     resizeMapConatiner();
     resizeMainPan();
     $("#markers-list").niceScroll();
+    $("#map").click(function(){
+        $(".contextMenu").hide();
+    });
     tokenCsrf = $("meta[name='_csrf']").attr("content");
 });
 
@@ -49,7 +52,7 @@ function initPage() {
             map,
             "rightclick",
             function( event ) {
-                $(".contextMenu").offset({top:event.pixel.y,left:event.pixel.x});
+                $(".contextMenu").css({top: event.pixel.y, left: event.pixel.x, position:'absolute'});
                 $(".contextMenu").show();
                 // use JS Dom methods to create the menu
                 // use event.pixel.x and event.pixel.y

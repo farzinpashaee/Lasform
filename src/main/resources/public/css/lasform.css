@@ -75,6 +75,8 @@
     -webkit-box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.4);
     -moz-box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.4);
     box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.4);
+    font-size: 0.8em;
+    color:#CCC;
 }
 
 .contextMenu ul {
@@ -88,6 +90,12 @@
     padding: 0px 1px;
     margin: 0px;
 }
+
+.contextMenu li :hover {
+    background-color: deepskyblue;
+    color:#FFF;
+}
+
 .contextMenu a {
     display: block;
     color: #000;
