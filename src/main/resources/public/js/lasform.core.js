@@ -16,7 +16,7 @@ $(window).ready(function() {
     resizeMainPan();
     $("#markers-list").niceScroll();
     $("#map").click(function(){
-        $(".contextMenu").hide();
+        contextMenuHide();
     });
     tokenCsrf = $("meta[name='_csrf']").attr("content");
 });
@@ -54,12 +54,38 @@ function initPage() {
             function( event ) {
                 $(".contextMenu").css({top: event.pixel.y, left: event.pixel.x, position:'absolute'});
                 $(".contextMenu").show();
+                $('.contextMenu').data('lat',event.latLng.lat());
+                $('.contextMenu').data('lng',event.latLng.lng());
                 // use JS Dom methods to create the menu
                 // use event.pixel.x and event.pixel.y
                 // to position menu at mouse position
                 console.log( event );
             }
         );
+}
+
+function contextMenuZoomIn(){
+    debug("Zooming in");
+    contextMenuHide();
+    map.panTo({lat:  $(".contextMenu").data('lat') , lng:  $(".contextMenu").data('lng')});
+    map.setZoom(map.getZoom()+1);
+}
+
+function contextMenuZoomOut(){
+    debug("Zooming out");
+    contextMenuHide();
+    map.panTo({lat:  $(".contextMenu").data('lat') , lng:  $(".contextMenu").data('lng')});
+    map.setZoom(map.getZoom()-1);
+}
+
+function contextMenuSetCenter(){
+    debug("Setting center");
+    contextMenuHide();
+    map.panTo({lat:  $(".contextMenu").data('lat') , lng:  $(".contextMenu").data('lng')});
+}
+
+function contextMenuHide(){
+    $(".contextMenu").hide();
 }
 
 function itemClicked( lat , lng , id ){
