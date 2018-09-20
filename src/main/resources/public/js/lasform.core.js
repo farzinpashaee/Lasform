@@ -14,6 +14,7 @@ document.oncontextmenu = function() {
 $(window).ready(function() {
     resizeMapConatiner();
     resizeMainPan();
+    $("#marker-details").hide();
     $("#markers-list").niceScroll();
     $("#map").click(function(){
         contextMenuHide();
@@ -94,6 +95,13 @@ function itemClicked( lat , lng , id ){
     var infowindow = markers[id].contentInfo;
     infowindow.open(map,markers[id]);
     lastInfoWindow = infowindow;
+    viewDetails(id);
+}
+
+function viewDetails( id ){
+    $("#marker-details").html(markers[id].contentInfo);
+    $("#marker-list").hide();
+    $("#marker-details").show();
 }
 
 function resizeMapConatiner(){
