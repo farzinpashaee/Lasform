@@ -1,6 +1,12 @@
 requirejs.config({
-    baseUrl: 'lib',
+    baseUrl: 'scripts/lib',
     paths: {
-        app: 'app'
+        app: '../app',
+    },
+    "shim": {
+        "jquery.nicescroll.min": ["jquery"],
     }
 });
+
+requirejs(['app/lasform.core']);
+requirejs(['app/lasform.core']);
