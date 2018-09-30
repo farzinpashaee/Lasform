@@ -1,4 +1,4 @@
-define(["jquery","jquery.nicescroll.min"], function($) {
+define(['jquery','jquery.nicescroll.min'],function($) {
     var map;
     var contextMenu;
     var userLocationAvailble = false;
@@ -12,10 +12,9 @@ define(["jquery","jquery.nicescroll.min"], function($) {
         return false;
     }
 
-
     return {
-        myfunc: function () {
-            alert(">>2<<");
+        prepare: function () {
+            initPage();
         }
     };
 
