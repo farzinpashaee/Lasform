@@ -2,11 +2,18 @@ requirejs.config({
     baseUrl: 'scripts/lib',
     paths: {
         app: '../app',
+        async: 'requirejs-plugins/async',
     },
     "shim": {
         "jquery.nicescroll.min": ["jquery"],
     }
 });
 
-requirejs(['app/lasform.core']);
-requirejs(['app/lasform.core']);
+define(['jquery',
+        'async!https://maps.googleapis.com/maps/api/js?key=AIzaSyDQz41w41dpAu2o9lPssyUCnDgd4rxGpYA&callback=initPage',
+        'app/lasform.core'],function ($,gm,lastform) {
+    alert($(".contextMenu").height());
+    function initPage(){
+        alert("--MAP--");
+    }
+});

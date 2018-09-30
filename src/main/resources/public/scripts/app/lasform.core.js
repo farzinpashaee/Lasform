@@ -12,6 +12,13 @@ define(["jquery","jquery.nicescroll.min"], function($) {
         return false;
     }
 
+
+    return {
+        myfunc: function () {
+            alert(">>2<<");
+        }
+    };
+
     $(window).ready(function () {
         resizeMapConatiner();
         resizeMainPan();
