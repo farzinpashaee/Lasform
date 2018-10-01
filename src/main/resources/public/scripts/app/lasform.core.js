@@ -1,4 +1,4 @@
-define(['jquery','jquery.nicescroll.min'],function($) {
+define(['jquery','jquery.nicescroll.min','app/templates'],function($) {
     var map;
     var contextMenu;
     var userLocationAvailble = false;
