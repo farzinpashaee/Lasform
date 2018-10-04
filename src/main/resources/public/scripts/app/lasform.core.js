@@ -1,4 +1,7 @@
-define(['jquery','jquery.nicescroll.min','app/templates'],function($) {
+define(['jquery',
+    'jquery.nicescroll.min',
+    'app/templates',
+    'app/lasform.utils'],function($) {
     var map;
     var contextMenu;
     var userLocationAvailble = false;
@@ -8,72 +11,78 @@ define(['jquery','jquery.nicescroll.min','app/templates'],function($) {
     var currentMarkersListCount = 0;
     var tokenCsrf = "";
 
-    document.oncontextmenu = function () {
-        return false;
+    var e = {
+        map : '#map',
+        markersList : '#markers-list',
+        markerDetails : '#marker-details'
+    };
+
+    var config = {
+        mapDragDelay : 1000
     }
 
     return {
         prepare: function () {
-            initPage();
+            // disable context menu
+            document.oncontextmenu = function () {
+                return false;
+            }
+
+            $(window).ready(function () {
+                resizeView();
+                $(e.markerDetails).hide();
+                $(e.markersList).niceScroll();
+                $(e.map).click(function () {
+                    contextMenuHide();
+                });
+                tokenCsrf = $("meta[name='_csrf']").attr("content");
+            });
+
+            $(window).resize(function () {
+                resizeView();
+                $(e.markersList).niceScroll();
+            });
+
+            initMap();
+
         }
     };
 
-    $(window).ready(function () {
-        resizeMapConatiner();
-        resizeMainPan();
-        $("#marker-details").hide();
-        $("#markers-list").niceScroll();
-        $("#map").click(function () {
-            contextMenuHide();
+    function initMap() {
+        resizeView();
+        $(e.markersList).niceScroll();
+        // load initial settings
+        ajaxCall("/api/location/initialSetting",{},function(payload){
+            debug("INFO" , "Initial setting loaded")
+            // generate map
+            map = new google.maps.Map(document.getElementById(e.map.substr(1,e.map.length-1)), {
+                center: {lat: parseInt(payload.initialMapCenter.latitude) , lng:  parseInt(payload.initialMapCenter.longitude)},
+                zoom: 14,
+                disableDefaultUI: true
+            });
+            google.maps.event.addListener(map, 'bounds_changed', function () {
+                clearTimeout(boundChangeTimeoutId);
+                boundChangeTimeoutId = setTimeout(function () {
+                    reloadMapView(map);
+                }, config.mapDragDelay);
+            });
+            contextMenu = google.maps.event.addListener(map,"rightclick",function (event) {
+                    $(".contextMenu").css({top: event.pixel.y, left: event.pixel.x, position: 'absolute'});
+                    $(".contextMenu").show();
+                    $('.contextMenu').data('lat', event.latLng.lat());
+                    $('.contextMenu').data('lng', event.latLng.lng());
+                }
+            );
+            // initial user location policy
+            getLocation();
         });
-        tokenCsrf = $("meta[name='_csrf']").attr("content");
-    });
-
-    $(window).resize(function () {
-        resizeMapConatiner();
-        resizeMainPan();
-        $("#markers-list").niceScroll();
-    });
-
-    function debug(description) {
-        console.log(description);
     }
 
-    function initPage() {
-        getLocation();
-        resizeMapConatiner();
-        resizeMainPan();
-        $("#markers-list").niceScroll();
-        map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: -34.397, lng: 150.644},
-            zoom: 14,
-            disableDefaultUI: true
-        });
-        google.maps.event.addListener(map, 'bounds_changed', function () {
-            clearTimeout(boundChangeTimeoutId);
-            boundChangeTimeoutId = setTimeout(function () {
-                reloadMapView(map);
-            }, 1000);
-        });
-
-        contextMenu = google.maps.event.addListener(
-            map,
-            "rightclick",
-            function (event) {
-                $(".contextMenu").css({top: event.pixel.y, left: event.pixel.x, position: 'absolute'});
-                $(".contextMenu").show();
-                $('.contextMenu').data('lat', event.latLng.lat());
-                $('.contextMenu').data('lng', event.latLng.lng());
-                // use JS Dom methods to create the menu
-                // use event.pixel.x and event.pixel.y
-                // to position menu at mouse position
-                console.log(event);
-            }
-        );
+    function resizeView(){
+        $(e.map).height($(window).height());
     }
 
     function contextMenuZoomIn() {
-        debug("Zooming in");
         contextMenuHide();
         map.panTo({lat: $(".contextMenu").data('lat'), lng: $(".contextMenu").data('lng')});
         map.setZoom(map.getZoom() + 1);

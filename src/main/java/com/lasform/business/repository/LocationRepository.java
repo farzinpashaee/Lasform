@@ -1,7 +1,5 @@
 package com.lasform.business.repository;
 
-import com.lasform.model.dto.LatLng;
-import com.lasform.model.dto.LocationBoundary;
 import com.lasform.model.entity.Location;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

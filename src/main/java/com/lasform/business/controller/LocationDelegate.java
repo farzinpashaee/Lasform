@@ -1,5 +1,6 @@
 package com.lasform.business.controller;
 
+import com.lasform.business.service.ApplicationService;
 import com.lasform.business.service.LocationService;
 import com.lasform.helper.ResponseHelper;
 import com.lasform.model.dto.LatLng;
@@ -18,6 +19,9 @@ public class LocationDelegate {
     @Autowired
     LocationService locationService;
 
+    @Autowired
+    ApplicationService applicationService;
+
     @RequestMapping(value="/test", method = RequestMethod.POST)
     private LocationBoundary test(){
         LocationBoundary lb = new LocationBoundary();
@@ -25,7 +29,6 @@ public class LocationDelegate {
         lb.setSouthwest(new LatLng("1","2"));
         return lb;
     }
-
 
     @RequestMapping(value="/echo", method = RequestMethod.POST)
     private String echo(@RequestBody String  message){
@@ -55,6 +58,11 @@ public class LocationDelegate {
     @RequestMapping(value="/save")
     private Response save(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
+    }
+
+    @RequestMapping(value="/initialSetting")
+    private Response initialSetting(){
+        return ResponseHelper.prepareSuccess( applicationService.getInitialSetting() );
     }
 
 }
