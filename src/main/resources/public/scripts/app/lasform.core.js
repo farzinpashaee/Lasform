@@ -177,8 +177,6 @@ define(['jquery',
         }
     }
 
-    function markerFocus() {
-    }
 
     function prepareMarkersList(locations) {
         $("#markers-list").html("");
@@ -201,31 +199,11 @@ define(['jquery',
         debug("Reloading map view data...");
         northeastCurrent = map.getBounds().getNorthEast();
         southwestCurrent = map.getBounds().getSouthWest();
-        $.ajax({
-            type: "POST",
-            url: "/api/location/getLocationsInBoundary",
-            data: JSON.stringify({
-                northeast: {latitude: northeastCurrent.lat(), longitude: northeastCurrent.lng()},
-                southwest: {latitude: southwestCurrent.lat(), longitude: southwestCurrent.lng()}
-            }),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            headers: {
-                _csrf: tokenCsrf,
-            },
-            success: function (data) {
-                debug(data);
-                if (data.state) {
-                    prepareMarkers(map, data.payload);
-                    prepareMarkersList(data.payload);
-                    resizeMainPan();
-                } else {
-                    console.error("Failed loading data!");
-                }
-            },
-            failure: function (err) {
-                console.error(err);
-            }
+        ajaxCall("/api/location/getLocationsInBoundary",{
+            northeast: {latitude: northeastCurrent.lat(), longitude: northeastCurrent.lng()},
+            southwest: {latitude: southwestCurrent.lat(), longitude: southwestCurrent.lng()}
+        },function(){
+            prepareMarkers(map, data.payload);
         });
     }
 
