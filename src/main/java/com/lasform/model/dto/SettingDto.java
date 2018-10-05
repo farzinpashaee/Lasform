@@ -6,5 +6,6 @@ import lombok.Data;
 public class SettingDto {
 
     private LatLng initialMapCenter;
+    private boolean userLocationPolicy;
 
 }

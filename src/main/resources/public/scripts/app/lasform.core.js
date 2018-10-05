@@ -54,6 +54,7 @@ define(['jquery',
         // load initial settings
         ajaxCall("/api/location/initialSetting",{},function(payload){
             debug("INFO" , "Initial setting loaded")
+            debug("INFO" , "userLocationPolicy:" + payload.userLocationPolicy)
             // generate map
             map = new google.maps.Map(document.getElementById(e.map.substr(1,e.map.length-1)), {
                 center: {lat: parseInt(payload.initialMapCenter.latitude) , lng:  parseInt(payload.initialMapCenter.longitude)},
@@ -74,7 +75,9 @@ define(['jquery',
                 }
             );
             // initial user location policy
-            getLocation();
+            if(payload.userLocationPolicy){
+                getLocation();
+            }
         });
     }
 

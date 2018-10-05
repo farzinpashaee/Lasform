@@ -19,6 +19,7 @@ public class ApplicationService {
         if( setting != null ){
             String[] center = setting.getInitialMapCenter().split(",");
             settingDto.setInitialMapCenter( new LatLng(center[0],center[1]) );
+            settingDto.setUserLocationPolicy( setting.isUserLocationPolicy() );
         }
         return  settingDto;
     }

@@ -15,5 +15,6 @@ public class Setting {
     @GeneratedValue(strategy=GenerationType.AUTO)
     private long id;
     private String initialMapCenter;
+    private boolean userLocationPolicy;
 
 }
