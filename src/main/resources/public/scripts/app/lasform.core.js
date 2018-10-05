@@ -147,7 +147,7 @@ define(['jquery',
             userLocationAvailble = true;
         } else {
             userLocationAvailble = false;
-            debug("Geolocation is not supported by this browser");
+            debug("user location","Geolocation is not supported by this browser");
         }
     }
 
@@ -202,8 +202,8 @@ define(['jquery',
         ajaxCall("/api/location/getLocationsInBoundary",{
             northeast: {latitude: northeastCurrent.lat(), longitude: northeastCurrent.lng()},
             southwest: {latitude: southwestCurrent.lat(), longitude: southwestCurrent.lng()}
-        },function(){
-            prepareMarkers(map, data.payload);
+        },function(data){
+            prepareMarkers(map, data);
         });
     }
 
