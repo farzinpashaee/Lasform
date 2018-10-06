@@ -27,7 +27,7 @@ define(['jquery',
             document.oncontextmenu = function () {
                 return false;
             }
-
+            // on window ready
             $(window).ready(function () {
                 resizeView();
                 $(e.markerDetails).hide();
@@ -37,14 +37,13 @@ define(['jquery',
                 });
                 tokenCsrf = $("meta[name='_csrf']").attr("content");
             });
-
+            // on window resize
             $(window).resize(function () {
                 resizeView();
                 $(e.markersList).niceScroll();
             });
-
+            // initial map
             initMap();
-
         }
     };
 
