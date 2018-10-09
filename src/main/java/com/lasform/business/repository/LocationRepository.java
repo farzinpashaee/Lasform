@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface LocationRepository extends JpaRepository<Location,Long> {
 
-
     @Query("SELECT l FROM Location l WHERE l.name like %:nameQuery% ")
     public List<Location> searchByName( String nameQuery );
 

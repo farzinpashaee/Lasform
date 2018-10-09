@@ -1,3 +1,8 @@
+ec = {
+    ajaxFail : { code : 110 , message : "" },
+    ajaxResponseFail : { code : 111 , message : "Failed on response" }
+}
+
 function debug(code,description) {
     console.log( code + " - " + description );
 }
@@ -22,11 +27,11 @@ function ajaxCall( path , data , callback ){
             if (data.state) {
                 callback(data.payload);
             } else {
-                error("010","Failed loading data!");
+                error(ec.ajaxResponseFail.code,ec.ajaxResponseFail.message);
             }
         },
         failure: function (err) {
-            error("011",err);
+            error(ec.ajaxFail.code,ec.ajaxFail.message + " " + err);
         }
     });
 }

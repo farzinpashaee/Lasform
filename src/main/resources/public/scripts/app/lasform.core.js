@@ -209,4 +209,8 @@ define(['jquery',
         });
     }
 
+    function search(query){
+
+    }
+
 });
