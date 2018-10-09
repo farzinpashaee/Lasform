@@ -42,18 +42,14 @@
 
                 <div class="row">
                     <div class="col">
-                        <div id="search-bar">
-                            <form action="#">
-                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
-                                    <label class="mdl-button mdl-js-button mdl-button--icon" for="sample6">
-                                        <i class="material-icons">search</i>
-                                    </label>
-                                    <div class="mdl-textfield__expandable-holder">
-                                        <input class="mdl-textfield__input" type="text" id="sample6">
-                                        <label class="mdl-textfield__label" for="sample-expandable">Expandable Input</label>
-                                    </div>
-                                </div>
-                            </form>
+                        <div id="search-bar" align="center" >
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <input class="mdl-textfield__input" type="text" id="sample3">
+                                <label class="mdl-textfield__label" for="sample3">Search</label>
+                            </div>
+                            <label class="mdl-button mdl-js-button mdl-button--icon" >
+                                <i class="material-icons">search</i>
+                            </label>
                         </div>
                         <div id="markers-list"></div>
                         <div id="marker-details"></div>
@@ -64,9 +60,13 @@
         </div>
     </div>
 
-
-
     <div id="map">
+    </div>
+
+    <div id="users-location" >
+        <button class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored">
+            <i class="material-icons">location_searching</i>
+        </button>
     </div>
 
     <div class="contextMenu">

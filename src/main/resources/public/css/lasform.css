@@ -22,11 +22,23 @@
     height: 500px;
 }
 
+#users-location{
+    position: fixed;
+    right: 20px;
+    bottom: 25px;
+    z-index: 10000;
+}
+
+#search-bar{
+    margin-top: 5px;
+}
+
 #markers-list{
     margin-top: 20px;
     margin-bottom: 10px;
     overflow-y: scroll;
     height: auto;
+    display: none;
 }
 
 .user-area-icon{
