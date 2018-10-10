@@ -8,7 +8,7 @@
 
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-red.min.css">
     <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
@@ -22,42 +22,61 @@
 <body>
 
     <div id="main-pan-container">
-        <div id="main-pan" >
-            <div class="container">
-                <div class="row">
-                    <div class="col">
-                        <div class="main-pan-header">
-                            <img src="img/logo-small.png" class="logo" />
-                            <div class="float-right">
-                                <i class="fas fa-user-circle user-area-icon"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="row">
-                    <div class="split-line">
+        <div class="mdl-card mdl-shadow--2dp">
+            <div class="mdl-card__title">
+                <img src="img/logo-small.png" class="logo" />
+                <i class="fas fa-user-circle user-area-icon"></i>
+            </div>
+            <div class="mdl-card__actions mdl-card--border">
+                <div id="search-bar" align="center" >
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" type="text" id="sample3">
+                        <label class="mdl-textfield__label" for="sample3">Search</label>
                     </div>
+                    <label class="mdl-button mdl-js-button mdl-button--icon" >
+                        <i class="material-icons">search</i>
+                    </label>
                 </div>
-
-                <div class="row">
-                    <div class="col">
-                        <div id="search-bar" align="center" >
-                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <input class="mdl-textfield__input" type="text" id="sample3">
-                                <label class="mdl-textfield__label" for="sample3">Search</label>
-                            </div>
-                            <label class="mdl-button mdl-js-button mdl-button--icon" >
-                                <i class="material-icons">search</i>
-                            </label>
-                        </div>
-                        <div id="markers-list"></div>
-                        <div id="marker-details"></div>
-                    </div>
-                </div>
-
             </div>
         </div>
+
+        <!--<div id="main-pan" >-->
+            <!--<div class="container">-->
+
+                <!--<div class="row">-->
+                    <!--<div class="col">-->
+                        <!--<div class="main-pan-header">-->
+                            <!--<img src="img/logo-small.png" class="logo" />-->
+                            <!--<div class="float-right">-->
+                                <!--<i class="fas fa-user-circle user-area-icon"></i>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                    <!--<div class="split-line">-->
+                    <!--</div>-->
+                <!--</div>-->
+
+                <!--<div class="row">-->
+                    <!--<div class="col">-->
+                        <!--<div id="search-bar2" align="center" >-->
+                            <!--<div class="mdl-textfield mdl-js-textfield mdl-textfield&#45;&#45;floating-label">-->
+                                <!--<input class="mdl-textfield__input" type="text" id="sample3">-->
+                                <!--<label class="mdl-textfield__label" for="sample3">Search</label>-->
+                            <!--</div>-->
+                            <!--<label class="mdl-button mdl-js-button mdl-button&#45;&#45;icon" >-->
+                                <!--<i class="material-icons">search</i>-->
+                            <!--</label>-->
+                        <!--</div>-->
+                        <!--<div id="markers-list"></div>-->
+                        <!--<div id="marker-details"></div>-->
+                    <!--</div>-->
+                <!--</div>-->
+
+            <!--</div>-->
+        <!--</div>-->
     </div>
 
     <div id="map">

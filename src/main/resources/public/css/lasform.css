@@ -43,15 +43,11 @@
 
 .user-area-icon{
     font-size: 1.5em;
-    margin-top: 14px;
-    margin-right: 5px;
+    float: right;
     cursor: pointer;
 }
 
 .logo {
-    margin-top: 5px;
-    margin-left: -7px;
-    margin-bottom: 5px;
     width: 150px;
     height: auto;
 }
