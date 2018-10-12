@@ -24,9 +24,9 @@ define(['jquery',
     return {
         prepare: function () {
             // disable context menu
-            document.oncontextmenu = function () {
+            /*document.oncontextmenu = function () {
                 return false;
-            }
+            }*/
             // on window ready
             $(window).ready(function () {
                 resizeView();
