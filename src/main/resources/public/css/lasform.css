@@ -76,9 +76,12 @@
     cursor: pointer;
 }
 
-.logo {
-    width: 150px;
-    height: auto;
+.lf-logo {
+    background-image: url("../img/svg/lasform-logo.svg");
+    background-repeat: no-repeat;
+    width: 28px;
+    height: 28px;
+    position: absolute;
 }
 
 .main-pan-header{

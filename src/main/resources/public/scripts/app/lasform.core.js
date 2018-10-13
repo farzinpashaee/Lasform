@@ -44,6 +44,17 @@ define(['jquery',
             });
             // initial map
             initMap();
+            // search
+            $("#lf-search-input").keyup(function(e){
+                if(e.keyCode == 13){
+                    debug("INFO" , "Searching '"+$("#lf-search-input").val()+"'");
+                    search($("#lf-search-input").val());
+                }
+            });
+            $("#lf-search-button").click(function(){
+                debug("INFO" , "Searching '"+$("#lf-search-input").val()+"'");
+                search($("#lf-search-input").val());
+            });
         }
     };
 
@@ -83,6 +94,7 @@ define(['jquery',
     function resizeView(){
         $(e.map).height($(window).height());
     }
+
 
     function contextMenuZoomIn() {
         contextMenuHide();
