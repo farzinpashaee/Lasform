@@ -14,7 +14,8 @@ define(['jquery',
     var e = {
         map : '#map',
         markersList : '#markers-list',
-        markerDetails : '#marker-details'
+        markerDetails : '#marker-details',
+        searchInput : '#lf-search-input'
     };
 
     var config = {
@@ -24,9 +25,9 @@ define(['jquery',
     return {
         prepare: function () {
             // disable context menu
-            /*document.oncontextmenu = function () {
+            document.oncontextmenu = function () {
                 return false;
-            }*/
+            }
             // on window ready
             $(window).ready(function () {
                 resizeView();
@@ -42,19 +43,19 @@ define(['jquery',
                 resizeView();
                 $(e.markersList).niceScroll();
             });
-            // initial map
-            initMap();
-            // search
-            $("#lf-search-input").keyup(function(e){
-                if(e.keyCode == 13){
-                    debug("INFO" , "Searching '"+$("#lf-search-input").val()+"'");
-                    search($("#lf-search-input").val());
+            // UI prepare
+            $(e.searchInput).keyup(function(event){
+                if(event.keyCode == 13){
+                    debug("INFO" , "Searching '"+$(e.searchInput).val()+"'");
+                    search($(e.searchInput).val());
                 }
             });
             $("#lf-search-button").click(function(){
-                debug("INFO" , "Searching '"+$("#lf-search-input").val()+"'");
-                search($("#lf-search-input").val());
+                debug("INFO" , "Searching '"+$(e.searchInput).val()+"'");
+                search($(e.searchInput).val());
             });
+            // initial map
+            initMap();
         }
     };
 
@@ -86,7 +87,7 @@ define(['jquery',
             );
             // initial user location policy
             if(payload.userLocationPolicy){
-                getLocation();
+                getUserLocation();
             }
         });
     }
@@ -95,7 +96,103 @@ define(['jquery',
         $(e.map).height($(window).height());
     }
 
+    function itemClicked(lat, lng, id) {
+        if (lastInfoWindow != null) lastInfoWindow.close();
+        map.panTo({lat: lat, lng: lng});
+        var infowindow = markers[id].contentInfo;
+        infowindow.open(map, markers[id]);
+        lastInfoWindow = infowindow;
+        viewDetails(id);
+    }
 
+    function viewDetails(id) {
+        $("#marker-details").html(markers[id].contentInfo);
+        $("#marker-list").hide();
+        $("#marker-details").show();
+    }
+
+
+    // Updating user location
+    function getUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(updateUserLocation);
+            userLocationAvailble = true;
+        } else {
+            userLocationAvailble = false;
+            debug("user location","Geolocation is not supported by this browser");
+        }
+    }
+
+    function updateUserLocation(position) {
+        map.setCenter({lat: position.coords.latitude, lng: position.coords.longitude});
+    }
+
+    // Preparing markers for map
+    function prepareMarkers(locations) {
+        for (i = 0; i < locations.length; i++) {
+            if (markers[locations[i].id] == null) {
+                var infowindow = new google.maps.InfoWindow({
+                    content: templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
+                });
+                var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(locations[i].latitude, locations[i].longitude),
+                    map: map,
+                    contentInfo: infowindow
+                });
+                google.maps.event.addListener(marker, 'click', function () {
+                    if (lastInfoWindow != null) lastInfoWindow.close();
+                    map.panTo(this.position);
+                    infowindow.open(map, this);
+                    lastInfoWindow = infowindow;
+                });
+                markers[locations[i].id] = marker;
+            }
+        }
+    }
+
+
+    // function prepareMarkersList(locations) {
+    //     $("#markers-list").html("");
+    //     markersListCotent = "";
+    //     currentMarkersListCount = 0;
+    //     if (locations.length == 0) {
+    //         markersListCotent = "No location found in the area";
+    //     } else {
+    //         for (i = 0; i < locations.length; i++) {
+    //             currentMarkersListCount++;
+    //             markersListCotent += "<div class='marker-list-item' onclick='itemClicked(" + locations[i].latitude + "," + locations[i].longitude + "," + locations[i].id + ")'>"
+    //                 + templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
+    //                 + "</div>";
+    //         }
+    //     }
+    //     $("#markers-list").html(markersListCotent);
+    // }
+
+    // Server side Requests
+    // reloadMapView: Reloading map on view change
+    function reloadMapView() {
+        debug("Reloading map view data...");
+        var northeastCurrent = map.getBounds().getNorthEast();
+        var southwestCurrent = map.getBounds().getSouthWest();
+        ajaxCall("/api/location/getLocationsInBoundary",{
+            northeast: {latitude: northeastCurrent.lat(), longitude: northeastCurrent.lng()},
+            southwest: {latitude: southwestCurrent.lat(), longitude: southwestCurrent.lng()}
+        },function(data){
+            prepareMarkers(data);
+        });
+    }
+    // Searching map
+    function search( searchQuery ){
+        debug("INFO","searchQuery " + searchQuery);
+        ajaxCall("/api/location/searchByName",
+            { name : searchQuery } ,
+            function(data){
+            debug("INFO","Data " + data);
+                prepareMarkers(data);
+            });
+    }
+
+    // Context Menu
     function contextMenuZoomIn() {
         contextMenuHide();
         map.panTo({lat: $(".contextMenu").data('lat'), lng: $(".contextMenu").data('lng')});
@@ -119,110 +216,6 @@ define(['jquery',
         $(".contextMenu").hide();
     }
 
-    function itemClicked(lat, lng, id) {
-        if (lastInfoWindow != null) lastInfoWindow.close();
-        map.panTo({lat: lat, lng: lng});
-        var infowindow = markers[id].contentInfo;
-        infowindow.open(map, markers[id]);
-        lastInfoWindow = infowindow;
-        viewDetails(id);
-    }
-
-    function viewDetails(id) {
-        $("#marker-details").html(markers[id].contentInfo);
-        $("#marker-list").hide();
-        $("#marker-details").show();
-    }
-
-    function resizeMapConatiner() {
-        $("#map").height($(window).height());
-    }
-
-    function resizeMainPan() {
-        realHeight = currentMarkersListCount * 50;
-        if (realHeight > $(window).height()) {
-            if ($(window).height() > 200) {
-                $("#main-pan").height($(window).height() - 100);
-                $("#markers-list").height($(window).height() - 180);
-            } else {
-                $("#main-pan").height($(window).height() - 50);
-                $("#markers-list").height($(window).height() - 130);
-            }
-        } else {
-            $("#main-pan").height(realHeight + 130);
-            $("#markers-list").height(realHeight + 50);
-        }
-        $("#markers-list").niceScroll();
-    }
-
-    function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(updateUserLocation);
-            userLocationAvailble = true;
-        } else {
-            userLocationAvailble = false;
-            debug("user location","Geolocation is not supported by this browser");
-        }
-    }
-
-    function updateUserLocation(position) {
-        map.setCenter({lat: position.coords.latitude, lng: position.coords.longitude});
-    }
-
-    function prepareMarkers(map, locations) {
-        for (i = 0; i < locations.length; i++) {
-            if (markers[locations[i].id] == null) {
-                var infowindow = new google.maps.InfoWindow({
-                    content: templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
-                });
-                var marker = new google.maps.Marker({
-                    position: new google.maps.LatLng(locations[i].latitude, locations[i].longitude),
-                    map: map,
-                    contentInfo: infowindow
-                });
-                google.maps.event.addListener(marker, 'click', function () {
-                    if (lastInfoWindow != null) lastInfoWindow.close();
-                    map.panTo(this.position);
-                    infowindow.open(map, this);
-                    lastInfoWindow = infowindow;
-                });
-                markers[locations[i].id] = marker;
-            }
-        }
-    }
-
-
-    function prepareMarkersList(locations) {
-        $("#markers-list").html("");
-        markersListCotent = "";
-        currentMarkersListCount = 0;
-        if (locations.length == 0) {
-            markersListCotent = "No location found in the area";
-        } else {
-            for (i = 0; i < locations.length; i++) {
-                currentMarkersListCount++;
-                markersListCotent += "<div class='marker-list-item' onclick='itemClicked(" + locations[i].latitude + "," + locations[i].longitude + "," + locations[i].id + ")'>"
-                    + templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
-                    + "</div>";
-            }
-        }
-        $("#markers-list").html(markersListCotent);
-    }
-
-    function reloadMapView(map) {
-        debug("Reloading map view data...");
-        northeastCurrent = map.getBounds().getNorthEast();
-        southwestCurrent = map.getBounds().getSouthWest();
-        ajaxCall("/api/location/getLocationsInBoundary",{
-            northeast: {latitude: northeastCurrent.lat(), longitude: northeastCurrent.lng()},
-            southwest: {latitude: southwestCurrent.lat(), longitude: southwestCurrent.lng()}
-        },function(data){
-            prepareMarkers(map, data);
-        });
-    }
-
-    function search(query){
-
-    }
+    
 
 });
