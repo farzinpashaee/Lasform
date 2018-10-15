@@ -9,8 +9,9 @@
 }
 
 .lf-main-pan-card {
-    height: 55px;
-}
+    min-height: 50px;
+    width: 100%;
+ }
 
 .lf-main-pan-card-content {
     padding: 1rem;
@@ -39,6 +40,11 @@
     padding-right: 40px;
 }
 
+.lf-search-detail-card {
+    margin-top: 5px;
+    width: 100%;
+}
+
 .lf-main-pan {
     min-height: 40px;
     background-color: #FFF;
@@ -46,6 +52,15 @@
     -webkit-box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.5);
     -moz-box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.5);
     box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.5);
+}
+
+.lf-location-details{
+    width: 100%;
+    display: none;
+}
+
+.lf-search-list{
+    width: 100%;
 }
 
 #map {

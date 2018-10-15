@@ -4,7 +4,7 @@ define(['jquery',
     'app/lasform.utils'],function($) {
     var map;
     var contextMenu;
-    var userLocationAvailble = false;
+    var userLocationAvailable = false;
     var boundChangeTimeoutId = 0;
     var markers = [];
     var lastInfoWindow = null;
@@ -116,9 +116,9 @@ define(['jquery',
     function getUserLocation() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(updateUserLocation);
-            userLocationAvailble = true;
+            userLocationAvailable = true;
         } else {
-            userLocationAvailble = false;
+            userLocationAvailable = false;
             debug("user location","Geolocation is not supported by this browser");
         }
     }
