@@ -3,7 +3,7 @@
     left: 0px;
     top: 0px;
     z-index: 10000;
-    padding: 15px;
+    padding: 8px;
     width: 100%;
     max-width: 450px;
 }
@@ -40,8 +40,14 @@
     padding-right: 40px;
 }
 
-.lf-search-detail-card {
+.lf-search-card {
+    display: none;
     margin-top: 5px;
+    min-height: 100px;
+    width: 100%;
+}
+
+.lf-search-card-content{
     width: 100%;
 }
 
@@ -175,4 +181,10 @@
 
 .float-left{
     float: left;
+}
+
+.lf-loading-container{
+    margin-top: 30px;
+    text-align: center;
+    display: none;
 }

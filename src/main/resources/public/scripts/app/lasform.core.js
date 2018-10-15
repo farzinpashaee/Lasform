@@ -151,22 +151,21 @@ define(['jquery',
     }
 
 
-    // function prepareMarkersList(locations) {
-    //     $("#markers-list").html("");
-    //     markersListCotent = "";
-    //     currentMarkersListCount = 0;
-    //     if (locations.length == 0) {
-    //         markersListCotent = "No location found in the area";
-    //     } else {
-    //         for (i = 0; i < locations.length; i++) {
-    //             currentMarkersListCount++;
-    //             markersListCotent += "<div class='marker-list-item' onclick='itemClicked(" + locations[i].latitude + "," + locations[i].longitude + "," + locations[i].id + ")'>"
-    //                 + templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
-    //                 + "</div>";
-    //         }
-    //     }
-    //     $("#markers-list").html(markersListCotent);
-    // }
+    function prepareMarkersList(locations) {
+        markersListCotent = "";
+        currentMarkersListCount = 0;
+        if (locations.length == 0) {
+            markersListCotent = "No location found in the area";
+        } else {
+            for (i = 0; i < locations.length; i++) {
+                currentMarkersListCount++;
+                markersListCotent += "<div class='marker-list-item' onclick='itemClicked(" + locations[i].latitude + "," + locations[i].longitude + "," + locations[i].id + ")'>"
+                    + templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
+                    + "</div>";
+            }
+        }
+        return markersListCotent;
+    }
 
     // Server side Requests
     // reloadMapView: Reloading map on view change
@@ -184,10 +183,14 @@ define(['jquery',
     // Searching map
     function search( searchQuery ){
         debug("INFO","searchQuery " + searchQuery);
+        $(".lf-search-card").show()
+        $(".lf-loading-container").show();
         ajaxCall("/api/location/searchByName",
             { name : searchQuery } ,
             function(data){
-            debug("INFO","Data " + data);
+                debug("INFO","Data " + data);
+                $(".lf-loading-container").hide();
+                $(".lf-search-list").html(prepareMarkersList(data));
                 prepareMarkers(data);
             });
     }
