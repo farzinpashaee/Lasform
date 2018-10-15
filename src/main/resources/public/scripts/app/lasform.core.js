@@ -13,9 +13,17 @@ define(['jquery',
 
     var e = {
         map : '#map',
-        markersList : '#markers-list',
         markerDetails : '#marker-details',
-        searchInput : '#lf-search-input'
+        searchDetailsCard : '.lf-search-details-card',
+        searchInput : '#lf-search-input',
+        searchButton : '#lf-search-button',
+        searchCard : '.lf-search-card',
+        searchContainer : '.if-search-container',
+        markersList : '.lf-search-list',
+        markerListItem : '.marker-list-item',
+        locationDetailsContainer : '.lf-location-details-container',
+        locationDetails : '.lf-location-details',
+        loadingContainer : '.lf-loading-container'
     };
 
     var config = {
@@ -50,10 +58,26 @@ define(['jquery',
                     search($(e.searchInput).val());
                 }
             });
-            $("#lf-search-button").click(function(){
+            $(e.searchButton).click(function(){
                 debug("INFO" , "Searching '"+$(e.searchInput).val()+"'");
                 search($(e.searchInput).val());
             });
+
+            $(document).on( 'click' , e.markerListItem , function(){
+                debug("INFO","Clicked " + $(this).data("id"));
+                viewDetails($(this).data("id"));
+            });
+
+            // $(".marker-list-item").click(function(){
+            //     debug("INFO","Clicked " + id);
+            //     $( e.searchCard ).fadeOut();
+            //     // if (lastInfoWindow != null) lastInfoWindow.close();
+            //     // map.panTo({lat: lat, lng: lng});
+            //     // var infowindow = markers[id].contentInfo;
+            //     // infowindow.open(map, markers[id]);
+            //     // lastInfoWindow = infowindow;
+            //     // viewDetails(id);
+            // });
             // initial map
             initMap();
         }
@@ -97,20 +121,14 @@ define(['jquery',
     }
 
     function itemClicked(lat, lng, id) {
-        if (lastInfoWindow != null) lastInfoWindow.close();
-        map.panTo({lat: lat, lng: lng});
-        var infowindow = markers[id].contentInfo;
-        infowindow.open(map, markers[id]);
-        lastInfoWindow = infowindow;
-        viewDetails(id);
+
     }
 
     function viewDetails(id) {
-        $("#marker-details").html(markers[id].contentInfo);
-        $("#marker-list").hide();
-        $("#marker-details").show();
+        $(e.locationDetails).html(markers[id].contentInfo);
+        $(e.searchContainer).hide();
+        $(e.locationDetailsContainer).show();
     }
-
 
     // Updating user location
     function getUserLocation() {
@@ -159,7 +177,7 @@ define(['jquery',
         } else {
             for (i = 0; i < locations.length; i++) {
                 currentMarkersListCount++;
-                markersListCotent += "<div class='marker-list-item' onclick='itemClicked(" + locations[i].latitude + "," + locations[i].longitude + "," + locations[i].id + ")'>"
+                markersListCotent += "<div class='marker-list-item' data-lat='" + locations[i].latitude + "' data-lng='" + locations[i].longitude + "' data-id='"+locations[i].id+"'>"
                     + templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
                     + "</div>";
             }
@@ -183,14 +201,15 @@ define(['jquery',
     // Searching map
     function search( searchQuery ){
         debug("INFO","searchQuery " + searchQuery);
-        $(".lf-search-card").show()
-        $(".lf-loading-container").show();
+        $(e.searchDetailsCard).show()
+        $(e.loadingContainer).show();
         ajaxCall("/api/location/searchByName",
             { name : searchQuery } ,
             function(data){
-                debug("INFO","Data " + data);
-                $(".lf-loading-container").hide();
-                $(".lf-search-list").html(prepareMarkersList(data));
+                debug("INFO","Data Size : " + data.length);
+                $(e.loadingContainer).hide();
+                $(e.markersList).html(prepareMarkersList(data));
+                $(e.markersList).niceScroll();
                 prepareMarkers(data);
             });
     }
