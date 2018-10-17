@@ -68,7 +68,9 @@
 .if-location-details-title{
     height: 20vh;
     color: white;
-    background-color: #0c5460;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-image: url("../img/locations/photo-1.jpg");
 }
 
 .lf-location-details{
@@ -203,4 +205,10 @@
     margin-top: 30px;
     text-align: center;
     display: none;
+}
+
+.lf-back-to-search{
+    position: absolute;
+    top: 15px;
+    left: 15px;
 }
