@@ -23,7 +23,8 @@ define(['jquery',
         markerListItem : '.marker-list-item',
         locationDetailsContainer : '.lf-location-details-container',
         locationDetails : '.lf-location-details',
-        loadingContainer : '.lf-loading-container'
+        loadingContainer : '.lf-loading-container',
+        backToSearchButton : '.lf-back-to-search-button'
     };
 
     var config = {
@@ -63,9 +64,12 @@ define(['jquery',
                 search($(e.searchInput).val());
             });
 
+            $(e.backToSearchButton).click(function(){
+                backToSearchList();
+            });
+
             $(document).on( 'click' , e.markerListItem , function(){
-                debug("INFO","Clicked " + $(this).data("id"));
-                viewDetails($(this).data("id"));
+                searchItemClicked($(this).data("lat"),$(this).data("lng"),$(this).data("id"));
             });
 
             // $(".marker-list-item").click(function(){
@@ -120,14 +124,25 @@ define(['jquery',
         $(e.map).height($(window).height());
     }
 
-    function itemClicked(lat, lng, id) {
-
+    function searchItemClicked(lat, lng, id) {
+        debug("INFO","Clicked " + id);
+        viewDetails(id);
+        if (lastInfoWindow != null) lastInfoWindow.close();
+        map.panTo({lat: lat, lng: lng});
+        var infowindow = markers[id].contentInfo;
+        infowindow.open(map, markers[id]);
+        lastInfoWindow = infowindow;
     }
 
     function viewDetails(id) {
-        $(e.locationDetails).html(markers[id].contentInfo);
+        $(e.locationDetails).html(markers[id].contentInfo.content);
         $(e.searchContainer).hide();
         $(e.locationDetailsContainer).show();
+    }
+
+    function backToSearchList(){
+        $(e.locationDetailsContainer).hide();
+        $(e.searchContainer).show();
     }
 
     // Updating user location
