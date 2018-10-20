@@ -10,6 +10,7 @@ define(['jquery',
     var lastInfoWindow = null;
     var currentMarkersListCount = 0;
     var tokenCsrf = "";
+    var userMarker = null;
 
     var e = {
         map : '#map',
@@ -24,7 +25,8 @@ define(['jquery',
         locationDetailsContainer : '.lf-location-details-container',
         locationDetails : '.lf-location-details',
         loadingContainer : '.lf-loading-container',
-        backToSearchButton : '.lf-back-to-search-button'
+        backToSearchButton : '.lf-back-to-search-button',
+        searchQuerySpan : '.lp-search-query'
     };
 
     var config = {
@@ -37,6 +39,9 @@ define(['jquery',
             document.oncontextmenu = function () {
                 return false;
             }
+            $(document).click(function(){
+                contextMenuHide();
+            });
             // on window ready
             $(window).ready(function () {
                 resizeView();
@@ -158,6 +163,15 @@ define(['jquery',
 
     function updateUserLocation(position) {
         map.setCenter({lat: position.coords.latitude, lng: position.coords.longitude});
+        var icon = {
+            url: "../../img/icons/users-locations.png", // url
+            scaledSize: new google.maps.Size(25, 25), // scaled size
+        };
+        userMarker = new google.maps.Marker({
+            position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+            map: map,
+            icon: icon
+        });
     }
 
     // Preparing markers for map
@@ -216,6 +230,7 @@ define(['jquery',
     // Searching map
     function search( searchQuery ){
         debug("INFO","searchQuery " + searchQuery);
+        $(e.searchQuerySpan).html(searchQuery);
         $(e.searchDetailsCard).show()
         $(e.loadingContainer).show();
         ajaxCall("/api/location/searchByName",
