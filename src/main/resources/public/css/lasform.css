@@ -1,3 +1,7 @@
+body{
+    font-family: Arial;
+}
+
 .lf-main-pan-container{
     position: fixed;
     left: 0px;
@@ -169,31 +173,29 @@
 .contextMenu ul {
     padding: 3px 0px;
     margin: 0px;
-    border: solid 1px #fff;
 }
 
 .contextMenu li {
     list-style: none;
-    padding-left: 10px;
+    padding-left: 14px;
+    padding-right: 14px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     margin: 0px;
     cursor: pointer;
     line-height: 22px;
 }
 
 .contextMenu li:hover {
-    background-color: deepskyblue;
-    color:#FFF;
+    background-color: #eee;
 }
 
 .contextMenu li.separator{
-    padding-left: 0px;
+    margin: 0px;
+    padding: 0px;
+    border-top: solid 1px #ccc;
 }
 
-.contextMenu li.separator div {
-    margin: 3px 0px;
-    border-top: solid 1px #ccc;
-    border-bottom: solid 1px #fff;
-}
 
 .float-right{
     float: right;
