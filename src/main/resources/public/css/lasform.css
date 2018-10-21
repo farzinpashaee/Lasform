@@ -216,3 +216,9 @@ body{
     top: 15px;
     left: 15px;
 }
+
+.lf-search-card-close{
+    position: absolute;
+    right: 15px;
+    top: 15px;
+}

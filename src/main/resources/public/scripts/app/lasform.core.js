@@ -26,7 +26,8 @@ define(['jquery',
         locationDetails : '.lf-location-details',
         loadingContainer : '.lf-loading-container',
         backToSearchButton : '.lf-back-to-search-button',
-        searchQuerySpan : '.lp-search-query'
+        searchQuerySpan : '.lp-search-query',
+        searchCardCloseButton : '.lf-search-card-close-button'
     };
 
     var config = {
@@ -75,6 +76,10 @@ define(['jquery',
 
             $(document).on( 'click' , e.markerListItem , function(){
                 searchItemClicked($(this).data("lat"),$(this).data("lng"),$(this).data("id"));
+            });
+
+            $(e.searchCardCloseButton).click(function(){
+                $(e.searchDetailsCard).hide();
             });
 
             // $(".marker-list-item").click(function(){
