@@ -27,7 +27,8 @@ define(['jquery',
         loadingContainer : '.lf-loading-container',
         backToSearchButton : '.lf-back-to-search-button',
         searchQuerySpan : '.lp-search-query',
-        searchCardCloseButton : '.lf-search-card-close-button'
+        searchCardCloseButton : '.lf-search-card-close-button',
+        locationDetailsTitle : ".if-location-details-title"
     };
 
     var config = {
@@ -80,6 +81,7 @@ define(['jquery',
 
             $(e.searchCardCloseButton).click(function(){
                 $(e.searchDetailsCard).hide();
+                $(e.searchInput).val("");
             });
 
             // $(".marker-list-item").click(function(){
@@ -138,8 +140,16 @@ define(['jquery',
         debug("INFO","Clicked " + id);
         viewDetails(id);
         if (lastInfoWindow != null) lastInfoWindow.close();
-        map.panTo({lat: lat, lng: lng});
+        debug("ERR",lat+","+lng);
+        map.panTo({lat: parseFloat(lat), lng: parseFloat(lng)});
         var infowindow = markers[id].contentInfo;
+         if(markers[id].cover){
+             $(e.locationDetailsTitle).css("height","20vh");
+             $(e.locationDetailsTitle).css("background-image","url(../img/locations/photo-"+id+".jpg)");
+         } else {
+             $(e.locationDetailsTitle).css("height","8vh");
+             $(e.locationDetailsTitle).css("background-image","");
+         }
         infowindow.open(map, markers[id]);
         lastInfoWindow = infowindow;
     }
@@ -189,7 +199,9 @@ define(['jquery',
                 var marker = new google.maps.Marker({
                     position: new google.maps.LatLng(locations[i].latitude, locations[i].longitude),
                     map: map,
-                    contentInfo: infowindow
+                    contentInfo: infowindow,
+                    cover : locations[i].cover,
+                    imageSlide : locations[i].imageSlide
                 });
                 google.maps.event.addListener(marker, 'click', function () {
                     if (lastInfoWindow != null) lastInfoWindow.close();

@@ -75,7 +75,7 @@ body{
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
-    background-image: url("../img/locations/photo-1.jpg");
+    border-bottom: 1px solid #eee;
 }
 
 
