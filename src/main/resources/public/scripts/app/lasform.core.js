@@ -149,7 +149,7 @@ define(['jquery',
         debug("ERR",lat+","+lng);
         map.panTo({lat: parseFloat(lat), lng: parseFloat(lng)});
         var infowindow = markers[id].contentInfo;
-         if(markers[id].cover){
+         if(markers[id].details.cover){
              $(e.locationDetailsTitle).css("height","160px");
              $(e.locationDetailsTitle).css("background-image","url(../img/locations/photo-"+id+".jpg)");
          } else {
@@ -216,18 +216,22 @@ define(['jquery',
                 var infowindow = new google.maps.InfoWindow({
                     content: templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
                 });
+                console.log("-----------------------");
+                console.log(locations[i].id);
+               //console.log(locations[i].cover);
+                var location = locations[i];
                 var marker = new google.maps.Marker({
                     position: new google.maps.LatLng(locations[i].latitude, locations[i].longitude),
                     map: map,
                     contentInfo: infowindow,
-                    cover : locations[i].cover,
-                    imageSlide : locations[i].imageSlide
+                    details: location
                 });
                 google.maps.event.addListener(marker, 'click', function () {
                     if (lastInfoWindow != null) lastInfoWindow.close();
                     map.panTo(this.position);
                     infowindow.open(map, this);
                     lastInfoWindow = infowindow;
+                    searchItemClicked(this.position.latitude,this.position.longitude,this.location.id);
                 });
                 markers[locations[i].id] = marker;
             }
@@ -244,8 +248,8 @@ define(['jquery',
             for (i = 0; i < locations.length; i++) {
                 currentMarkersListCount++;
                 var listItem = templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description);
-                debug("--",locations[i].cover)
-                if(locations[i].cover){
+                debug("--",locations[i].details.cover)
+                if(locations[i].details.cover){
                     listItem = listItem.replace("::image::","<div class='image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>");
                 } else {
                     listItem = listItem.replace("::image::","");
