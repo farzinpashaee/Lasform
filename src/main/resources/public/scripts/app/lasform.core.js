@@ -21,7 +21,7 @@ define(['jquery',
         searchCard : '.lf-search-card',
         searchContainer : '.if-search-container',
         markersList : '.lf-search-list',
-        markerListItem : '.marker-list-item',
+        markerListItem : '.lf-marker-list-item',
         locationDetailsContainer : '.lf-location-details-container',
         locationDetails : '.lf-location-details',
         loadingContainer : '.lf-loading-container',
@@ -29,7 +29,8 @@ define(['jquery',
         searchQuerySpan : '.lp-search-query',
         searchCardCloseButton : '.lf-search-card-close-button',
         locationDetailsTitle : ".if-location-details-title",
-        userLocationButton : ".lf-user-location-button"
+        userLocationButton : ".lf-user-location-button",
+        userLocationButtonIcon : ".lf-user-location-button-icon"
     };
 
     var config = {
@@ -173,15 +174,18 @@ define(['jquery',
     // Updating user location
     function getUserLocation() {
         if (navigator.geolocation) {
+            $(e.userLocationButtonIcon).addClass("blinking");
             navigator.geolocation.getCurrentPosition(updateUserLocation);
             userLocationAvailable = true;
         } else {
+            $(e.userLocationButtonIcon).removeClass("blinking");
             userLocationAvailable = false;
             debug("user location","Geolocation is not supported by this browser");
         }
     }
 
     function updateUserLocation(position) {
+        $(e.userLocationButtonIcon).removeClass("blinking");
         if(userMarker == null ){
             var icon = {
                 url: "../../img/icons/users-locations.png", // url
@@ -202,6 +206,13 @@ define(['jquery',
     function prepareMarkers(locations) {
         for (i = 0; i < locations.length; i++) {
             if (markers[locations[i].id] == null) {
+                // var listItem = templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description);
+                // debug("COVER",locations[i].cover)
+                // if(locations[i].cover){
+                //     listItem.replace("::image::","<div class='lf-list-item image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>");
+                // } else {
+                //     listItem.replace("::image::","");
+                // }
                 var infowindow = new google.maps.InfoWindow({
                     content: templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
                 });
@@ -232,8 +243,15 @@ define(['jquery',
         } else {
             for (i = 0; i < locations.length; i++) {
                 currentMarkersListCount++;
-                markersListCotent += "<div class='marker-list-item' data-lat='" + locations[i].latitude + "' data-lng='" + locations[i].longitude + "' data-id='"+locations[i].id+"'>"
-                    + templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
+                var listItem = templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description);
+                debug("--",locations[i].cover)
+                if(locations[i].cover){
+                    listItem = listItem.replace("::image::","<div class='image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>");
+                } else {
+                    listItem = listItem.replace("::image::","");
+                }
+                markersListCotent += "<div class='lf-marker-list-item' data-lat='" + locations[i].latitude + "' data-lng='" + locations[i].longitude + "' data-id='"+locations[i].id+"'>"
+                    + listItem
                     + "</div>";
             }
         }

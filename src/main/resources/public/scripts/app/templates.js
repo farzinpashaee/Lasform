@@ -1,4 +1,4 @@
 templates = {
-    infoWindow : '<span class="infowindow-header">::title::</span><p>::description::</p>',
-    markerListItem : '<span class="marker-list-item-header">::title::</span><br/><span class="marker-list-item-description" >::description::</span></div>'
+    infoWindow : '<span class="lf-info-window">::title::</span><p>::description::</p>',
+    markerListItem : '::image::<div class="details"><span class="title">::title::</span><br/><span class="description" >::description::</span></div></div>'
 }

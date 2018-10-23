@@ -134,19 +134,7 @@ body{
     height: 50px;
 }
 
-.marker-list-item{
-    padding: 10px;
-    border-bottom: 1px solid #f4f4f4;
-    cursor: pointer;
-}
 
-.marker-list-item-header{
-    font-weight:bold;
-}
-
-.marker-list-item-description{
-    font-size: 12px;
-}
 
 .split-line{
     border-top:1px solid #efefef;
@@ -221,4 +209,45 @@ body{
     position: absolute;
     right: 15px;
     top: 15px;
+}
+
+.lf-user-location-button-icon.blinking{
+    animation: blinker 0.5s linear infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+.lf-marker-list-item{
+    padding: 5px;
+    border-bottom: 1px solid #f4f4f4;
+    cursor: pointer;
+    min-height: 65px;
+}
+
+.lf-marker-list-item .image{
+    float: left;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+}
+
+.lf-marker-list-item .title{
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.lf-marker-list-item .description{
+    font-size: 0.8em;
+}
+
+.lf-marker-list-item .details{
+    float: left;
+    margin-left: 10px;
+    margin-top: 9px;
 }
