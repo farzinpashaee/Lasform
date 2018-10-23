@@ -28,7 +28,8 @@ define(['jquery',
         backToSearchButton : '.lf-back-to-search-button',
         searchQuerySpan : '.lp-search-query',
         searchCardCloseButton : '.lf-search-card-close-button',
-        locationDetailsTitle : ".if-location-details-title"
+        locationDetailsTitle : ".if-location-details-title",
+        userLocationButton : ".lf-user-location-button"
     };
 
     var config = {
@@ -82,6 +83,10 @@ define(['jquery',
             $(e.searchCardCloseButton).click(function(){
                 $(e.searchDetailsCard).hide();
                 $(e.searchInput).val("");
+            });
+
+            $(e.userLocationButton).click(function(){
+                getUserLocation();
             });
 
             // $(".marker-list-item").click(function(){
@@ -144,10 +149,10 @@ define(['jquery',
         map.panTo({lat: parseFloat(lat), lng: parseFloat(lng)});
         var infowindow = markers[id].contentInfo;
          if(markers[id].cover){
-             $(e.locationDetailsTitle).css("height","20vh");
+             $(e.locationDetailsTitle).css("height","160px");
              $(e.locationDetailsTitle).css("background-image","url(../img/locations/photo-"+id+".jpg)");
          } else {
-             $(e.locationDetailsTitle).css("height","8vh");
+             $(e.locationDetailsTitle).css("height","60px");
              $(e.locationDetailsTitle).css("background-image","");
          }
         infowindow.open(map, markers[id]);
@@ -177,16 +182,20 @@ define(['jquery',
     }
 
     function updateUserLocation(position) {
+        if(userMarker == null ){
+            var icon = {
+                url: "../../img/icons/users-locations.png", // url
+                scaledSize: new google.maps.Size(25, 25), // scaled size
+            };
+            userMarker = new google.maps.Marker({
+                position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+                map: map,
+                icon: icon
+            });
+        } else {
+            userMarker.setPosition(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
+        }
         map.setCenter({lat: position.coords.latitude, lng: position.coords.longitude});
-        var icon = {
-            url: "../../img/icons/users-locations.png", // url
-            scaledSize: new google.maps.Size(25, 25), // scaled size
-        };
-        userMarker = new google.maps.Marker({
-            position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
-            map: map,
-            icon: icon
-        });
     }
 
     // Preparing markers for map
@@ -250,6 +259,8 @@ define(['jquery',
         $(e.searchQuerySpan).html(searchQuery);
         $(e.searchDetailsCard).show()
         $(e.loadingContainer).show();
+        $(e.searchContainer).show();
+        $(e.locationDetailsContainer).hide();
         ajaxCall("/api/location/searchByName",
             { name : searchQuery } ,
             function(data){
