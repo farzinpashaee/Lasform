@@ -206,15 +206,15 @@ define(['jquery',
     function prepareMarkers(locations) {
         for (i = 0; i < locations.length; i++) {
             if (markers[locations[i].id] == null) {
-                // var listItem = templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description);
+                var listItem = templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description);
                 // debug("COVER",locations[i].cover)
-                // if(locations[i].cover){
-                //     listItem.replace("::image::","<div class='lf-list-item image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>");
-                // } else {
-                //     listItem.replace("::image::","");
-                // }
+                if(locations[i].cover){
+                    listItem = listItem.replace("::image::","<div class='image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>");
+                 } else {
+                    listItem = listItem.replace("::image::","");
+                 }
                 var infowindow = new google.maps.InfoWindow({
-                    content: templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
+                    content: listItem
                 });
                 var location = locations[i];
                 var marker = new google.maps.Marker({

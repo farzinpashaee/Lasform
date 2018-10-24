@@ -251,3 +251,31 @@ body{
     margin-left: 10px;
     margin-top: 9px;
 }
+
+.lf-info-window{
+
+}
+
+.lf-info-window .title{
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.lf-info-window .description{
+    font-size: 0.8em;
+}
+
+.lf-info-window .details{
+    float: left;
+    margin-left: 8px;
+    margin-top: 8px;
+}
+
+.lf-info-window .image{
+    float: left;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+}
