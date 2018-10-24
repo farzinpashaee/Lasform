@@ -146,7 +146,6 @@ define(['jquery',
         debug("INFO","Clicked " + id);
         viewDetails(id);
         if (lastInfoWindow != null) lastInfoWindow.close();
-        debug("ERR",lat+","+lng);
         map.panTo({lat: parseFloat(lat), lng: parseFloat(lng)});
         var infowindow = markers[id].contentInfo;
          if(markers[id].details.cover){
@@ -163,6 +162,7 @@ define(['jquery',
     function viewDetails(id) {
         $(e.locationDetails).html(markers[id].contentInfo.content);
         $(e.searchContainer).hide();
+        $(e.searchDetailsCard).show()
         $(e.locationDetailsContainer).show();
     }
 
@@ -216,9 +216,6 @@ define(['jquery',
                 var infowindow = new google.maps.InfoWindow({
                     content: templates.infoWindow.replace("::title::", locations[i].name).replace("::description::", locations[i].description)
                 });
-                console.log("-----------------------");
-                console.log(locations[i].id);
-               //console.log(locations[i].cover);
                 var location = locations[i];
                 var marker = new google.maps.Marker({
                     position: new google.maps.LatLng(locations[i].latitude, locations[i].longitude),
@@ -231,7 +228,7 @@ define(['jquery',
                     map.panTo(this.position);
                     infowindow.open(map, this);
                     lastInfoWindow = infowindow;
-                    searchItemClicked(this.position.latitude,this.position.longitude,this.location.id);
+                    searchItemClicked(this.details.latitude,this.details.longitude,this.details.id);
                 });
                 markers[locations[i].id] = marker;
             }
@@ -240,26 +237,25 @@ define(['jquery',
 
 
     function prepareMarkersList(locations) {
-        markersListCotent = "";
+        var markersListContent = "";
         currentMarkersListCount = 0;
         if (locations.length == 0) {
-            markersListCotent = "No location found in the area";
+            markersListContent = "No location found in the area";
         } else {
             for (i = 0; i < locations.length; i++) {
                 currentMarkersListCount++;
                 var listItem = templates.markerListItem.replace("::title::", locations[i].name).replace("::description::", locations[i].description);
-                debug("--",locations[i].details.cover)
-                if(locations[i].details.cover){
+                if(locations[i].cover){
                     listItem = listItem.replace("::image::","<div class='image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>");
                 } else {
                     listItem = listItem.replace("::image::","");
                 }
-                markersListCotent += "<div class='lf-marker-list-item' data-lat='" + locations[i].latitude + "' data-lng='" + locations[i].longitude + "' data-id='"+locations[i].id+"'>"
+                markersListContent += "<div class='lf-marker-list-item' data-lat='" + locations[i].latitude + "' data-lng='" + locations[i].longitude + "' data-id='"+locations[i].id+"'>"
                     + listItem
                     + "</div>";
             }
         }
-        return markersListCotent;
+        return markersListContent;
     }
 
     // Server side Requests
