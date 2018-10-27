@@ -6,16 +6,16 @@
 
     <link rel="shortcut icon" type="image/png" href="img/logo-favicon.png"/>
 
-
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-red.min.css">
-    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <!--<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">-->
+    <!--<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-red.min.css">-->
+    <!--<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>-->
 
     <!--<link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">-->
     <!--<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>-->
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/angular-material.min.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/lasform.css">
 
@@ -23,83 +23,98 @@
     <title>Lasform v0.0.1</title>
 
 </head>
-<body>
+<body ng-app="lfApp">
 
-    <div class="lf-main-pan-container">
+<div ng-controller="appCtrl" ng-cloak>
+    <md-content>
 
-        <div class="mdl-card mdl-shadow--2dp lf-main-pan-card">
-            <div class="mdl-card__supporting-text">
-                <input id="lf-search-input" name="lf-search-input" type="text" placeholder="Search Lasform Map" class="lf-search-input">
-                <i id="lf-search-button" class="material-icons lf-search-button">
-                    search
-                </i>
-                <i class="material-icons lf-login-icon">
-                    account_circle
-                </i>
-            </div>
-        </div>
+        <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
+            <md-button>{{title1}}</md-button>
+            <md-button md-no-ink class="md-primary">Primary (md-noink)</md-button>
+            <md-button ng-disabled="true" class="md-primary">Disabled</md-button>
+            <md-button class="md-warn">{{title4}}</md-button>
+            <div class="label">Flat</div>
+        </section>
+    </md-content>
+</div>
 
-        <div class="mdl-card mdl-shadow--2dp lf-search-details-card">
+    <!--<div class="lf-main-pan-container">-->
 
-            <div class="lf-loading-container">
-                <div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active lf-loading"></div>
-            </div>
+        <!--<div class="mdl-card mdl-shadow&#45;&#45;2dp lf-main-pan-card">-->
+            <!--<div class="mdl-card__supporting-text">-->
+                <!--<input id="lf-search-input" name="lf-search-input" type="text" placeholder="Search Lasform Map" class="lf-search-input">-->
+                <!--<i id="lf-search-button" class="material-icons lf-search-button">-->
+                    <!--search-->
+                <!--</i>-->
+                <!--<i class="material-icons lf-login-icon">-->
+                    <!--account_circle-->
+                <!--</i>-->
+            <!--</div>-->
+        <!--</div>-->
 
-            <div class="if-search-container">
-                <div class="lf-search-card-close">
-                    <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect mdl-color--white lf-search-card-close-button">
-                        <i class="material-icons" >close</i>
-                    </button>
-                </div>
-                <div class="mdl-card__title --blue ">
-                    Search '<span class="lp-search-query"></span>'
-                </div>
-                <div class="mdl-card__supporting-text lf-search-card-content">
-                    <div class="lf-search-list"></div>
-                </div>
-            </div>
+        <!--<div class="mdl-card mdl-shadow&#45;&#45;2dp lf-search-details-card">-->
 
-            <div class="lf-location-details-container">
-                <div class="lf-back-to-search">
-                    <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect mdl-color--white lf-back-to-search-button">
-                        <i class="material-icons" >arrow_back</i>
-                    </button>
-                </div>
-                <div class="mdl-card__title if-location-details-title"></div>
-                <div class="mdl-card__menu">
-                    <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect mdl-color--white">
-                        <i class="material-icons ">more_vert</i>
-                    </button>
-                </div>
-                <div class="mdl-card__supporting-text lf-search-card-content">
-                    <div class="lf-location-details">
-                        <h5>Location 1</h5>
-                        <span></span>
-                    </div>
-                </div>
-            </div>
+            <!--<div class="lf-loading-container">-->
+                <!--<div class="mdl-spinner mdl-spinner&#45;&#45;single-color mdl-js-spinner is-active lf-loading"></div>-->
+            <!--</div>-->
 
-        </div>
+            <!--<div class="if-search-container">-->
+                <!--<div class="lf-search-card-close">-->
+                    <!--<button class="mdl-button mdl-button&#45;&#45;icon mdl-js-button mdl-js-ripple-effect mdl-color&#45;&#45;white lf-search-card-close-button">-->
+                        <!--<i class="material-icons" >close</i>-->
+                    <!--</button>-->
+                <!--</div>-->
+                <!--<div class="mdl-card__title &#45;&#45;blue ">-->
+                    <!--Search '<span class="lp-search-query"></span>'-->
+                <!--</div>-->
+                <!--<div class="mdl-card__supporting-text lf-search-card-content">-->
+                    <!--<div class="lf-search-list"></div>-->
+                <!--</div>-->
+            <!--</div>-->
 
-    </div>
+            <!--<div class="lf-location-details-container">-->
+                <!--<div class="lf-back-to-search">-->
+                    <!--<button class="mdl-button mdl-button&#45;&#45;icon mdl-js-button mdl-js-ripple-effect mdl-color&#45;&#45;white lf-back-to-search-button">-->
+                        <!--<i class="material-icons" >arrow_back</i>-->
+                    <!--</button>-->
+                <!--</div>-->
+                <!--<div class="mdl-card__title if-location-details-title"></div>-->
+                <!--<div class="mdl-card__menu">-->
+                    <!--<button class="mdl-button mdl-button&#45;&#45;icon mdl-js-button mdl-js-ripple-effect mdl-color&#45;&#45;white">-->
+                        <!--<i class="material-icons ">more_vert</i>-->
+                    <!--</button>-->
+                <!--</div>-->
+                <!--<div class="mdl-card__supporting-text lf-search-card-content">-->
+                    <!--<div class="lf-location-details">-->
+                        <!--<h5>Location 1</h5>-->
+                        <!--<span></span>-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
 
-    <div id="map">
-    </div>
+        <!--</div>-->
 
-    <div id="users-location" >
-        <button class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored lf-user-location-button">
-            <i class="material-icons lf-user-location-button-icon" >my_location</i>
-        </button>
-    </div>
+    <!--</div>-->
 
-    <div class="contextMenu">
-        <ul>
-            <li id="zoomIn" onclick="contextMenuZoomIn()">Zoom In</li>
-            <li id="zoomOut" onclick="contextMenuZoomOut()">Zoom Out</li>
-            <li class="separator"><div></div></li>
-            <li id="centerHere" onclick="contextMenuSetCenter()">Center Here</li>
-        </ul>
-    </div>
+    <!--<div id="map">-->
+    <!--</div>-->
+
+    <!--<div id="users-location" >-->
+        <!--<button class="mdl-button mdl-js-button mdl-button&#45;&#45;fab mdl-js-ripple-effect mdl-button&#45;&#45;colored lf-user-location-button">-->
+            <!--<i class="material-icons lf-user-location-button-icon" >my_location</i>-->
+        <!--</button>-->
+    <!--</div>-->
+
+    <!--<div class="contextMenu">-->
+        <!--<ul>-->
+            <!--<li id="addLocation" onclick="contextMenuZoomIn()">Add Location</li>-->
+            <!--<li class="separator"><div></div></li>-->
+            <!--<li id="zoomIn" onclick="contextMenuZoomIn()">Zoom In</li>-->
+            <!--<li id="zoomOut" onclick="contextMenuZoomOut()">Zoom Out</li>-->
+            <!--<li class="separator"><div></div></li>-->
+            <!--<li id="centerHere" onclick="contextMenuSetCenter()">Center Here</li>-->
+        <!--</ul>-->
+    <!--</div>-->
 
 
 
