@@ -1,6 +1,6 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('jquery'), require('popper.js')) :
-	typeof define === 'function' && define.amd ? define(['jquery', 'popper.js'], factory) :
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(require('public/scripts/lib/jquery/jquery'), require('popper.js')) :
+	typeof define === 'function' && define.amd ? define(['public/scripts/lib/jquery/jquery', 'popper.js'], factory) :
 	(factory(global.jQuery,global.Popper));
 }(this, (function ($,Popper$1) { 'use strict';
 
