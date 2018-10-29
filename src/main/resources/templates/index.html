@@ -1,45 +1,37 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.springframework.org/schema/beans">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="shortcut icon" type="image/png" href="img/logo-favicon.png"/>
 
-    <link rel="shortcut icon" type="image/png" href="img/logo-favicon.png"/>
+        <!--<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">-->
+        <!--<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-red.min.css">-->
+        <!--<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>-->
+        <!--<link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">-->
+        <!--<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>-->
 
-    <!--<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">-->
-    <!--<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-red.min.css">-->
-    <!--<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>-->
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+        <link rel="stylesheet" href="css/lasform.css">
+        <link rel="stylesheet" href="css/angular_material/1.1.8/angular.material.min.css">
 
-    <!--<link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">-->
-    <!--<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>-->
+        <!--<script data-main="scripts/main" src="scripts/require.js"></script>-->
 
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/angular-material.min.css">
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/lasform.css">
+        <title>Lasform v0.0.1</title>
 
-    <script data-main="scripts/main" src="scripts/require.js"></script>
-    <title>Lasform v0.0.1</title>
+    </head>
+    <body ng-app="lfApp">
 
-</head>
-<body ng-app="lfApp">
+        <div ng-controller="mapCtrl">
 
-<div ng-controller="appCtrl" ng-cloak>
-    <md-content>
+            <div class="lf-main-container">
 
-        <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
-            <md-button>{{title1}}</md-button>
-            <md-button md-no-ink class="md-primary">Primary (md-noink)</md-button>
-            <md-button ng-disabled="true" class="md-primary">Disabled</md-button>
-            <md-button class="md-warn">{{title4}}</md-button>
-            <div class="label">Flat</div>
-        </section>
-    </md-content>
-</div>
+            </div>
+
+        </div>
 
     <!--<div class="lf-main-pan-container">-->
-
         <!--<div class="mdl-card mdl-shadow&#45;&#45;2dp lf-main-pan-card">-->
             <!--<div class="mdl-card__supporting-text">-->
                 <!--<input id="lf-search-input" name="lf-search-input" type="text" placeholder="Search Lasform Map" class="lf-search-input">-->
@@ -107,8 +99,6 @@
 
     <!--<div class="contextMenu">-->
         <!--<ul>-->
-            <!--<li id="addLocation" onclick="contextMenuZoomIn()">Add Location</li>-->
-            <!--<li class="separator"><div></div></li>-->
             <!--<li id="zoomIn" onclick="contextMenuZoomIn()">Zoom In</li>-->
             <!--<li id="zoomOut" onclick="contextMenuZoomOut()">Zoom Out</li>-->
             <!--<li class="separator"><div></div></li>-->
@@ -116,7 +106,11 @@
         <!--</ul>-->
     <!--</div>-->
 
-
-
-</body>
+    </body>
+    <script src="scripts/lib/angular/1.6.9/angular.min.js"></script>
+    <script src="scripts/lib/angular/1.6.9/angular.animate.min.js"></script>
+    <script src="scripts/lib/angular/1.6.9/angular.aria.min.js"></script>
+    <script src="scripts/lib/angular/1.6.9/angular.messages.min.js"></script>
+    <script src="scripts/lib/angular_material/1.1.8/angular.material.min.js"></script>
+    <script src="scripts/app/lasform.app.js"></script>
 </html>

@@ -1,34 +1,49 @@
 requirejs.config({
     baseUrl: 'scripts',
     paths: {
-        lfCore: 'app/lasform.core',
-        jquery: 'jquery.js',
-        angular: 'lib/angular/angular.min',
-        angularAnim: 'lib/angular/angular.animate.min',
-        angularAria: 'lib/angular/angular.aria.min',
-        angularMessage: 'lib/angular/angular.messages.min',
-        angularMaterial: 'lib/angular/angular.material.min',
-        async: 'lib/requirejs-plugins/async',
+        app: 'app',
+        jquery: 'lib/jquery/jquery',
+        angular: 'lib/angular/1.6.9/angular.min',
+        hammer: 'lib/hammer.min',
+        angularAnimate: 'lib/angular/1.6.9/angular.min',
+        angularMessages: 'lib/angular/1.6.9/angular.messages.min',
+        angularAria: 'lib/angular/1.6.9/angular.aria.min',
+        angularMaterial: 'lib/angular_material/1.1.8/angular.material.min',
+        async: 'requirejs-plugins/async',
         googleMap: 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDQz41w41dpAu2o9lPssyUCnDgd4rxGpYA&callback=initPage'
     },
     "shim": {
-        "jquery.nicescroll.min": ["jquery"],
-        'angular': {
-            exports: 'angular'
+        //"jquery.nicescroll.min": ["jquery"],
+        app: {
+            exports: "app",
+            deps: [
+                "angular", "angularMessages", "angularMaterial"
+            ]
+        },
+        angular: {
+            exports: "angular"
+        },
+        jquery: {
+            exports: "$"
+        },
+        angularAnimate: {
+            deps: ['angular']
+        },
+        angularAria: {
+            deps:[ 'angular']
+        },
+        angularMessages : {
+            deps: ['angular']
+        },
+        angularMaterial: {
+            deps: ['angular', 'angularAnimate', 'ngAria']
         }
     }
 });
 
-
-define(['angular'],function(angular){
-
-    angular.module('lfApp', [])
-        .controller('appCtrl', function($scope) {
-            $scope.title1 = 'Button';
-        });
-
-    //lastform.prepare();
-})
+define(['angular'], function () {
+    angular.module('lfApp', ['']);
+});
 
 // define(['jquery',
 //         'async!https://maps.googleapis.com/maps/api/js?key=AIzaSyDQz41w41dpAu2o9lPssyUCnDgd4rxGpYA&callback=initPage',
