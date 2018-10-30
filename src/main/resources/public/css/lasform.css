@@ -1,18 +1,16 @@
 body{
     font-family: Arial;
 }
-
 .lf-main-container{
     position: fixed;
     left: 0px;
     top: 0px;
     z-index: 10000;
-    padding: 8px;
     width: 100%;
     max-width: 450px;
 }
 
-.lf-main-pan-card {
+.lf-main-container-card {
     min-height: 50px;
     width: 100%;
  }
@@ -23,16 +21,16 @@ body{
 
 .lf-login-icon{
     position: absolute;
-    right: 15px;
-    top: 14px;
+    right: 25px;
+    top: 21px;
     font-size: 1.8em;
     cursor: pointer;
 }
 
 .lf-search-button{
     position: absolute;
-    right: 50px;
-    top: 14px;
+    right: 60px;
+    top: 21px;
     font-size: 1.8em;
     cursor: pointer;
 }
@@ -40,8 +38,7 @@ body{
 .lf-search-input{
     border :0px;
     outline: none;
-    width: 100%;
-    padding-right: 40px;
+    width: 81%;
 }
 
 .lf-search-details-card {
@@ -66,7 +63,6 @@ body{
 
 .lf-location-details-container{
     width: 100%;
-    display: none;
 }
 
 .if-location-details-title{
@@ -194,9 +190,19 @@ body{
 }
 
 .lf-loading-container{
-    margin-top: 30px;
+    width: 140px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: -70px;
+    position: relative;
+    left: 50%;
     text-align: center;
-    display: none;
+}
+
+.lf-loading-container div{
+    margin-top: -18px;
+    font-size: 0.9em;
+    color: gray;
 }
 
 .lf-back-to-search{

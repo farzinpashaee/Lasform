@@ -5,14 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="shortcut icon" type="image/png" href="img/logo-favicon.png"/>
 
-        <!--<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">-->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
         <!--<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-red.min.css">-->
         <!--<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>-->
         <!--<link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">-->
         <!--<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>-->
 
-        <!-- Bootstrap -->
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+        <!--<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">-->
         <link rel="stylesheet" href="css/lasform.css">
         <link rel="stylesheet" href="css/angular_material/1.1.8/angular.material.min.css">
 
@@ -26,12 +25,78 @@
         <div ng-controller="mapCtrl">
 
             <div class="lf-main-container">
+                <div class="lf-main-bar-card">
+                    <md-card md-theme="default" md-theme-watch>
+                        <md-card-content>
+                            <input id="lf-search-input" name="lf-search-input" type="text" placeholder="Search Lasform Map" class="lf-search-input"/>
+                            <i id="lf-search-button" class="material-icons lf-search-button">search</i>
+                            <i class="material-icons lf-login-icon">account_circle</i>
+                        </md-card-content>
+                    </md-card>
+                </div>
+
+                <div class="if-search-container">
+                    <md-card md-theme="default" md-theme-watch>
+                        <div class="lf-loading-container">
+                            <md-progress-circular md-mode="indeterminate" md-diameter="20px"></md-progress-circular>
+                            <div>Searching...</div>
+                        </div>
+                        <div class="if-search-container">
+                            <md-list class="md-dense" flex>
+                                <md-subheader class="md-no-sticky">Searching for 'Query String'</md-subheader>
+                                <!--<md-list-item class="md-3-line" ng-repeat="item in todos">-->
+                                    <!--<img ng-src="{{item.face}}?{{$index}}" class="md-avatar" alt="{{item.who}}" />-->
+                                    <!--<div class="md-list-item-text" layout="column">-->
+                                        <!--<h3>{{ item.who }}</h3>-->
+                                        <!--<h4>{{ item.what }}</h4>-->
+                                        <!--<p>{{ item.notes }}</p>-->
+                                    <!--</div>-->
+                                <!--</md-list-item>-->
+                                <md-list-item class="md-3-line">
+                                    <img ng-src="{{item.face}}?{{$index}}" class="md-avatar" alt="{{item.who}}" />
+                                    <div class="md-list-item-text" layout="column">
+                                        <h3>Location</h3>
+                                        <h4>ranking</h4>
+                                        <p>details</p>
+                                    </div>
+                                </md-list-item>
+                            </md-list>
+                        </div>
+
+                        <div class="lf-location-details-container">
+                            <md-card-header>
+                                <md-card-avatar>
+                                    <md-icon class="md-avatar-icon" md-svg-icon="img/icons/menu.svg"></md-icon>
+                                </md-card-avatar>
+                                <md-card-header-text>
+                                    <span class="md-title">Title</span>
+                                    <span class="md-subhead">subhead</span>
+                                </md-card-header-text>
+                            </md-card-header>
+                            <div style="background-image: url('img/locations/photo-1.jpg'); width: 100%; background-position: center; background-size: cover; min-height: 200px;">
+
+                            </div>
+                            <md-card-title>
+                                <md-card-title-text>
+                                    <span class="md-headline">In-card actions</span>
+                                    <span class="md-subhead">Description</span>
+                                </md-card-title-text>
+                            </md-card-title>
+                            <md-card-content>
+                                <p>
+                                    The titles of Washed Out's breakthrough song and the first single from Paracosm share the
+                                    two most important words in Ernest Greene's musical language: feel it. It's a simple request, as well...
+                                </p>
+                            </md-card-content>
+                        </div>
+                    </md-card>
+                </div>
 
             </div>
 
         </div>
 
-    <!--<div class="lf-main-pan-container">-->
+                <!--<div class="lf-main-pan-container">-->
         <!--<div class="mdl-card mdl-shadow&#45;&#45;2dp lf-main-pan-card">-->
             <!--<div class="mdl-card__supporting-text">-->
                 <!--<input id="lf-search-input" name="lf-search-input" type="text" placeholder="Search Lasform Map" class="lf-search-input">-->
@@ -105,12 +170,13 @@
             <!--<li id="centerHere" onclick="contextMenuSetCenter()">Center Here</li>-->
         <!--</ul>-->
     <!--</div>-->
-
     </body>
+
     <script src="scripts/lib/angular/1.6.9/angular.min.js"></script>
     <script src="scripts/lib/angular/1.6.9/angular.animate.min.js"></script>
     <script src="scripts/lib/angular/1.6.9/angular.aria.min.js"></script>
     <script src="scripts/lib/angular/1.6.9/angular.messages.min.js"></script>
     <script src="scripts/lib/angular_material/1.1.8/angular.material.min.js"></script>
     <script src="scripts/app/lasform.app.js"></script>
+
 </html>
