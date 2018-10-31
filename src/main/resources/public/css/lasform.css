@@ -22,7 +22,7 @@ body{
 .lf-login-icon{
     position: absolute;
     right: 25px;
-    top: 21px;
+    top: 18px;
     font-size: 1.8em;
     cursor: pointer;
 }
@@ -30,7 +30,7 @@ body{
 .lf-search-button{
     position: absolute;
     right: 60px;
-    top: 21px;
+    top: 18px;
     font-size: 1.8em;
     cursor: pointer;
 }
@@ -218,6 +218,7 @@ body{
 }
 
 .lf-user-location-button-icon.blinking{
+    font-size: 1.7em;
     animation: blinker 0.5s linear infinite;
 }
 
