@@ -37,33 +37,20 @@
 
                 <div class="if-search-container">
                     <md-card md-theme="default" md-theme-watch>
-                        <div class="lf-loading-container">
+                        <!-- loading -->
+                        <div class="lf-loading-container" ng-if="loadingView">
                             <md-progress-circular md-mode="indeterminate" md-diameter="20px"></md-progress-circular>
                             <div>Searching...</div>
                         </div>
-                        <div class="if-search-list-container">
+                        <!-- search list -->
+                        <div class="if-search-list-container" ng-if="searchListView">
                             <md-list class="md-dense" flex>
-                                <md-subheader class="md-no-sticky">Searching for 'Query String'</md-subheader>
-                                <!--<md-list-item class="md-3-line" ng-repeat="item in todos">-->
-                                    <!--<img ng-src="{{item.face}}?{{$index}}" class="md-avatar" alt="{{item.who}}" />-->
-                                    <!--<div class="md-list-item-text" layout="column">-->
-                                        <!--<h3>{{ item.who }}</h3>-->
-                                        <!--<h4>{{ item.what }}</h4>-->
-                                        <!--<p>{{ item.notes }}</p>-->
-                                    <!--</div>-->
-                                <!--</md-list-item>-->
-                                <md-list-item class="md-3-line">
-                                    <img ng-src="{{item.face}}?{{$index}}" class="md-avatar" alt="{{item.who}}" />
-                                    <div class="md-list-item-text" layout="column">
-                                        <h3>Location</h3>
-                                        <h4>ranking</h4>
-                                        <p>details</p>
-                                    </div>
-                                </md-list-item>
+                                <md-subheader class="md-no-sticky">Searching for '{{searchedQuery}}'</md-subheader>
+                                <lf-list-item lat="0" lng="0" lid="1" title="title" ranking="0" description="des" cover="true" ></lf-list-item>
                             </md-list>
                         </div>
-
-                        <div class="lf-location-details-container">
+                        <!-- location details -->
+                        <div class="lf-location-details-container" ng-if="locationDetailsView">
                             <md-card-header>
                                 <md-card-header-text>
                                     <span class="md-title">Title</span>
@@ -71,7 +58,6 @@
                                 </md-card-header-text>
                             </md-card-header>
                             <div style="background-image: url('img/locations/photo-1.jpg'); width: 100%; background-position: center; background-size: cover; min-height: 200px;">
-
                             </div>
                             <md-card-title>
                                 <md-card-title-text>
@@ -178,5 +164,7 @@
     <script src="scripts/lib/jquery/jquery.js"></script>
     <script src="scripts/app/lasform.templates.js"></script>
     <script src="scripts/app/lasform.app.js"></script>
+    <script src="scripts/app/lasform.utils.js"></script>
+    <script src="scripts/app/lasform.directive.js"></script>
 
 </html>

@@ -1,31 +1,32 @@
-angular.module('lfApp', ['ngMaterial'])
-    .controller('mapCtrl', function($scope, $http) {
+var app = angular.module('lfApp', ['ngMaterial']);
+app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
         var map;
         var contextMenu;
         var boundChangeTimeoutId = 0;
-        var markers = [];
+        $scope.markers = [];
         var currentMarkersListCount = 0;
         var lastInfoWindow = null;
         var userLocationAvailable = false;
         var userMarker = null;
 
         var CONFIG = { MAP_DRAG_DELAY : 1000 }
-        var LOG = { INFO : "info" , DEBUG : "debug" , ERR : "ERROR" , DEBUG_NO_TAG : "debugNoTag" }
         var e = {
             map : '#map',
             markerDetails : '#marker-details',
             contextMenu: ".contextMenu",
             searchInput: '.lf-search-input',
             searchButton: '.lf-search-button',
-            userLocationButtonIcon : ".lf-user-location-button-icon"
+            searchQuerySpan : '.lp-search-query',
+            markersList : '#lf-search-list',
+            userLocationButtonIcon : '.lf-user-location-button-icon'
         };
 
         // Preparing Application
         prepare();
 
         function prepare(){
-            log(LOG.INFO,"Preparing Application");
+            lfServices.log(lfServices.LOG.INFO,"Preparing Application");
             prepareUI();
             initMap();
         }
@@ -43,13 +44,11 @@ angular.module('lfApp', ['ngMaterial'])
             // On press Enter in search input
             $(e.searchInput).keyup(function(event){
                 if(event.keyCode == 13){
-                    log(LOG.INFO, "Searching '"+$scope.searchQuery+"'");
                     search($scope.searchQuery);
                 }
             });
             // On search button clicked
             $(e.searchButton).click(function(){
-                log(LOG.INFO, "Searching '"+$scope.searchQuery+"'");
                 search($scope.searchQuery);
             });
             // Click on maker list item
@@ -60,12 +59,16 @@ angular.module('lfApp', ['ngMaterial'])
             $(e.userLocationButton).click(function(){
                 getUserLocation();
             });
+
+            $scope.loadingView = false;
+            $scope.searchListView = false;
+            $scope.locationDetailsView = false;
         }
 
         function initMap(){
             onViewResize();
-            restCall("POST","/api/location/initialSetting" , {} ,function (payload) {
-                log(LOG.INFO,"InitialSetting loaded");
+            lfServices.restCall("POST","/api/location/initialSetting" , {} ,function (payload) {
+                lfServices.log(lfServices.LOG.INFO,"InitialSetting loaded");
                 // Creating map
                 map = new google.maps.Map(document.getElementById(e.map.substr(1,e.map.length-1)), {
                     center: {lat: parseInt(payload.initialMapCenter.latitude) , lng:  parseInt(payload.initialMapCenter.longitude)},
@@ -93,10 +96,11 @@ angular.module('lfApp', ['ngMaterial'])
         }
 
         function reloadMapView(){
-            log(LOG.INFO,"Reloading map view data...");
+            lfServices.log(lfServices.LOG.INFO,"Reloading map view data...");
+            // Checking map bound area
             var northeastCurrent = map.getBounds().getNorthEast();
             var southwestCurrent = map.getBounds().getSouthWest();
-            restCall("POST","/api/location/getLocationsInBoundary",{
+            lfServices.restCall("POST","/api/location/getLocationsInBoundary",{
                 northeast: {latitude: northeastCurrent.lat(), longitude: northeastCurrent.lng()},
                 southwest: {latitude: southwestCurrent.lat(), longitude: southwestCurrent.lng()}
             },function(payload){
@@ -105,9 +109,10 @@ angular.module('lfApp', ['ngMaterial'])
         }
 
         function prepareMarkers(locations) {
+            lfServices.log(lfServices.LOG.INFO,"Preparing markers");
             for (var i = 0; i < locations.length; i++) {
-                if (markers[locations[i].id] == null) {
-                    var listItemContent = renderView([
+                if ($scope.markers[locations[i].id] == null) {
+                    var listItemContent = lfServices.renderView([
                         {key:"title",value:locations[i].name},
                         {key:"description",value:locations[i].description},
                         {key:"image",value:(locations[i].cover ? "<div class='image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>":"")}],
@@ -129,15 +134,15 @@ angular.module('lfApp', ['ngMaterial'])
                         lastInfoWindow = infoWindow;
                         listItemClicked(this.details.latitude,this.details.longitude,this.details.id);
                     });
-                    markers[locations[i].id] = marker;
+                    $scope.markers[locations[i].id] = marker;
                 }
             }
         }
 
         function listItemClicked(lat, lng, id) {
-            log(LOG.INFO,"Clicked " + id);
+            lfServices.log(lfServices.LOG.INFO,"List item clicked id : " + id);
             if (lastInfoWindow != null) lastInfoWindow.close();
-            if(markers[id].details.cover){
+            if($scope.markers[id].details.cover){
                 $(e.locationDetailsTitle).css("height","160px");
                 $(e.locationDetailsTitle).css("background-image","url(../img/locations/photo-"+id+".jpg)");
             } else {
@@ -146,8 +151,8 @@ angular.module('lfApp', ['ngMaterial'])
             }
             viewItemDetails(id);
             map.panTo({lat: parseFloat(lat), lng: parseFloat(lng)});
-            markers[id].contentInfoWindow.open(map, markers[id]);
-            lastInfoWindow = markers[id].contentInfoWindow;
+            $scope.markers[id].contentInfoWindow.open(map, $scope.markers[id]);
+            lastInfoWindow = $scope.markers[id].contentInfoWindow;
         }
 
         // Updating user location
@@ -159,7 +164,7 @@ angular.module('lfApp', ['ngMaterial'])
             } else {
                 //$(e.userLocationButtonIcon).removeClass("blinking");
                 userLocationAvailable = false;
-                log(LOG.DEBUG,"user location","Geolocation is not supported by this browser");
+                lfServices.log(lfServices.LOG.DEBUG,"user location","Geolocation is not supported by this browser");
             }
         }
 
@@ -182,13 +187,13 @@ angular.module('lfApp', ['ngMaterial'])
         }
 
         function viewItemDetails(id) {
-            $(e.locationDetails).html(markers[id].contentInfoWindow.content);
+            $(e.locationDetails).html($scope.markers[id].contentInfoWindow.content);
             $(e.searchContainer).hide();
             $(e.searchDetailsCard).show()
             $(e.locationDetailsContainer).show();
         }
 
-        function prepareMarkersList(locations) {
+        function renderMarkersList(locations) {
             var markersListContent = "";
             currentMarkersListCount = 0;
             if (locations.length == 0) {
@@ -196,10 +201,11 @@ angular.module('lfApp', ['ngMaterial'])
             } else {
                 for (var i = 0; i < locations.length; i++) {
                     currentMarkersListCount++;
-                    var listItem = renderView([
+                    var image =  (locations[i].cover ? lfServices.renderView([{key:"src",value:"../img/locations/photo-"+locations[i].id+".jpg"}],templates.markerListItemImage) : "");
+                    var listItem = lfServices.renderView([
                             {key:"title",value:locations[i].name},
                             {key:"description",value:locations[i].description},
-                            {key:"image",value:(locations[i].cover ? "<div class='image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>":"")}],
+                            {key:"image",value:image}],
                         templates.markerListItem);
                     markersListContent += "<div class='lf-marker-list-item' data-lat='" + locations[i].latitude + "' data-lng='" + locations[i].longitude + "' data-id='"+locations[i].id+"'>"
                         + listItem
@@ -214,18 +220,17 @@ angular.module('lfApp', ['ngMaterial'])
         }
 
         function search( searchQuery ){
-            log(LOG.DEBUG,"searchQuery " + searchQuery);
-            $(e.searchQuerySpan).html(searchQuery);
-            $(e.searchDetailsCard).show()
-            $(e.loadingContainer).show();
-            $(e.searchContainer).show();
-            $(e.locationDetailsContainer).hide();
-            restCall("POST","/api/location/searchByName",
+            lfServices.log(lfServices.LOG.DEBUG,"Searching query '" + searchQuery + "'");
+            $scope.searchedQuery = searchQuery;
+            $scope.loadingView = true;
+            $scope.searchListView = false;
+            $scope.locationDetailsView = false;
+            lfServices.restCall("POST","/api/location/searchByName",
                 { name : searchQuery } ,
                 function(data){
-                    log(LOG.DEBUG,"Data Size : " + data.length);
-                    $(e.loadingContainer).hide();
-                    $(e.markersList).html(prepareMarkersList(data));
+                    $scope.loadingView = false;
+                    $scope.searchListView = true;
+                    $scope.searchResult = renderMarkersList(data);
                     prepareMarkers(data);
                 });
         }
@@ -252,38 +257,9 @@ angular.module('lfApp', ['ngMaterial'])
             $(e.contextMenu).hide();
         }
 
-        function renderView( items , template ){
-            var view = template;
-            for(var i = 0 ; i < items.length ; i++){
-                view = view.replace( "::"+(items[i].key)+"::" , items[i].value );
-            }
-            return view;
-        }
 
-        function restCall( method , url  , data , callback ){
-            $http({ method : method,
-                url : url,
-                data : data
-            }).then(function mySuccess(response) {
-                log(LOG.DEBUG_NO_TAG,response.data);
-                if(response.data.state){
-                    callback(response.data.payload);
-                } else {
-                    log(LOG.ERR,"Error fetching data from " + url);
-                }
-            }, function myError(err) {
-                log(LOG.ERR,err);
-            });
-        }
 
-        function log( tag , description) {
-            if (tag === LOG.ERR) {
-                console.error(tag + " : " + description);
-            } else if ( tag === LOG.DEBUG_NO_TAG ) {
-                console.log(description);
-            } else {
-                console.log(tag + " : " + description);
-            }
-        }
+    })
 
-    });
+
+

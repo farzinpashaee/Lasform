@@ -1,38 +1,42 @@
-ec = {
-    ajaxFail : { code : 110 , message : "" },
-    ajaxResponseFail : { code : 111 , message : "Failed on response" }
-}
+app.service('lfServices', function($http){
 
-function debug(code,description) {
-    console.log( code + " - " + description );
-}
+    var lfServices = this;
 
-function error(code,description) {
-    console.error( "ERROR:" + code + " - "+ description );
-}
+    var LOG = { INFO : "info" , DEBUG : "debug" , ERR : "ERROR" , DEBUG_NO_TAG : "debugNoTag" }
+    this.LOG = LOG;
 
-function ajaxCall( path , data , callback ){
-    debug("ajaxCall","loading " + path + " with " + data);
-    $.ajax({
-        type: "POST",
-        url: path ,
-        data: JSON.stringify(data),
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        headers: {
-            _csrf: $("meta[name='_csrf']").attr("content"),
-        },
-        success: function (data) {
-            debug(data);
-            if (data.state) {
-                callback(data.payload);
-            } else {
-                error(ec.ajaxResponseFail.code,ec.ajaxResponseFail.message);
-            }
-        },
-        failure: function (err) {
-            error(ec.ajaxFail.code,ec.ajaxFail.message + " " + err);
+    this.renderView = function( items , template ){
+        var view = template;
+        for(var i = 0 ; i < items.length ; i++){
+            view = view.replace( "::"+(items[i].key)+"::" , items[i].value );
         }
-    });
-}
+        return view;
+    }
+
+    this.restCall = function( method , url  , data , callback ){
+        $http({ method : method,
+            url : url,
+            data : data
+        }).then(function mySuccess(response) {
+            lfServices.log(LOG.DEBUG_NO_TAG,response.data);
+            if(response.data.state){
+                callback(response.data.payload);
+            } else {
+                lfServices.log(LOG.ERR,"Error fetching data from " + url);
+            }
+        }, function myError(err) {
+            lfServices.log(LOG.ERR,err);
+        });
+    }
+
+    this.log = function( tag , description) {
+        if (tag === LOG.ERR) {
+            console.error(tag + " : " + description);
+        } else if ( tag === LOG.DEBUG_NO_TAG ) {
+            console.log(description);
+        } else {
+            console.log(tag + " : " + description);
+        }
+    }
+});
 

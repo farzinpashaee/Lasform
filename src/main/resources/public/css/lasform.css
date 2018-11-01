@@ -63,7 +63,7 @@ body{
 
 .lf-location-details-container{
     width: 100%;
-    display: none;
+    /*display: none;*/
 }
 
 .if-location-details-title{
@@ -198,7 +198,7 @@ body{
     position: relative;
     left: 50%;
     text-align: center;
-    display: none;
+    /*display: none;*/
 }
 
 .lf-loading-container div{
@@ -228,7 +228,11 @@ body{
 }
 
 .if-search-container{
-    display: none;
+
+}
+
+.if-search-list-container{
+    /*display: none;*/
 }
 
 @keyframes blinker {
