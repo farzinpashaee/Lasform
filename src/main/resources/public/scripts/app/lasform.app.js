@@ -5,8 +5,8 @@ angular.module('lfApp', ['ngMaterial'])
         var contextMenu;
         var boundChangeTimeoutId = 0;
         var markers = [];
-        var lastInfoWindow = null;
         var currentMarkersListCount = 0;
+        var lastInfoWindow = null;
         var userLocationAvailable = false;
         var userMarker = null;
 
@@ -15,6 +15,10 @@ angular.module('lfApp', ['ngMaterial'])
         var e = {
             map : '#map',
             markerDetails : '#marker-details',
+            contextMenu: ".contextMenu",
+            searchInput: '.lf-search-input',
+            searchButton: '.lf-search-button',
+            userLocationButtonIcon : ".lf-user-location-button-icon"
         };
 
         // Preparing Application
@@ -22,29 +26,60 @@ angular.module('lfApp', ['ngMaterial'])
 
         function prepare(){
             log(LOG.INFO,"Preparing Application");
-            initMap();
             prepareUI();
+            initMap();
         }
 
         function prepareUI(){
-
+            // Disable context menu
+            // document.oncontextmenu = function () {return false;}
+            // Hide context menu on click anywhere
+            $(document).click(function(){ contextMenuHide(); });
+            // on window resize
+            $(window).resize(function () { onViewResize(); });
+            $(window).ready(function () {
+                onViewResize();
+            });
+            // On press Enter in search input
+            $(e.searchInput).keyup(function(event){
+                if(event.keyCode == 13){
+                    log(LOG.INFO, "Searching '"+$scope.searchQuery+"'");
+                    search($scope.searchQuery);
+                }
+            });
+            // On search button clicked
+            $(e.searchButton).click(function(){
+                log(LOG.INFO, "Searching '"+$scope.searchQuery+"'");
+                search($scope.searchQuery);
+            });
+            // Click on maker list item
+            $(document).on( 'click' , e.markerListItem , function(){
+                //searchItemClicked($(this).data("lat"),$(this).data("lng"),$(this).data("id"));
+            });
+            // Find user's location
+            $(e.userLocationButton).click(function(){
+                getUserLocation();
+            });
         }
 
         function initMap(){
             onViewResize();
             restCall("POST","/api/location/initialSetting" , {} ,function (payload) {
                 log(LOG.INFO,"InitialSetting loaded");
+                // Creating map
                 map = new google.maps.Map(document.getElementById(e.map.substr(1,e.map.length-1)), {
                     center: {lat: parseInt(payload.initialMapCenter.latitude) , lng:  parseInt(payload.initialMapCenter.longitude)},
                     zoom: 14,
                     disableDefaultUI: true
                 });
+                // Adding change bound listener
                 google.maps.event.addListener(map, 'bounds_changed', function () {
                     clearTimeout(boundChangeTimeoutId);
                     boundChangeTimeoutId = setTimeout(function () {
                         reloadMapView();
                     }, CONFIG.MAP_DRAG_DELAY);
                 });
+                // Adding context menu
                 contextMenu = google.maps.event.addListener(map,"rightclick",function (event) {
                         $(".contextMenu").css({top: event.pixel.y, left: event.pixel.x, position: 'absolute'});
                         $(".contextMenu").show();
@@ -52,9 +87,8 @@ angular.module('lfApp', ['ngMaterial'])
                         $('.contextMenu').data('lng', event.latLng.lng());
                     }
                 );
-                if(payload.userLocationPolicy){
-                    getUserLocation();
-                }
+                // Check user location policy
+                if(payload.userLocationPolicy) getUserLocation();
             });
         }
 
@@ -125,7 +159,7 @@ angular.module('lfApp', ['ngMaterial'])
             } else {
                 //$(e.userLocationButtonIcon).removeClass("blinking");
                 userLocationAvailable = false;
-                debug("user location","Geolocation is not supported by this browser");
+                log(LOG.DEBUG,"user location","Geolocation is not supported by this browser");
             }
         }
 
@@ -154,8 +188,68 @@ angular.module('lfApp', ['ngMaterial'])
             $(e.locationDetailsContainer).show();
         }
 
+        function prepareMarkersList(locations) {
+            var markersListContent = "";
+            currentMarkersListCount = 0;
+            if (locations.length == 0) {
+                markersListContent = "No location found in the area";
+            } else {
+                for (var i = 0; i < locations.length; i++) {
+                    currentMarkersListCount++;
+                    var listItem = renderView([
+                            {key:"title",value:locations[i].name},
+                            {key:"description",value:locations[i].description},
+                            {key:"image",value:(locations[i].cover ? "<div class='image' style='background-image: url(\"../img/locations/photo-"+locations[i].id+".jpg\")' ></div>":"")}],
+                        templates.markerListItem);
+                    markersListContent += "<div class='lf-marker-list-item' data-lat='" + locations[i].latitude + "' data-lng='" + locations[i].longitude + "' data-id='"+locations[i].id+"'>"
+                        + listItem
+                        + "</div>";
+                }
+            }
+            return markersListContent;
+        }
+
         function onViewResize(){
             $(e.map).height($(window).height());
+        }
+
+        function search( searchQuery ){
+            log(LOG.DEBUG,"searchQuery " + searchQuery);
+            $(e.searchQuerySpan).html(searchQuery);
+            $(e.searchDetailsCard).show()
+            $(e.loadingContainer).show();
+            $(e.searchContainer).show();
+            $(e.locationDetailsContainer).hide();
+            restCall("POST","/api/location/searchByName",
+                { name : searchQuery } ,
+                function(data){
+                    log(LOG.DEBUG,"Data Size : " + data.length);
+                    $(e.loadingContainer).hide();
+                    $(e.markersList).html(prepareMarkersList(data));
+                    prepareMarkers(data);
+                });
+        }
+
+        // Context Menu
+        function contextMenuZoomIn() {
+            contextMenuHide();
+            map.panTo({lat: $(e.contextMenu).data('lat'), lng: $(e.contextMenu).data('lng')});
+            map.setZoom(map.getZoom() + 1);
+        }
+
+        function contextMenuZoomOut() {
+            contextMenuHide();
+            map.panTo({lat: $(e.contextMenu).data('lat'), lng: $(e.contextMenu).data('lng')});
+            map.setZoom(map.getZoom() - 1);
+        }
+
+        function contextMenuSetCenter() {
+            contextMenuHide();
+            map.panTo({lat: $(e.contextMenu).data('lat'), lng: $(e.contextMenu).data('lng')});
+        }
+
+        function contextMenuHide() {
+            $(e.contextMenu).hide();
         }
 
         function renderView( items , template ){

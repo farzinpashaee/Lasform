@@ -28,7 +28,7 @@
                 <div class="lf-main-bar-card">
                     <md-card md-theme="default" md-theme-watch>
                         <md-card-content>
-                            <input id="lf-search-input" name="lf-search-input" type="text" placeholder="Search Lasform Map" class="lf-search-input"/>
+                            <input ng-model="searchQuery" id="lf-search-input" name="lf-search-input" type="text" placeholder="Search Lasform Map" class="lf-search-input"/>
                             <span id="lf-search-button" class="mdi mdi-magnify lf-search-button"></span>
                             <span class="mdi mdi-account-circle lf-login-icon"></span>
                         </md-card-content>
@@ -41,7 +41,7 @@
                             <md-progress-circular md-mode="indeterminate" md-diameter="20px"></md-progress-circular>
                             <div>Searching...</div>
                         </div>
-                        <div class="if-search-container">
+                        <div class="if-search-list-container">
                             <md-list class="md-dense" flex>
                                 <md-subheader class="md-no-sticky">Searching for 'Query String'</md-subheader>
                                 <!--<md-list-item class="md-3-line" ng-repeat="item in todos">-->

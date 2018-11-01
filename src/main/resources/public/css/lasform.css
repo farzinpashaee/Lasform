@@ -63,6 +63,7 @@ body{
 
 .lf-location-details-container{
     width: 100%;
+    display: none;
 }
 
 .if-location-details-title{
@@ -197,6 +198,7 @@ body{
     position: relative;
     left: 50%;
     text-align: center;
+    display: none;
 }
 
 .lf-loading-container div{
@@ -217,9 +219,16 @@ body{
     top: 15px;
 }
 
+.lf-user-location-button-icon{
+    font-size: 2em;
+}
+
 .lf-user-location-button-icon.blinking{
-    font-size: 1.7em;
     animation: blinker 0.5s linear infinite;
+}
+
+.if-search-container{
+    display: none;
 }
 
 @keyframes blinker {
