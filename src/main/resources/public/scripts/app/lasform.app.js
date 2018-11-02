@@ -230,7 +230,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                 function(data){
                     $scope.loadingView = false;
                     $scope.searchListView = true;
-                    $scope.searchResult = renderMarkersList(data);
+                    $scope.searchResult = data;
                     prepareMarkers(data);
                 });
         }

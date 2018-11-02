@@ -5,18 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="shortcut icon" type="image/png" href="img/logo-favicon.png"/>
 
-        <!--<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-red.min.css">-->
-        <!--<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>-->
-        <!--<link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">-->
-        <!--<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>-->
-
-        <!--<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">-->
         <link rel="stylesheet" href="css/lasform.css">
         <link rel="stylesheet" href="css/materialdesignicons.min.css">
         <link rel="stylesheet" href="css/angular_material/1.1.8/angular.material.min.css">
-
-        <!--<script data-main="scripts/main" src="scripts/require.js"></script>-->
-
         <title>Lasform v0.0.1</title>
 
     </head>
@@ -46,7 +37,15 @@
                         <div class="if-search-list-container" ng-if="searchListView">
                             <md-list class="md-dense" flex>
                                 <md-subheader class="md-no-sticky">Searching for '{{searchedQuery}}'</md-subheader>
-                                <lf-list-item lat="0" lng="0" lid="1" title="title" ranking="0" description="des" cover="true" ></lf-list-item>
+                                <lf-list-item ng-repeat="location in searchResult"
+                                              location="location"
+                                              lat="{{location.latitude}}"
+                                              lng="{{location.longitude}}"
+                                              lid="{{location.id}}"
+                                              title="{{location.name}}"
+                                              rating="{{location.rating}}"
+                                              description="{{location.description}}"
+                                              cover="{{location.cover}}" ></lf-list-item>
                             </md-list>
                         </div>
                         <!-- location details -->
@@ -164,7 +163,7 @@
     <script src="scripts/lib/jquery/jquery.js"></script>
     <script src="scripts/app/lasform.templates.js"></script>
     <script src="scripts/app/lasform.app.js"></script>
-    <script src="scripts/app/lasform.utils.js"></script>
+    <script src="scripts/app/lasform.service.js"></script>
     <script src="scripts/app/lasform.directive.js"></script>
 
 </html>
