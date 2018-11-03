@@ -13,6 +13,18 @@ app.service('lfServices', function($http){
         return view;
     }
 
+    this.renderRating = function(rating){
+        var starRepresantation = "";
+        for( var i = 1 ; i <= 5 ; i++){
+            if( i <= rating ){
+                starRepresantation += "<span class=\"mdi mdi-star lf-rating-active-star\"></span>";
+            } else {
+                starRepresantation += "<span class=\"mdi mdi-star-outline lf-rating-off-star\"></span>";
+            }
+        }
+        return starRepresantation;
+    }
+
     this.restCall = function( method , url  , data , callback ){
         $http({ method : method,
             url : url,

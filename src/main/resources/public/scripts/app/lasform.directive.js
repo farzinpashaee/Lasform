@@ -1,20 +1,31 @@
 app.directive("lfListItem", ['lfServices',  function( lfServices ) {
-
-    var getTemplate = function(attr) {
-        return "<b>"+attr.cover+"</b>"+(attr.cover==true?"Aaa1":"Bbb1")+"<br/>";
-    }
-
     return {
-        // scope: {
-        //     location:'=data'
-        // },
-        template : function(elem, attr) {
-            return "<md-list-item class=\"md-3-line\" >"+lfServices.renderView([
-                    {key:"title",value:attr.title},
-                    {key:"description",value:attr.description},
-                    {key:"image",value: attr.cover=='1'?"d":"zz" }],
+        restrict: 'E',
+        scope: {
+            title:'@',
+            lid:'@',
+            description:'@',
+            cover:'@'
+        },
+        template : function(scope, element, attr) {
+            return "<md-list-item onclick='alert(\"s\")' class=\"md-3-line\" >"+lfServices.renderView([
+                    {key:"title",value:"{{title}}"}, // renderRanking
+                    {key:"description",value:"{{description}}"},
+                    {key:"rating",value: lfServices.renderRating(3) },
+                    {key:"image",value: lfServices.renderView([
+                                              {key:"title",value:"{{title}}"},
+                                              {key:"src",value:"../img/locations/photo-{{lid}}.jpg"}],templates.markerListItemImage) }],
                 templates.markerListItem)+"</md-list-item>"
-        }
+        },
+        // link: function(scope, elems, attrs) {
+        //     if (attrs.cover=="true") {
+        //         scope.image = lfServices.renderView([
+        //                 {key:"title",value:"{{title}}"},
+        //                 {key:"src",value:"../img/locations/photo-{{lid}}.jpg"}],templates.markerListItemImage);
+        //     } else {
+        //         scope.image = ""
+        //     }
+        // }
+        //'<img class="md-avatar" src="../img/locations/photo-{{lid}}.jpg" ng-if="cover==\'true\'" />
     };
 }]);
-

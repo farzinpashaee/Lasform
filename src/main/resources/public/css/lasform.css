@@ -299,3 +299,11 @@ body{
     background-size: cover;
     background-position: center;
 }
+
+.lf-rating-active-star{
+    color: #ffca28;
+}
+
+.lf-rating-off-star{
+    color: #bdbdbd;
+}
