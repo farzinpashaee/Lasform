@@ -19,11 +19,14 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             searchButton: '.lf-search-button',
             searchQuerySpan : '.lp-search-query',
             markersList : '#lf-search-list',
-            userLocationButtonIcon : '.lf-user-location-button-icon'
+            userLocationButtonIcon : '.lf-user-location-button-icon',
+            listItemContainer : '.lf-list-item-container'
         };
 
         // Preparing Application
-        prepare();
+        $( document ).ready(function() {
+            prepare();
+        });
 
         function prepare(){
             lfServices.log(lfServices.LOG.INFO,"Preparing Application");
@@ -59,6 +62,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $(e.userLocationButton).click(function(){
                 getUserLocation();
             });
+
+            $(e.listItemContainer).niceScroll();
 
             $scope.loadingView = false;
             $scope.searchListView = false;
@@ -232,6 +237,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     $scope.searchListView = true;
                     $scope.searchResult = data;
                     prepareMarkers(data);
+                    $(e.listItemContainer).niceScroll();
                 });
         }
 
@@ -260,6 +266,3 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
 
     })
-
-
-

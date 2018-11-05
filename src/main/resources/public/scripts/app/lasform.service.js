@@ -8,7 +8,7 @@ app.service('lfServices', function($http){
     this.renderView = function( items , template ){
         var view = template;
         for(var i = 0 ; i < items.length ; i++){
-            view = view.replace( "::"+(items[i].key)+"::" , items[i].value );
+            view = view.replace( "{{"+(items[i].key)+"}}" , items[i].value );
         }
         return view;
     }

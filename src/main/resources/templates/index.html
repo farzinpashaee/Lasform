@@ -29,26 +29,32 @@
                 <div class="if-search-container">
                     <md-card md-theme="default" md-theme-watch>
                         <!-- loading -->
-                        <div class="lf-loading-container" ng-if="loadingView">
+                        <div class="lf-loading-container" ng-show="loadingView">
                             <md-progress-circular md-mode="indeterminate" md-diameter="20px"></md-progress-circular>
                             <div>Searching...</div>
                         </div>
                         <!-- search list -->
-                        <div class="if-search-list-container" ng-if="searchListView">
+                        <div class="lf-search-list-container" ng-show="searchListView">
                             <md-list class="md-dense" flex>
                                 <md-subheader class="md-no-sticky">Searching for '{{searchedQuery}}'</md-subheader>
-                                <lf-list-item ng-repeat="location in searchResult"
-                                              lat="{{location.latitude}}"
-                                              lng="{{location.longitude}}"
-                                              lid="{{location.id}}"
-                                              title="{{location.name}}"
-                                              rating="{{location.rating}}"
-                                              description="{{location.description}}"
-                                              cover="{{location.cover}}" ></lf-list-item>
+                                <div class="lf-list-item-container" >
+
+                                    <!--<md-list-item class="md-3-line" ng-repeat="location in searchResult" ng-click="null">-->
+                                        <!--<img ng-src="../img/locations/photo-{{location.id}}.jpg" class="md-avatar ng-scope" alt="location1" ng-if="{{location.cover}}" >-->
+                                        <!--<div class="md-list-item-text" layout="column">-->
+                                            <!--<h3>{{ item.who }}</h3>-->
+                                            <!--<h4>{{ item.what }}</h4>-->
+                                            <!--<p>{{ item.notes }}</p>-->
+                                        <!--</div>-->
+                                    <!--</md-list-item>-->
+
+
+                                    <lf-list-item ng-repeat="location in searchResult" ></lf-list-item>
+                                </div>
                             </md-list>
                         </div>
                         <!-- location details -->
-                        <div class="lf-location-details-container" ng-if="locationDetailsView">
+                        <div class="lf-location-details-container" ng-show="locationDetailsView">
                             <md-card-header>
                                 <md-card-header-text>
                                     <span class="md-title">Title</span>
@@ -160,6 +166,7 @@
     <script src="scripts/lib/angular/1.6.9/angular.messages.min.js"></script>
     <script src="scripts/lib/angular_material/1.1.8/angular.material.min.js"></script>
     <script src="scripts/lib/jquery/jquery.js"></script>
+    <script src="scripts/lib/jquery/jquery.nicescroll.min.js"></script>
     <script src="scripts/app/lasform.templates.js"></script>
     <script src="scripts/app/lasform.app.js"></script>
     <script src="scripts/app/lasform.service.js"></script>

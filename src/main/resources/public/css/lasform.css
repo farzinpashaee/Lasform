@@ -66,7 +66,7 @@ body{
     /*display: none;*/
 }
 
-.if-location-details-title{
+.lf-location-details-title{
     height: 20vh;
     color: white;
     background-repeat: no-repeat;
@@ -227,11 +227,11 @@ body{
     animation: blinker 0.5s linear infinite;
 }
 
-.if-search-container{
+.lf-search-container{
 
 }
 
-.if-search-list-container{
+.lf-search-list-container{
     /*display: none;*/
 }
 
@@ -306,4 +306,9 @@ body{
 
 .lf-rating-off-star{
     color: #bdbdbd;
+}
+
+.lf-list-item-container{
+    overflow-y: scroll;
+    max-height: 400px;
 }
