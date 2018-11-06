@@ -38,41 +38,37 @@
                             <md-list class="md-dense" flex>
                                 <md-subheader class="md-no-sticky">Searching for '{{searchedQuery}}'</md-subheader>
                                 <div class="lf-list-item-container" >
-
-                                    <!--<md-list-item class="md-3-line" ng-repeat="location in searchResult" ng-click="null">-->
-                                        <!--<img ng-src="../img/locations/photo-{{location.id}}.jpg" class="md-avatar ng-scope" alt="location1" ng-if="{{location.cover}}" >-->
-                                        <!--<div class="md-list-item-text" layout="column">-->
-                                            <!--<h3>{{ item.who }}</h3>-->
-                                            <!--<h4>{{ item.what }}</h4>-->
-                                            <!--<p>{{ item.notes }}</p>-->
-                                        <!--</div>-->
-                                    <!--</md-list-item>-->
-
-
-                                    <lf-list-item ng-repeat="location in searchResult" ></lf-list-item>
+                                    <lf-list-item ng-repeat="location in searchResult" location="location" ng-click="showDetailsFromList(location)" ></lf-list-item>
                                 </div>
                             </md-list>
                         </div>
                         <!-- location details -->
                         <div class="lf-location-details-container" ng-show="locationDetailsView">
-                            <md-card-header>
-                                <md-card-header-text>
-                                    <span class="md-title">Title</span>
-                                    <span class="md-subhead">subhead</span>
-                                </md-card-header-text>
-                            </md-card-header>
-                            <div style="background-image: url('img/locations/photo-1.jpg'); width: 100%; background-position: center; background-size: cover; min-height: 200px;">
+                            <!--<md-card-header>-->
+                                <!--<md-card-header-text>-->
+                                    <!--<span class="md-title">{{locationDetails.name}}</span>-->
+                                    <!--<span class="md-subhead">subhead</span>-->
+                                <!--</md-card-header-text>-->
+                            <!--</md-card-header>-->
+
+                            <div ng-if="locationDetails.cover" class="if-details-image" style="background-image: url('img/locations/photo-{{locationDetails.id}}.jpg');">
+                                <md-button class="md-fab md-mini if-back-from-details" aria-label="Back to list" ng-click="backToList()">
+                                    <span class="mdi mdi-arrow-left if-back-from-details-icon"></span>
+                                </md-button>
                             </div>
+                            <div ng-show="!locationDetails.cover" class="if-details-head">
+                                <div class="if-back-from-details"><span class="mdi mdi-arrow-left if-back-from-details-icon" ng-click="backToList()"></span></div>
+                            </div>
+
                             <md-card-title>
                                 <md-card-title-text>
-                                    <span class="md-headline">In-card actions</span>
-                                    <span class="md-subhead">Description</span>
+                                    <span class="md-headline">{{locationDetails.name}}</span>
+                                    <span class="md-subhead lf-location-rating">{{locationDetails.description}}</span>
                                 </md-card-title-text>
                             </md-card-title>
                             <md-card-content>
                                 <p>
-                                    The titles of Washed Out's breakthrough song and the first single from Paracosm share the
-                                    two most important words in Ernest Greene's musical language: feel it. It's a simple request, as well...
+                                    {{locationDetails.description}}
                                 </p>
                             </md-card-content>
                         </div>

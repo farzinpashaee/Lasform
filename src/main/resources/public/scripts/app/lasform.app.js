@@ -20,7 +20,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             searchQuerySpan : '.lp-search-query',
             markersList : '#lf-search-list',
             userLocationButtonIcon : '.lf-user-location-button-icon',
-            listItemContainer : '.lf-list-item-container'
+            listItemContainer : '.lf-list-item-container',
+            locationDetailsRating : '.lf-location-rating'
         };
 
         // Preparing Application
@@ -68,6 +69,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $scope.loadingView = false;
             $scope.searchListView = false;
             $scope.locationDetailsView = false;
+
+            $scope.locationDetails = {id:0,name:"No name",description:"No description",cover:false};
         }
 
         function initMap(){
@@ -239,6 +242,25 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     prepareMarkers(data);
                     $(e.listItemContainer).niceScroll();
                 });
+        }
+
+        $scope.showDetailsFromList = function(location){
+            $scope.locationDetails = location;
+            $(e.locationDetailsRating).html(lfServices.renderRating(location.rating));
+            $scope.searchListView = false;
+            $scope.locationDetailsView = true;
+        }
+
+        $scope.backToList = function(){
+            $scope.searchListView = true;
+            $scope.locationDetailsView = false;
+        }
+
+
+        function showDetailsFromMarker(location){
+            $scope.locationDetails = location;
+            $scope.searchListView = false;
+            $scope.locationDetailsView = true;
         }
 
         // Context Menu

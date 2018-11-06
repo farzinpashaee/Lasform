@@ -312,3 +312,29 @@ body{
     overflow-y: scroll;
     max-height: 400px;
 }
+
+.if-details-image{
+    width: 100%;
+    background-position: center;
+    background-size: cover;
+    min-height: 200px;
+}
+
+.if-back-from-details{
+    background-color:white !important;
+    position: relative;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+}
+
+.if-back-from-details-icon{
+    font-size: 1.8em;
+    color: black;
+    cursor: pointer;
+}
+
+.if-details-head{
+    height: 50px;
+    border-bottom: 1px solid #EFEFEF;
+}
