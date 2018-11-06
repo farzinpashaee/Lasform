@@ -12,9 +12,7 @@
 
     </head>
     <body ng-app="lfApp">
-
         <div ng-controller="mapCtrl">
-
             <div class="lf-main-container">
                 <div class="lf-main-bar-card">
                     <md-card md-theme="default" md-theme-watch>
@@ -38,7 +36,7 @@
                             <md-list class="md-dense" flex>
                                 <md-subheader class="md-no-sticky">Searching for '{{searchedQuery}}'</md-subheader>
                                 <div class="lf-list-item-container" >
-                                    <lf-list-item ng-repeat="location in searchResult" location="location" ng-click="showDetailsFromList(location)" ></lf-list-item>
+                                    <lf-list-item class="lf-list-item" ng-repeat="location in searchResult" location="location" ng-click="showDetailsFromList(location)" ></lf-list-item>
                                 </div>
                             </md-list>
                         </div>
@@ -51,7 +49,7 @@
                                 <!--</md-card-header-text>-->
                             <!--</md-card-header>-->
 
-                            <div ng-if="locationDetails.cover" class="if-details-image" style="background-image: url('img/locations/photo-{{locationDetails.id}}.jpg');">
+                            <div ng-if="locationDetails.cover" class="if-details-image" ng-style="{'background-image':'url(img/locations/photo-{{locationDetails.id}}.jpg)'}">
                                 <md-button class="md-fab md-mini if-back-from-details" aria-label="Back to list" ng-click="backToList()">
                                     <span class="mdi mdi-arrow-left if-back-from-details-icon"></span>
                                 </md-button>
@@ -63,7 +61,7 @@
                             <md-card-title>
                                 <md-card-title-text>
                                     <span class="md-headline">{{locationDetails.name}}</span>
-                                    <span class="md-subhead lf-location-rating">{{locationDetails.description}}</span>
+                                    <span class="lf-location-rating">{{locationDetails.description}}</span>
                                 </md-card-title-text>
                             </md-card-title>
                             <md-card-content>
@@ -153,6 +151,8 @@
             <!--<li id="centerHere" onclick="contextMenuSetCenter()">Center Here</li>-->
         <!--</ul>-->
     <!--</div>-->
+
+        <div class='lf-ui-loading'></div>
     </body>
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQz41w41dpAu2o9lPssyUCnDgd4rxGpYA"></script>

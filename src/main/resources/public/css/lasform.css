@@ -1,6 +1,17 @@
 body{
     font-family: Arial;
 }
+
+.lf-ui-loading{
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    background-color: #d32f2f;
+}
+
 .lf-main-container{
     position: fixed;
     left: 0px;
@@ -337,4 +348,8 @@ body{
 .if-details-head{
     height: 50px;
     border-bottom: 1px solid #EFEFEF;
+}
+
+.lf-list-item{
+    cursor: pointer;
 }

@@ -21,7 +21,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             markersList : '#lf-search-list',
             userLocationButtonIcon : '.lf-user-location-button-icon',
             listItemContainer : '.lf-list-item-container',
-            locationDetailsRating : '.lf-location-rating'
+            locationDetailsRating : '.lf-location-rating',
+            uiLoading : '.lf-ui-loading'
         };
 
         // Preparing Application
@@ -36,6 +37,9 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         }
 
         function prepareUI(){
+            // cover UI
+            //$('body').append("<div class='lf-ui-loading'></div>")
+
             // Disable context menu
             // document.oncontextmenu = function () {return false;}
             // Hide context menu on click anywhere
@@ -71,6 +75,9 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $scope.locationDetailsView = false;
 
             $scope.locationDetails = {id:0,name:"No name",description:"No description",cover:false};
+            setTimeout(function(){
+                $(e.uiLoading).fadeOut();
+            },1000);
         }
 
         function initMap(){
