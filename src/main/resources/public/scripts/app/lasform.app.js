@@ -4,7 +4,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         var map;
         var contextMenu;
         var boundChangeTimeoutId = 0;
-        $scope.markers = [];
+        var markers = [];
         var currentMarkersListCount = 0;
         var lastInfoWindow = null;
         var userLocationAvailable = false;
@@ -127,7 +127,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         function prepareMarkers(locations) {
             lfServices.log(lfServices.LOG.INFO,"Preparing markers");
             for (var i = 0; i < locations.length; i++) {
-                if ($scope.markers[locations[i].id] == null) {
+                if (markers[locations[i].id] == null) {
                     var listItemContent = lfServices.renderView([
                         {key:"title",value:locations[i].name},
                         {key:"description",value:locations[i].description},
@@ -150,7 +150,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                         lastInfoWindow = infoWindow;
                         listItemClicked(this.details.latitude,this.details.longitude,this.details.id);
                     });
-                    $scope.markers[locations[i].id] = marker;
+                    markers[locations[i].id] = marker;
                 }
             }
         }
@@ -188,7 +188,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         }
 
         function viewItemDetails(id) {
-            $(e.locationDetails).html($scope.markers[id].contentInfoWindow.content);
+            $(e.locationDetails).html(markers[id].contentInfoWindow.content);
             $(e.searchContainer).hide();
             $(e.searchDetailsCard).show()
             $(e.locationDetailsContainer).show();
@@ -240,8 +240,9 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         $scope.showDetailsFromList = function(location){
             $scope.locationDetails = location;
             $(e.locationDetailsRating).html(lfServices.renderRating(location.rating));
-            console.log(parseFloat(location.latitude)+"/"+parseFloat(location.longitude));
             map.panTo({lat: parseFloat(location.latitude), lng: parseFloat(location.longitude)});
+            var infowindow = markers[location.id].contentInfoWindow;
+            infowindow.open(map, markers[location.id]);
             $scope.searchListView = false;
             $scope.locationDetailsView = true;
         }
