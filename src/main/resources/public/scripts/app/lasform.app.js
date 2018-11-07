@@ -240,9 +240,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         $scope.showDetailsFromList = function(location){
             $scope.locationDetails = location;
             $(e.locationDetailsRating).html(lfServices.renderRating(location.rating));
-            map.panTo({lat: parseFloat(location.latitude), lng: parseFloat(location.longitude)});
-            var infowindow = markers[location.id].contentInfoWindow;
-            infowindow.open(map, markers[location.id]);
+            this.focusLocation(location);
             $scope.searchListView = false;
             $scope.locationDetailsView = true;
         }
@@ -252,6 +250,17 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $scope.locationDetailsView = false;
         }
 
+        $scope.focusLocation = function(location){
+            map.panTo({lat: parseFloat(location.latitude), lng: parseFloat(location.longitude)});
+            this.showInfoWindow(location);
+        }
+
+        $scope.showInfoWindow = function(location){
+            if (lastInfoWindow != null) lastInfoWindow.close();
+            var infowindow = markers[location.id].contentInfoWindow;
+            infowindow.open(map, markers[location.id]);
+            lastInfoWindow = infowindow;
+        }
 
         function showDetailsFromMarker(location){
             $scope.locationDetails = location;
