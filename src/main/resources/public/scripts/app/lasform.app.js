@@ -19,6 +19,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             searchButton: '.lf-search-button',
             searchQuerySpan : '.lp-search-query',
             markersList : '#lf-search-list',
+            userLocationButton : '.lf-user-location-button',
             userLocationButtonIcon : '.lf-user-location-button-icon',
             listItemContainer : '.lf-list-item-container',
             locationDetailsRating : '.lf-location-rating',
@@ -77,7 +78,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $scope.locationDetails = {id:0,name:"No name",description:"No description",cover:false};
             setTimeout(function(){
                 $(e.uiLoading).fadeOut();
-            },1000);
+            },500);
         }
 
         function initMap(){
@@ -154,30 +155,15 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             }
         }
 
-        function listItemClicked(lat, lng, id) {
-            lfServices.log(lfServices.LOG.INFO,"List item clicked id : " + id);
-            if (lastInfoWindow != null) lastInfoWindow.close();
-            if($scope.markers[id].details.cover){
-                $(e.locationDetailsTitle).css("height","160px");
-                $(e.locationDetailsTitle).css("background-image","url(../img/locations/photo-"+id+".jpg)");
-            } else {
-                $(e.locationDetailsTitle).css("height","60px");
-                $(e.locationDetailsTitle).css("background-image","");
-            }
-            viewItemDetails(id);
-            map.panTo({lat: parseFloat(lat), lng: parseFloat(lng)});
-            $scope.markers[id].contentInfoWindow.open(map, $scope.markers[id]);
-            lastInfoWindow = $scope.markers[id].contentInfoWindow;
-        }
 
         // Updating user location
         function getUserLocation() {
             if (navigator.geolocation) {
-                //$(e.userLocationButtonIcon).addClass("blinking");
+                $(e.userLocationButtonIcon).addClass("blinking");
                 navigator.geolocation.getCurrentPosition(updateUserLocation);
                 userLocationAvailable = true;
             } else {
-                //$(e.userLocationButtonIcon).removeClass("blinking");
+                $(e.userLocationButtonIcon).removeClass("blinking");
                 userLocationAvailable = false;
                 lfServices.log(lfServices.LOG.DEBUG,"user location","Geolocation is not supported by this browser");
             }
@@ -254,6 +240,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         $scope.showDetailsFromList = function(location){
             $scope.locationDetails = location;
             $(e.locationDetailsRating).html(lfServices.renderRating(location.rating));
+            console.log(parseFloat(location.latitude)+"/"+parseFloat(location.longitude));
+            map.panTo({lat: parseFloat(location.latitude), lng: parseFloat(location.longitude)});
             $scope.searchListView = false;
             $scope.locationDetailsView = true;
         }
