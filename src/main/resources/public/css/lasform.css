@@ -210,6 +210,18 @@ body{
     float: left;
 }
 
+m-5{
+    margin: 5px;
+}
+
+.mr-5{
+    margin-right: 5px;
+}
+
+.ml-5{
+    margin-left: 5px;
+}
+
 .lf-loading-container{
     width: 140px;
     margin-top: 20px;
@@ -340,19 +352,21 @@ body{
     min-height: 200px;
 }
 
-.if-back-from-details{
+.if-details-header-button{
     background-color:white !important;
-    position: relative;
-    top: 10px;
-    left: 10px;
     width: 40px;
 }
 
-.if-back-from-details-icon{
+.if-details-header-button-icon{
     font-size: 1.8em;
     color: black;
     cursor: pointer;
 }
+
+.if-image-cover-icons{
+    padding: 10px;
+}
+
 
 .if-details-head{
     height: 50px;
@@ -362,3 +376,4 @@ body{
 .lf-list-item{
     cursor: pointer;
 }
+

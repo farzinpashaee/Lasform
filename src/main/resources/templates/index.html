@@ -50,12 +50,24 @@
                             <!--</md-card-header>-->
 
                             <div ng-if="locationDetails.cover" class="if-details-image" ng-style="{'background-image':'url(img/locations/photo-{{locationDetails.id}}.jpg)'}">
-                                <md-button class="md-fab md-mini if-back-from-details" aria-label="Back to list" ng-click="backToList()">
-                                    <span class="mdi mdi-arrow-left if-back-from-details-icon"></span>
-                                </md-button>
+                                <div class="if-image-cover-icons">
+                                    <md-button class="md-fab md-mini if-details-header-button" aria-label="Back to list" ng-click="backToList()">
+                                        <span class="mdi mdi-arrow-left if-details-header-button-icon"></span>
+                                    </md-button>
+                                    <md-button class="md-fab md-mini if-details-header-button float-right" aria-label="details">
+                                        <span class="mdi mdi-dots-vertical if-details-header-button-icon"></span>
+                                    </md-button>
+                                    <md-button class="md-fab md-mini if-details-header-button float-right" aria-label="Rout">
+                                        <span class="mdi mdi-directions if-details-header-button-icon"></span>
+                                    </md-button>
+                                </div>
                             </div>
                             <div ng-show="!locationDetails.cover" class="if-details-head">
-                                <div class="if-back-from-details"><span class="mdi mdi-arrow-left if-back-from-details-icon" ng-click="backToList()"></span></div>
+                                <div class="if-image-cover-icons">
+                                    <span class="mdi mdi-arrow-left if-details-header-button-icon" ng-click="backToList()"></span>
+                                    <span class="mdi mdi-dots-vertical if-details-header-button-icon float-right mr-5"></span>
+                                    <span class="mdi mdi-directions if-details-header-button-icon float-right mr-5"></span>
+                                </div>
                             </div>
 
                             <md-card-title>
