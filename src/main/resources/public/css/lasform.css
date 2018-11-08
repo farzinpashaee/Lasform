@@ -12,6 +12,15 @@ body{
     background-color: #d32f2f;
 }
 
+.lf-ui-loading img{
+    position: relative;
+    width: 200px;
+    top: 50%;
+    left: 50%;
+    margin-left: -100px;
+    margin-top: -30px;
+}
+
 .lf-main-container{
     position: fixed;
     left: 0px;
