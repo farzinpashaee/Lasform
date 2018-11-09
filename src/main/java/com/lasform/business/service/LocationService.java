@@ -2,6 +2,7 @@ package com.lasform.business.service;
 
 import com.lasform.business.repository.CityRepository;
 import com.lasform.business.repository.LocationRepository;
+import com.lasform.model.dto.DirectionRequest;
 import com.lasform.model.dto.LocationBoundary;
 import com.lasform.model.dto.LocationDto;
 import com.lasform.model.entity.Location;
@@ -47,6 +48,8 @@ public class LocationService {
                 locationBoundary.getSouthwest().getLongitude() );
     }
 
-
+    public String googleDirection(DirectionRequest directionRequest){
+        return "";
+    }
 
 }

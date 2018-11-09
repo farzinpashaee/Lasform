@@ -3,10 +3,7 @@ package com.lasform.business.controller;
 import com.lasform.business.service.ApplicationService;
 import com.lasform.business.service.LocationService;
 import com.lasform.helper.ResponseHelper;
-import com.lasform.model.dto.LatLng;
-import com.lasform.model.dto.LocationBoundary;
-import com.lasform.model.dto.LocationDto;
-import com.lasform.model.dto.Response;
+import com.lasform.model.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -63,6 +60,11 @@ public class LocationDelegate {
     @RequestMapping(value="/initialSetting")
     private Response initialSetting(){
         return ResponseHelper.prepareSuccess( applicationService.getInitialSetting() );
+    }
+
+    @PostMapping(value = "/googleDirection")
+    private Response googleDirection(@RequestBody DirectionRequest directionRequest){
+        return ResponseHelper.prepareSuccess( locationService.googleDirection(directionRequest) );
     }
 
 }

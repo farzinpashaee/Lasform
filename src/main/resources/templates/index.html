@@ -57,7 +57,7 @@
                                     <md-button class="md-fab md-mini if-details-header-button float-right" aria-label="details">
                                         <span class="mdi mdi-dots-vertical if-details-header-button-icon"></span>
                                     </md-button>
-                                    <md-button class="md-fab md-mini if-details-header-button float-right" aria-label="Rout">
+                                    <md-button class="md-fab md-mini if-details-header-button float-right" aria-label="Rout" ng-click="routTo(locationDetails)">
                                         <span class="mdi mdi-directions if-details-header-button-icon"></span>
                                     </md-button>
                                 </div>
@@ -66,7 +66,7 @@
                                 <div class="if-image-cover-icons">
                                     <span class="mdi mdi-arrow-left if-details-header-button-icon" ng-click="backToList()"></span>
                                     <span class="mdi mdi-dots-vertical if-details-header-button-icon float-right mr-5"></span>
-                                    <span class="mdi mdi-directions if-details-header-button-icon float-right mr-5"></span>
+                                    <span class="mdi mdi-directions if-details-header-button-icon float-right mr-5" ng-click="routTo(locationDetails)"></span>
                                 </div>
                             </div>
 
@@ -80,6 +80,11 @@
                                 <p>{{locationDetails.description}}</p>
                             </md-card-content>
                         </div>
+
+                        <div class="lf-routing-details" ng-show="routingDetailsView">
+
+                        </div>
+
                     </md-card>
                 </div>
 

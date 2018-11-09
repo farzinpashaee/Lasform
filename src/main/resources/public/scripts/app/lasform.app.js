@@ -9,6 +9,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         var lastInfoWindow = null;
         var userLocationAvailable = false;
         var userMarker = null;
+        var userCurrentLocation = null;
+        var googleMapApiKey = "AIzaSyDQz41w41dpAu2o9lPssyUCnDgd4rxGpYA";
 
         var CONFIG = { MAP_DRAG_DELAY : 1000 }
         var e = {
@@ -74,6 +76,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $scope.loadingView = false;
             $scope.searchListView = false;
             $scope.locationDetailsView = false;
+            $scope.routingDetailsView = false;
 
             $scope.locationDetails = {id:0,name:"No name",description:"No description",cover:false};
             setTimeout(function(){
@@ -181,9 +184,11 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     map: map,
                     icon: icon
                 });
+
             } else {
                 userMarker.setPosition(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
             }
+            userCurrentLocation = {latitude : position.coords.latitude, longitude: position.coords.longitude};
             map.setCenter({lat: position.coords.latitude, lng: position.coords.longitude});
         }
 
@@ -260,6 +265,22 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             var infowindow = markers[location.id].contentInfoWindow;
             infowindow.open(map, markers[location.id]);
             lastInfoWindow = infowindow;
+        }
+
+        $scope.routTo = function(destination,origin) {
+            if(origin==null){
+                if(userCurrentLocation==null){
+                    return false;
+                } else {
+                    origin = userCurrentLocation;
+                }
+            }
+            lfServices.restCall("GET", "https://maps.googleapis.com/maps/api/directions/json?"
+                + "origin=" + origin.latitude + "," + origin.longitude
+                + "&destination=" + destination.latitude + "," + destination.longitude
+                + "&key=" + googleMapApiKey , {}, function (data) {
+                console.log(data);
+            });
         }
 
         function showDetailsFromMarker(location){
