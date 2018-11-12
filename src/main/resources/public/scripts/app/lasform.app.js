@@ -25,7 +25,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             userLocationButtonIcon : '.lf-user-location-button-icon',
             listItemContainer : '.lf-list-item-container',
             locationDetailsRating : '.lf-location-rating',
-            uiLoading : '.lf-ui-loading'
+            uiLoading : '.lf-ui-loading',
+            contextMenu : '.lf-contextMenu'
         };
 
         // Preparing Application
@@ -44,7 +45,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             //$('body').append("<div class='lf-ui-loading'></div>")
 
             // Disable context menu
-            // document.oncontextmenu = function () {return false;}
+            document.oncontextmenu = function () {return false;}
             // Hide context menu on click anywhere
             $(document).click(function(){ contextMenuHide(); });
             // on window resize
@@ -103,10 +104,10 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                 });
                 // Adding context menu
                 contextMenu = google.maps.event.addListener(map,"rightclick",function (event) {
-                        $(".contextMenu").css({top: event.pixel.y, left: event.pixel.x, position: 'absolute'});
-                        $(".contextMenu").show();
-                        $('.contextMenu').data('lat', event.latLng.lat());
-                        $('.contextMenu').data('lng', event.latLng.lng());
+                        $(e.contextMenu).css({top: event.pixel.y, left: event.pixel.x, position: 'absolute'});
+                        $(e.contextMenu).show();
+                        $(e.contextMenu).data('lat', event.latLng.lat());
+                        $(e.contextMenu).data('lng', event.latLng.lng());
                     }
                 );
                 // Check user location policy
