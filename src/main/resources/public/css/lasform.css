@@ -166,7 +166,7 @@ body{
     position: absolute;
     z-index: 1000;
     display:none;
-    min-width: 120px;
+    min-width: 150px;
     background: #FFF;
     -webkit-box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.4);
     -moz-box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.4);
@@ -189,6 +189,7 @@ body{
     margin: 0px;
     cursor: pointer;
     line-height: 22px;
+    font-size: 1.1em;
 }
 
 .lf-contextMenu li:hover {

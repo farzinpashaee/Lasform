@@ -46,6 +46,11 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
             // Disable context menu
             document.oncontextmenu = function () {return false;}
+            $("#zoomIn").click(function(){ contextMenuZoomIn(); });
+            $("#zoomOut").click(function(){ contextMenuZoomOut(); });
+            $("#setCenter").click(function(){ contextMenuSetCenter(); });
+
+
             // Hide context menu on click anywhere
             $(document).click(function(){ contextMenuHide(); });
             // on window resize
@@ -276,7 +281,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     origin = userCurrentLocation;
                 }
             }
-            lfServices.restCall("GET", "https://maps.googleapis.com/maps/api/directions/json?"
+            lfServices.restCall("GET", "/thirdParty/googleMapDirection/?"
                 + "origin=" + origin.latitude + "," + origin.longitude
                 + "&destination=" + destination.latitude + "," + destination.longitude
                 + "&key=" + googleMapApiKey , {}, function (data) {
@@ -296,7 +301,6 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             map.panTo({lat: $(e.contextMenu).data('lat'), lng: $(e.contextMenu).data('lng')});
             map.setZoom(map.getZoom() + 1);
         }
-
         function contextMenuZoomOut() {
             contextMenuHide();
             map.panTo({lat: $(e.contextMenu).data('lat'), lng: $(e.contextMenu).data('lng')});
