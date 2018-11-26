@@ -2,8 +2,6 @@ package com.lasform.business.controller;
 
 import com.lasform.helper.ResponseHelper;
 import com.lasform.model.dto.DirectionRequest;
-import com.lasform.model.dto.LocationBoundary;
-import com.lasform.model.dto.Response;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +33,9 @@ public class ThirdPartyController {
                 .append("&destination=")
                 .append(directionRequest.getDestination().getLatitude())
                 .append(",")
-                .append(directionRequest.getDestination().getLongitude());
+                .append(directionRequest.getDestination().getLongitude())
+                .append("&mode=")
+                .append(directionRequest.getMode());
         String googleResponse = restTemplate.getForObject("https://maps.googleapis.com/maps/api/directions/json?"+routQuery.toString()+"&key="+apiKey, String.class);
         return ResponseHelper.prepareStringSuccess(googleResponse);
     }

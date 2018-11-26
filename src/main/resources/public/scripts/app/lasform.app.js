@@ -281,11 +281,12 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     origin = userCurrentLocation;
                 }
             }
-            lfServices.restCall("GET", "/thirdParty/googleMapDirection/?"
-                + "origin=" + origin.latitude + "," + origin.longitude
-                + "&destination=" + destination.latitude + "," + destination.longitude
-                + "&key=" + googleMapApiKey , {}, function (data) {
-                console.log(data);
+            lfServices.restCall("POST", "/api/thirdParty/googleMapDirection/" ,
+                    {origin:{latitude:origin.latitude,longitude:origin.longitude},
+                    destination:{latitude:destination.latitude,longitude:destination.longitude},
+                    mode:"driving"},
+                function (data) {
+                    console.log(data);
             });
 
         }

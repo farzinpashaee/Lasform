@@ -4,6 +4,7 @@ public class DirectionRequest {
 
     private LatLng origin;
     private LatLng destination;
+    private String mode = "driving";
 
     public LatLng getOrigin() {
         return origin;
@@ -19,5 +20,13 @@ public class DirectionRequest {
 
     public void setDestination(LatLng destination) {
         this.destination = destination;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
     }
 }
