@@ -14,8 +14,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 public class LasformSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-                .authorizeRequests()
+        http.authorizeRequests()
                 .antMatchers("/**").permitAll()
                 .antMatchers("/api/location/**").permitAll()
                 .antMatchers("/manage/**").hasRole("USER")
@@ -27,8 +26,7 @@ public class LasformSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .logout()
                 .permitAll();
-        http
-                .csrf().disable();
+        http.csrf().disable();
     }
 
     @Bean

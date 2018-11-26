@@ -287,6 +287,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                 + "&key=" + googleMapApiKey , {}, function (data) {
                 console.log(data);
             });
+
         }
 
         function showDetailsFromMarker(location){

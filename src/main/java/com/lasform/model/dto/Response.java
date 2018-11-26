@@ -28,4 +28,9 @@ public class Response {
     public void setPayload(Object payload) {
         this.payload = payload;
     }
+
+    @Override
+    public String toString() {
+        return "{ \"state\" : " + state + " , \"payload\" : " + payload + " }";
+    }
 }

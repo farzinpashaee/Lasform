@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/location")
 @EnableWebSecurity
-public class LocationDelegate {
+public class LocationController {
 
     @Autowired
     LocationService locationService;
@@ -62,9 +62,6 @@ public class LocationDelegate {
         return ResponseHelper.prepareSuccess( applicationService.getInitialSetting() );
     }
 
-    @PostMapping(value = "/googleDirection")
-    private Response googleDirection(@RequestBody DirectionRequest directionRequest){
-        return ResponseHelper.prepareSuccess( locationService.googleDirection(directionRequest) );
-    }
+
 
 }
