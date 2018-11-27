@@ -158,12 +158,13 @@
             </md-button>
         </div>
 
-        <div class="lf-contextMenu">
+        <div class="lf-contextmenu">
             <ul>
-                <li id="zoomIn">Zoom In</li>
-                <li id="zoomOut">Zoom Out</li>
+                <li id="zoomIn" ng-click="contextmenuZoomIn()">Zoom In</li>
+                <li id="zoomOut" ng-click="contextmenuZoomOut()">Zoom Out</li>
                 <li class="separator"><div></div></li>
-                <li id="setCenter">Center Here</li>
+                <li id="setCenter" ng-click="contextmenuSetCenter()">Center Here</li>
+                <li id="ImHere" ng-click="contextmenuImHere()">I am Here!</li>
             </ul>
         </div>
 

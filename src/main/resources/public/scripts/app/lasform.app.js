@@ -2,7 +2,7 @@ var app = angular.module('lfApp', ['ngMaterial']);
 app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
         var map;
-        var contextMenu;
+        var contextmenu;
         var boundChangeTimeoutId = 0;
         var markers = [];
         var currentMarkersListCount = 0;
@@ -10,13 +10,11 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         var userLocationAvailable = false;
         var userMarker = null;
         var userCurrentLocation = null;
-        var googleMapApiKey = "AIzaSyDQz41w41dpAu2o9lPssyUCnDgd4rxGpYA";
 
         var CONFIG = { MAP_DRAG_DELAY : 1000 }
         var e = {
             map : '#map',
             markerDetails : '#marker-details',
-            contextMenu: ".contextMenu",
             searchInput: '.lf-search-input',
             searchButton: '.lf-search-button',
             searchQuerySpan : '.lp-search-query',
@@ -26,7 +24,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             listItemContainer : '.lf-list-item-container',
             locationDetailsRating : '.lf-location-rating',
             uiLoading : '.lf-ui-loading',
-            contextMenu : '.lf-contextMenu'
+            contextmenu : '.lf-contextmenu'
         };
 
         // Preparing Application
@@ -46,13 +44,16 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
             // Disable context menu
             document.oncontextmenu = function () {return false;}
-            $("#zoomIn").click(function(){ contextMenuZoomIn(); });
-            $("#zoomOut").click(function(){ contextMenuZoomOut(); });
-            $("#setCenter").click(function(){ contextMenuSetCenter(); });
+            $("#zoomIn").click(function(){ contextmenuZoomIn(); });
+            $("#zoomOut").click(function(){ contextmenuZoomOut(); });
+            $("#setCenter").click(function(){ contextmenuSetCenter(); });
+            $("#ImHere").click(function(){ contextmenuImHere(); });
+
+
 
 
             // Hide context menu on click anywhere
-            $(document).click(function(){ contextMenuHide(); });
+            $(document).click(function(){ contextmenuHide(); });
             // on window resize
             $(window).resize(function () { onViewResize(); });
             $(window).ready(function () {
@@ -108,11 +109,11 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     }, CONFIG.MAP_DRAG_DELAY);
                 });
                 // Adding context menu
-                contextMenu = google.maps.event.addListener(map,"rightclick",function (event) {
-                        $(e.contextMenu).css({top: event.pixel.y, left: event.pixel.x, position: 'absolute'});
-                        $(e.contextMenu).show();
-                        $(e.contextMenu).data('lat', event.latLng.lat());
-                        $(e.contextMenu).data('lng', event.latLng.lng());
+                contextmenu = google.maps.event.addListener(map,"rightclick",function (event) {
+                        $(e.contextmenu).css({top: event.pixel.y, left: event.pixel.x, position: 'absolute'});
+                        $(e.contextmenu).show();
+                        $(e.contextmenu).data('lat', event.latLng.lat());
+                        $(e.contextmenu).data('lng', event.latLng.lng());
                     }
                 );
                 // Check user location policy
@@ -179,6 +180,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         }
 
         function updateUserLocation(position) {
+            lfServices.log(lfServices.LOG.INFO,"Updating user location");
             $(e.userLocationButtonIcon).removeClass("blinking");
             if(userMarker == null ){
                 var icon = {
@@ -298,26 +300,31 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         }
 
         // Context Menu
-        function contextMenuZoomIn() {
-            contextMenuHide();
-            map.panTo({lat: $(e.contextMenu).data('lat'), lng: $(e.contextMenu).data('lng')});
+        function contextmenuZoomIn(){
+            console.log("><");
+            contextmenuHide();
+            map.panTo({lat: $(e.contextmenu).data('lat'), lng: $(e.contextmenu).data('lng')});
             map.setZoom(map.getZoom() + 1);
         }
-        function contextMenuZoomOut() {
-            contextMenuHide();
-            map.panTo({lat: $(e.contextMenu).data('lat'), lng: $(e.contextMenu).data('lng')});
+        function contextmenuZoomOut(){
+            contextmenuHide();
+            map.panTo({lat: $(e.contextmenu).data('lat'), lng: $(e.contextmenu).data('lng')});
             map.setZoom(map.getZoom() - 1);
         }
 
-        function contextMenuSetCenter() {
-            contextMenuHide();
-            map.panTo({lat: $(e.contextMenu).data('lat'), lng: $(e.contextMenu).data('lng')});
+        function contextmenuSetCenter(){
+            contextmenuHide();
+            map.panTo({lat: $(e.contextmenu).data('lat'), lng: $(e.contextmenu).data('lng')});
         }
 
-        function contextMenuHide() {
-            $(e.contextMenu).hide();
+        function contextmenuImHere(){
+            contextmenuHide();
+            updateUserLocation({coords:{latitude:$(e.contextmenu).data('lat'),longitude:$(e.contextmenu).data('lng')}});
         }
 
+        function contextmenuHide() {
+            $(e.contextmenu).hide();
+        }
 
 
     })

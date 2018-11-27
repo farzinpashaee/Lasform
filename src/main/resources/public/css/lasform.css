@@ -162,7 +162,7 @@ body{
     font-weight: bold;
 }
 
-.lf-contextMenu {
+.lf-contextmenu {
     position: absolute;
     z-index: 1000;
     display:none;
@@ -175,12 +175,12 @@ body{
     color:#4d4d4d;
 }
 
-.lf-contextMenu ul {
+.lf-contextmenu ul {
     padding: 3px 0px;
     margin: 0px;
 }
 
-.lf-contextMenu li {
+.lf-contextmenu li {
     list-style: none;
     padding-left: 14px;
     padding-right: 14px;
@@ -192,11 +192,11 @@ body{
     font-size: 1.1em;
 }
 
-.lf-contextMenu li:hover {
+.lf-contextmenu li:hover {
     background-color: #eee;
 }
 
-.lf-contextMenu li.separator{
+.lf-contextmenu li.separator{
     margin: 0px;
     padding: 0px;
     border-top: solid 1px #ccc;
