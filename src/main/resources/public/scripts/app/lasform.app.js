@@ -301,7 +301,6 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
         // Context Menu
         function contextmenuZoomIn(){
-            console.log("><");
             contextmenuHide();
             map.panTo({lat: $(e.contextmenu).data('lat'), lng: $(e.contextmenu).data('lng')});
             map.setZoom(map.getZoom() + 1);

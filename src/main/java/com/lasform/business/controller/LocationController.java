@@ -4,6 +4,7 @@ import com.lasform.business.service.ApplicationService;
 import com.lasform.business.service.LocationService;
 import com.lasform.helper.ResponseHelper;
 import com.lasform.model.dto.*;
+import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/location")
 @EnableWebSecurity
+@Api(value="Location REST API", description="REST API for location base services")
 public class LocationController {
 
     @Autowired
@@ -32,32 +34,32 @@ public class LocationController {
         return message;
     }
 
-    @RequestMapping(value="/findById")
+    @PostMapping(value="/findById")
     private Response findById(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.findById(locationDto.getId()) );
     }
 
-    @RequestMapping(value="/searchByName")
+    @PostMapping(value="/searchByName")
     private Response searchByName(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
-    @RequestMapping(value = "/getLocationsInBoundary")
+    @PostMapping(value = "/getLocationsInBoundary")
     private Response getLocationsInBoundary(@RequestBody LocationBoundary locationBoundary){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInBoundary(locationBoundary) );
     }
 
-    @RequestMapping(value = "/getLocationsCountInBoundary")
+    @PostMapping(value = "/getLocationsCountInBoundary")
     private Response getLocationsCountInBoundary(@RequestBody LocationBoundary locationBoundary){
         return ResponseHelper.prepareSuccess( locationService.getLocationsCountInBoundary(locationBoundary) );
     }
 
-    @RequestMapping(value="/save")
+    @PostMapping(value="/save")
     private Response save(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
     }
 
-    @RequestMapping(value="/initialSetting")
+    @GetMapping(value="/initialSetting")
     private Response initialSetting(){
         return ResponseHelper.prepareSuccess( applicationService.getInitialSetting() );
     }
