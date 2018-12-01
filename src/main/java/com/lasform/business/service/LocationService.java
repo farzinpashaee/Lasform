@@ -9,6 +9,7 @@ import com.lasform.model.entity.Location;
 import com.lasform.model.entity.City;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -46,11 +47,6 @@ public class LocationService {
                 locationBoundary.getNortheast().getLongitude() ,
                 locationBoundary.getSouthwest().getLatitude() ,
                 locationBoundary.getSouthwest().getLongitude() );
-    }
-
-    public String googleDirection(DirectionRequest directionRequest){
-
-        return "";
     }
 
 }

@@ -59,7 +59,7 @@ public class LocationController {
         return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
     }
 
-    @GetMapping(value="/initialSetting")
+    @PostMapping(value="/initialSetting")
     private Response initialSetting(){
         return ResponseHelper.prepareSuccess( applicationService.getInitialSetting() );
     }

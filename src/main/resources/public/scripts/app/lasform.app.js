@@ -10,6 +10,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         var userLocationAvailable = false;
         var userMarker = null;
         var userCurrentLocation = null;
+        var directionsService = new google.maps.DirectionsService();
+        var directionsDisplay = new google.maps.DirectionsRenderer();
 
         var CONFIG = { MAP_DRAG_DELAY : 1000 }
         var e = {
@@ -116,6 +118,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                         $(e.contextmenu).data('lng', event.latLng.lng());
                     }
                 );
+                directionsDisplay.setMap(map);
                 // Check user location policy
                 if(payload.userLocationPolicy) getUserLocation();
             });
@@ -275,6 +278,27 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             lastInfoWindow = infowindow;
         }
 
+        $scope.calcRoute = function(destination,origin) {
+            if(origin==null){
+                if(userCurrentLocation==null){
+                    return false;
+                } else {
+                    origin = userCurrentLocation;
+                }
+            }
+            console.log(">"+destination+" - " + origin + "<");
+            var request = {
+                origin: new google.maps.LatLng(origin.latitude, origin.longitude),
+                destination: new google.maps.LatLng(destination.latitude, destination.longitude),
+                travelMode: 'DRIVING'
+            };
+            directionsService.route(request, function(result, status) {
+                if (status == 'OK') {
+                    directionsDisplay.setDirections(result);
+                }
+            });
+        }
+
         $scope.routTo = function(destination,origin) {
             if(origin==null){
                 if(userCurrentLocation==null){
@@ -283,7 +307,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     origin = userCurrentLocation;
                 }
             }
-            lfServices.restCall("POST", "/api/thirdParty/googleMapDirection/" ,
+            lfServices.restCall("POST", "/api/thirdParty/mapDirection/" ,
                     {origin:{latitude:origin.latitude,longitude:origin.longitude},
                     destination:{latitude:destination.latitude,longitude:destination.longitude},
                     mode:"driving"},
