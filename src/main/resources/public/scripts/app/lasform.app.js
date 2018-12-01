@@ -49,7 +49,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $("#zoomIn").click(function(){ contextmenuZoomIn(); });
             $("#zoomOut").click(function(){ contextmenuZoomOut(); });
             $("#setCenter").click(function(){ contextmenuSetCenter(); });
-            $("#ImHere").click(function(){ contextmenuImHere(); });
+            $("#imHere").click(function(){ contextmenuImHere(); });
+            $("#directionFromHere").click(function(){ contextmenuDirectionFromHere(); });
 
 
 
@@ -343,6 +344,10 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         function contextmenuImHere(){
             contextmenuHide();
             updateUserLocation({coords:{latitude:$(e.contextmenu).data('lat'),longitude:$(e.contextmenu).data('lng')}});
+        }
+        
+        function contextmenuDirectionFromHere(){
+            contextmenuHide();
         }
 
         function contextmenuHide() {
