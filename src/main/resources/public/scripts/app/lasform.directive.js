@@ -12,7 +12,6 @@ app.directive("lfListItem", ['lfServices',  function( lfServices ) {
                 element.find('h4').html(lfServices.renderRating(scope.location.rating));
             }
             addRanking();
-
         }
     };
 }]);

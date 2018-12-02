@@ -17,15 +17,16 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         var e = {
             map : '#map',
             markerDetails : '#marker-details',
+            markersList : '#lf-search-list',
             searchInput: '.lf-search-input',
             searchButton: '.lf-search-button',
             searchQuerySpan : '.lp-search-query',
-            markersList : '#lf-search-list',
             userLocationButton : '.lf-user-location-button',
             userLocationButtonIcon : '.lf-user-location-button-icon',
             listItemContainer : '.lf-list-item-container',
             locationDetailsRating : '.lf-location-rating',
             uiLoading : '.lf-ui-loading',
+            lfRoutingDetails : '.lf-routing-details',
             contextmenu : '.lf-contextmenu'
         };
 
@@ -267,6 +268,11 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $scope.locationDetailsView = false;
         }
 
+        $scope.backToDetails = function(){
+            $scope.locationDetailsView = true;
+            $scope.routingDetailsView = false;
+        }
+
         $scope.focusLocation = function(location){
             map.panTo({lat: parseFloat(location.latitude), lng: parseFloat(location.longitude)});
             this.showInfoWindow(location);
@@ -281,6 +287,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
         $scope.routWithPath = function(destination,origin) {
             $scope.loadingView = true;
+            $scope.locationDetailsView = false;
             if(origin==null){
                 if(userCurrentLocation==null){
                     return false;
@@ -295,13 +302,17 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             };
             directionsService.route(request, function(result, status) {
                 $scope.loadingView = false;
+                $scope.routingDetailsView = true;
                 if (status == 'OK') {
                     console.log(result);
                     directionsDisplay.setDirections(result);
+                    // parse address description
+                    $scope.routSteps = result.routes[0].legs[0].steps;
                 } else {
                     // NOT_FOUND,ZERO_RESULTS,MAX_WAYPOINTS_EXCEEDED,MAX_ROUTE_LENGTH_EXCEEDED,INVALID_REQUEST,
                     // OVER_QUERY_LIMIT,REQUEST_DENIED,UNKNOWN_ERROR
                     lfServices.log(lfServices.ERR,"Status : " + status);
+                    $(e.lfRoutingDetails).html("Rout not found!");
                 }
             });
         }
@@ -366,3 +377,9 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
 
     })
+
+app.filter('trustAsHtml',['$sce', function($sce) {
+        return function(text) {
+            return $sce.trustAsHtml(text);
+        };
+    }]);

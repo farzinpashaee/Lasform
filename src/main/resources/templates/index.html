@@ -82,7 +82,17 @@
                         </div>
 
                         <div class="lf-routing-details" ng-show="routingDetailsView">
-
+                            <div class="if-details-head">
+                                <div class="if-image-cover-icons">
+                                    <span class="mdi mdi-arrow-left if-details-header-button-icon" ng-click="backToDetails()"></span>
+                                    <span class="mdi mdi-dots-vertical if-details-header-button-icon float-right mr-5"></span>
+                                </div>
+                            </div>
+                            <md-list ng-cloak>
+                                <md-list-item ng-repeat="step in routSteps" >
+                                    <p ng-bind-html="step.instructions|trustAsHtml"></p>
+                                </md-list-item>
+                            </md-list>
                         </div>
 
                     </md-card>
