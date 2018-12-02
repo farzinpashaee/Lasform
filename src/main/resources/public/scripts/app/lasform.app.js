@@ -119,7 +119,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                         $(e.contextmenu).data('lng', event.latLng.lng());
                     }
                 );
-                directionsDisplay.setMap(map);
+                directionsDisplay.setOptions({map: map, suppressMarkers: true});
                 // Check user location policy
                 if(payload.userLocationPolicy) getUserLocation();
             });
@@ -279,7 +279,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             lastInfoWindow = infowindow;
         }
 
-        $scope.calcRoute = function(destination,origin) {
+        $scope.routWithPath = function(destination,origin) {
+            $scope.loadingView = true;
             if(origin==null){
                 if(userCurrentLocation==null){
                     return false;
@@ -287,20 +288,28 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     origin = userCurrentLocation;
                 }
             }
-            console.log(">"+destination+" - " + origin + "<");
             var request = {
                 origin: new google.maps.LatLng(origin.latitude, origin.longitude),
                 destination: new google.maps.LatLng(destination.latitude, destination.longitude),
                 travelMode: 'DRIVING'
             };
             directionsService.route(request, function(result, status) {
+                $scope.loadingView = false;
                 if (status == 'OK') {
+                    console.log(result);
                     directionsDisplay.setDirections(result);
+                } else {
+                    // NOT_FOUND,ZERO_RESULTS,MAX_WAYPOINTS_EXCEEDED,MAX_ROUTE_LENGTH_EXCEEDED,INVALID_REQUEST,
+                    // OVER_QUERY_LIMIT,REQUEST_DENIED,UNKNOWN_ERROR
+                    lfServices.log(lfServices.ERR,"Status : " + status);
                 }
             });
         }
 
+
+
         $scope.routTo = function(destination,origin) {
+            $scope.loadingView = true;
             if(origin==null){
                 if(userCurrentLocation==null){
                     return false;
@@ -313,6 +322,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
                     destination:{latitude:destination.latitude,longitude:destination.longitude},
                     mode:"driving"},
                 function (data) {
+                    $scope.loadingView = false;
                     console.log(data);
             });
 
