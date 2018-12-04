@@ -89,9 +89,11 @@
                                 </div>
                             </div>
                             <md-list ng-cloak>
-                                <md-list-item ng-repeat="step in routSteps" >
-                                    <p ng-bind-html="step.instructions|trustAsHtml"></p>
-                                </md-list-item>
+                                <div class="lf-list-item-container" >
+                                    <md-list-item ng-repeat="step in routSteps" >
+                                        <p class="md-body-1" ng-bind-html="step.instructions|trustAsHtml"></p>
+                                    </md-list-item>
+                                </div>
                             </md-list>
                         </div>
 
