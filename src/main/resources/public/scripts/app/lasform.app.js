@@ -88,6 +88,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $scope.searchListView = false;
             $scope.locationDetailsView = false;
             $scope.routingDetailsView = false;
+            $scope.loadingMessage = "Searching...";
 
             $scope.locationDetails = {id:0,name:"No name",description:"No description",cover:false};
             setTimeout(function(){
@@ -241,6 +242,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         function search( searchQuery ){
             lfServices.log(lfServices.LOG.DEBUG,"Searching query '" + searchQuery + "'");
             $scope.searchedQuery = searchQuery;
+            $scope.loadingMessage = "Searching...";
             $scope.loadingView = true;
             $scope.searchListView = false;
             $scope.locationDetailsView = false;
@@ -286,6 +288,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         }
 
         $scope.routWithPath = function(destination,origin) {
+            $scope.loadingMessage = "Routing...";
             $scope.loadingView = true;
             $scope.locationDetailsView = false;
             if(origin==null){
