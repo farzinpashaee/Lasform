@@ -18,8 +18,8 @@
                     <md-card md-theme="default" md-theme-watch>
                         <md-card-content>
                             <input ng-model="searchQuery" id="lf-search-input" name="lf-search-input" type="text" placeholder="Search Lasform Map" class="lf-search-input"/>
-                            <span id="lf-search-button" class="mdi mdi-magnify lf-search-button"></span>
-                            <span class="mdi mdi-account-circle lf-login-icon"></span>
+                            <span id="lf-search-button" class="mdi mdi-magnify lf-icon lf-search-button"></span>
+                            <span class="mdi mdi-account-circle lf-icon lf-login-icon"></span>
                         </md-card-content>
                     </md-card>
                 </div>
@@ -64,9 +64,9 @@
                             </div>
                             <div ng-show="!locationDetails.cover" class="if-details-head">
                                 <div class="if-image-cover-icons">
-                                    <span class="mdi mdi-arrow-left if-details-header-button-icon" ng-click="backToList()"></span>
-                                    <span class="mdi mdi-dots-vertical if-details-header-button-icon float-right mr-5"></span>
-                                    <span class="mdi mdi-directions if-details-header-button-icon float-right mr-5" ng-click="routWithPath(locationDetails)"></span>
+                                    <span class="mdi mdi-arrow-left lf-icon if-details-header-button-icon" ng-click="backToList()"></span>
+                                    <span class="mdi mdi-dots-vertical lf-icon if-details-header-button-icon float-right mr-5"></span>
+                                    <span class="mdi mdi-directions lf-icon if-details-header-button-icon float-right mr-5" ng-click="routWithPath(locationDetails)"></span>
                                 </div>
                             </div>
 
@@ -84,8 +84,8 @@
                         <div class="lf-routing-details" ng-show="routingDetailsView">
                             <div class="if-details-head">
                                 <div class="if-image-cover-icons">
-                                    <span class="mdi mdi-arrow-left if-details-header-button-icon" ng-click="backToDetails()"></span>
-                                    <span class="mdi mdi-dots-vertical if-details-header-button-icon float-right mr-5"></span>
+                                    <span class="mdi mdi-arrow-left lf-icon if-details-header-button-icon" ng-click="backToDetails()"></span>
+                                    <span class="mdi mdi-dots-vertical lf-icon if-details-header-button-icon float-right mr-5"></span>
                                 </div>
                             </div>
                             <md-list ng-cloak>

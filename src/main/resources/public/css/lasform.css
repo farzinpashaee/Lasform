@@ -30,6 +30,10 @@ body{
     max-width: 450px;
 }
 
+.lf-icon{
+    cursor: pointer;
+}
+
 .lf-main-container-card {
     min-height: 50px;
     width: 100%;
