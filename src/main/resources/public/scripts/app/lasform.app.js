@@ -297,8 +297,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $(e.userLocationButtonIcon).removeClass("blinking");
             if(userMarker == null ){
                 var icon = {
-                    url: "../../img/icons/users-locations.png",
-                    scaledSize: new google.maps.Size(25, 25),
+                    url: "../../img/icons/user-marker.svg",
+                    scaledSize: new google.maps.Size(35, 35),
                 };
                 userMarker = new google.maps.Marker({
                     position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
