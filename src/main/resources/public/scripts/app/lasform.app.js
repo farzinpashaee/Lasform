@@ -1,6 +1,7 @@
 var app = angular.module('lfApp', ['ngMaterial']);
-app.controller('mapCtrl', function($scope, $http , lfServices ) {
+app.controller('mapCtrl',  function($scope, $http , lfServices ) {
 
+        var mapCtrl = this;
         var map;
         var contextmenu;
         var boundChangeTimeoutId = 0;
@@ -138,18 +139,17 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
         // Preparing Application
         $( document ).ready(function() {
-            prepare();
+            $scope.init();
         });
 
-        function prepare(){
+        $scope.init = function(){
             lfServices.log(lfServices.LOG.INFO,"Preparing Application");
-            prepareUI();
-            initMap();
+            $scope.prepareUI();
+            $scope.initMap();
         }
 
-        function prepareUI(){
-            // cover UI
-            //$('body').append("<div class='lf-ui-loading'></div>")
+        $scope.prepareUI = function(){
+            lfServices.log(lfServices.LOG.INFO,"Preparing User Interface");
 
             // Disable context menu
             document.oncontextmenu = function () {return false;}
@@ -158,9 +158,7 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             $("#setCenter").click(function(){ contextmenuSetCenter(); });
             $("#imHere").click(function(){ contextmenuImHere(); });
             $("#directionFromHere").click(function(){ contextmenuDirectionFromHere(); });
-
-
-
+            $("#addLocation").click(function(){ contextmenuAddNewLocation(); });
 
             // Hide context menu on click anywhere
             $(document).click(function(){ contextmenuHide(); });
@@ -202,7 +200,8 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
             },500);
         }
 
-        function initMap(){
+        $scope.initMap = function(){
+            lfServices.log(lfServices.LOG.INFO,"Initiating Map");
             onViewResize();
             lfServices.restCall("POST","/api/location/initialSetting" , {} ,function (payload) {
                 lfServices.log(lfServices.LOG.INFO,"InitialSetting loaded");
@@ -449,6 +448,42 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
 
         }
 
+
+        $scope.test = function() {
+            lfServices.log(lfServices.LOG.DEBUG,"-----------------");
+        }
+
+        $scope.showAdvanced = function(ev) {
+            lfServices.log(lfServices.LOG.DEBUG,"Add new location using context menu");
+            $mdDialog.show({
+                controller: DialogController,
+                templateUrl: 'addNewLocation.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose:true,
+                fullscreen: false // Only for -xs, -sm breakpoints.
+            })
+                .then(function(answer) {
+                    $scope.status = 'You said the information was "' + answer + '".';
+                }, function() {
+                    $scope.status = 'You cancelled the dialog.';
+                });
+        };
+
+        function DialogController($scope, $mdDialog) {
+            $scope.hide = function() {
+                $mdDialog.hide();
+            };
+
+            $scope.cancel = function() {
+                $mdDialog.cancel();
+            };
+
+            $scope.answer = function(answer) {
+                $mdDialog.hide(answer);
+            };
+        }
+
         function showDetailsFromMarker(location){
             $scope.locationDetails = location;
             $scope.searchListView = false;
@@ -479,6 +514,10 @@ app.controller('mapCtrl', function($scope, $http , lfServices ) {
         
         function contextmenuDirectionFromHere(){
             contextmenuHide();
+        }
+
+        function contextmenuAddNewLocation(){
+            lfServices.log(lfServices.LOG.DEBUG,"Add new location using context menu");
         }
 
         function contextmenuHide() {

@@ -29,7 +29,7 @@
                         <!-- loading -->
                         <div class="lf-loading-container" ng-show="loadingView">
                             <md-progress-circular md-mode="indeterminate" md-diameter="20px"></md-progress-circular>
-                            <div>{{loadingMessage}}Searching...</div>
+                            <div>{{loadingMessage}}</div>
                         </div>
                         <!-- search list -->
                         <div class="lf-search-list-container" ng-show="searchListView">
@@ -107,19 +107,20 @@
         <div id="map"></div>
 
         <div id="users-location" >
-            <md-button class="md-fab md-primary lf-user-location-button" aria-label="Use Android">
+            <md-button class="md-fab red lf-user-location-button" aria-label="Use Android">
                 <span class="mdi mdi-crosshairs-gps lf-user-location-button-icon"></span>
             </md-button>
         </div>
 
         <div class="lf-contextmenu">
             <ul>
+                <li id="setCenter" >Center Here</li>
                 <li id="zoomIn" >Zoom In</li>
                 <li id="zoomOut" >Zoom Out</li>
                 <li class="separator"><div></div></li>
                 <li id="imHere" >I am Here</li>
                 <li id="directionFromHere" >Direction From Here</li>
-                <li id="setCenter" >Center Here</li>
+                <li ng-click="test()" >Add New Location</li>
             </ul>
         </div>
 
