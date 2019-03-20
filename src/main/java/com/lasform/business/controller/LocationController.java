@@ -1,6 +1,7 @@
 package com.lasform.business.controller;
 
 import com.lasform.business.exceptions.UnrecognizedCityException;
+import com.lasform.business.exceptions.UnrecognizedLocationException;
 import com.lasform.business.exceptions.UnrecognizedLocationTypeException;
 import com.lasform.business.service.ApplicationService;
 import com.lasform.business.service.LocationService;
@@ -20,21 +21,18 @@ public class LocationController {
     @Autowired
     LocationService locationService;
 
-    @Autowired
-    ApplicationService applicationService;
-
     @RequestMapping(value="/echo", method = RequestMethod.POST)
     private String echo(@RequestBody String  message){
         return message;
     }
 
-    @PostMapping(value="/findById")
-    private Response findById(@RequestBody LocationDto locationDto){
+    @PostMapping(value="/findLocationById")
+    private Response findLocationById(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.findById(locationDto.getId()) );
     }
 
-    @PostMapping(value="/searchByName")
-    private Response searchByName(@RequestBody LocationDto locationDto){
+    @PostMapping(value="/searchLocationByName")
+    private Response searchLocationByName(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
@@ -48,8 +46,8 @@ public class LocationController {
         return ResponseHelper.prepareSuccess( locationService.getLocationsCountInBoundary(locationBoundary) );
     }
 
-    @PostMapping(value="/save")
-    private Response save(@RequestBody LocationDto locationDto){
+    @PostMapping(value="/saveLocation")
+    private Response saveLocation(@RequestBody LocationDto locationDto){
         try {
             return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
         } catch (UnrecognizedCityException e) {
@@ -59,10 +57,20 @@ public class LocationController {
         }
     }
 
-    @PostMapping(value="/initialSetting")
-    private Response initialSetting(){
-        return ResponseHelper.prepareSuccess( applicationService.getInitialSetting() );
+    @PostMapping(value="/updateLocation")
+    private Response updateLocation(@RequestBody LocationDto locationDto){
+        try{
+            return ResponseHelper.prepareSuccess( locationService.update(locationDto) );
+        } catch (UnrecognizedCityException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        } catch (UnrecognizedLocationTypeException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        } catch (UnrecognizedLocationException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        }
     }
+
+
 
 
 

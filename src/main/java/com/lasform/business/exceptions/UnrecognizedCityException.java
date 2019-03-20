@@ -4,7 +4,7 @@ public class UnrecognizedCityException extends BusinessException {
 
     public UnrecognizedCityException(){
         super("Unrecognized City Exception");
-        setBusinessExceptionCode(1000);
+        setBusinessExceptionCode(1002);
     }
 
 }
