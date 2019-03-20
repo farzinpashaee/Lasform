@@ -1,5 +1,7 @@
 package com.lasform.business.controller;
 
+import com.lasform.business.exceptions.UnrecognizedCityException;
+import com.lasform.business.exceptions.UnrecognizedLocationTypeException;
 import com.lasform.business.service.ApplicationService;
 import com.lasform.business.service.LocationService;
 import com.lasform.helper.ResponseHelper;
@@ -20,14 +22,6 @@ public class LocationController {
 
     @Autowired
     ApplicationService applicationService;
-
-    @RequestMapping(value="/test", method = RequestMethod.POST)
-    private LocationBoundary test(){
-        LocationBoundary lb = new LocationBoundary();
-        lb.setNortheast(new LatLng("1","2"));
-        lb.setSouthwest(new LatLng("1","2"));
-        return lb;
-    }
 
     @RequestMapping(value="/echo", method = RequestMethod.POST)
     private String echo(@RequestBody String  message){
@@ -56,7 +50,13 @@ public class LocationController {
 
     @PostMapping(value="/save")
     private Response save(@RequestBody LocationDto locationDto){
-        return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
+        try {
+            return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
+        } catch (UnrecognizedCityException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        } catch (UnrecognizedLocationTypeException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        }
     }
 
     @PostMapping(value="/initialSetting")

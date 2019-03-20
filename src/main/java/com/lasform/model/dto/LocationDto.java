@@ -89,14 +89,4 @@ public class LocationDto {
         this.cityName = cityName;
     }
 
-    public Location getLocation( City city , LocationType locationType){
-        Location location = new Location();
-        location.setName(getName());
-        location.setLatitude(getLatitude());
-        location.setLongitude(getLongitude());
-        location.setAddress(getAddress());
-        if( city != null ) location.setCity(city);
-        if( locationType != null ) location.setLocationType(locationType);
-        return location;
-    }
 }
