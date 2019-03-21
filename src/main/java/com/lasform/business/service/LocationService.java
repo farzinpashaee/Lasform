@@ -1,20 +1,22 @@
 package com.lasform.business.service;
 
+import com.lasform.C;
+import com.lasform.business.exceptions.NativeQueryException;
 import com.lasform.business.exceptions.UnrecognizedCityException;
 import com.lasform.business.exceptions.UnrecognizedLocationException;
 import com.lasform.business.exceptions.UnrecognizedLocationTypeException;
 import com.lasform.business.repository.CityRepository;
 import com.lasform.business.repository.LocationRepository;
 import com.lasform.business.repository.LocationTypeRepository;
-import com.lasform.model.dto.DirectionRequest;
 import com.lasform.model.dto.LocationBoundary;
 import com.lasform.model.dto.LocationDto;
+import com.lasform.model.dto.RadiusSearchDto;
 import com.lasform.model.entity.Location;
 import com.lasform.model.entity.City;
 import com.lasform.model.entity.LocationType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -29,6 +31,9 @@ public class LocationService {
 
     @Autowired
     CityRepository cityRepository;
+
+    @Value("${spring.datasource.driverClassName}")
+    String datasourceDriver;
 
     public Location findById( long id ){
         return locationRepository.findById(id).get() ;
@@ -62,7 +67,7 @@ public class LocationService {
         location.setLatitude(locationDto.getLatitude());
         location.setLongitude(locationDto.getLongitude());
         location.setAddress(locationDto.getAddress());
-        return location;
+        return locationRepository.save(location);
     }
 
     public List<Location> getLocationsInBoundary(LocationBoundary locationBoundary){
@@ -77,6 +82,16 @@ public class LocationService {
                 locationBoundary.getNortheast().getLongitude() ,
                 locationBoundary.getSouthwest().getLatitude() ,
                 locationBoundary.getSouthwest().getLongitude() );
+    }
+
+    public List<Location> getLocationsInRadius(RadiusSearchDto radiusSearchDto) throws NativeQueryException {
+        if( datasourceDriver.equals(C.DB_DRIVERS.MYSQL) ){
+            return locationRepository.getLocationsInRadius(radiusSearchDto.getCenter().getLatitude() ,
+                    radiusSearchDto.getCenter().getLongitude(),
+                    radiusSearchDto.getRadius());
+        } else {
+            throw new NativeQueryException("Native query not provided for this service");
+        }
     }
 
 }

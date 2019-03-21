@@ -1,5 +1,6 @@
 package com.lasform.business.controller;
 
+import com.lasform.business.exceptions.NativeQueryException;
 import com.lasform.business.exceptions.UnrecognizedCityException;
 import com.lasform.business.exceptions.UnrecognizedLocationException;
 import com.lasform.business.exceptions.UnrecognizedLocationTypeException;
@@ -45,6 +46,17 @@ public class LocationController {
     private Response getLocationsCountInBoundary(@RequestBody LocationBoundary locationBoundary){
         return ResponseHelper.prepareSuccess( locationService.getLocationsCountInBoundary(locationBoundary) );
     }
+
+
+    @PostMapping(value = "/getLocationsInRadius")
+    private Response getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto){
+        try {
+            return ResponseHelper.prepareSuccess( locationService.getLocationsInRadius(radiusSearchDto) );
+        } catch (NativeQueryException e) {
+            return ResponseHelper.prepareError( 0 , e.getMessage() );
+        }
+    }
+
 
     @PostMapping(value="/saveLocation")
     private Response saveLocation(@RequestBody LocationDto locationDto){
