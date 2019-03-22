@@ -3,11 +3,12 @@ package com.lasform.business.repository;
 import com.lasform.model.entity.Location;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface LocationRepository extends JpaRepository<Location,Long> {
+public interface LocationRepository extends CrudRepository<Location,Long> {
 
     @Query("SELECT l FROM Location l WHERE l.name like %:nameQuery% ")
     public List<Location> searchByName(@Param("nameQuery")  String nameQuery );
@@ -28,4 +29,9 @@ public interface LocationRepository extends JpaRepository<Location,Long> {
                                                   String northEastLng ,
                                                   String southWestLat ,
                                                   String southWestLng );
+
+    public List<Location> findAllByCityId( Long cityId );
+    public List<Location> findAllByCity_StateId( Long stateId );
+    public List<Location> findAllByCity_State_CountryId( Long countryId );
+
 }

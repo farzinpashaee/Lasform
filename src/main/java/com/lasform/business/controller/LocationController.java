@@ -37,6 +37,21 @@ public class LocationController {
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
+    @PostMapping(value = "/getLocationsInCity")
+    private Response getLocationsInCity(@RequestBody Long cityId){
+        return ResponseHelper.prepareSuccess( locationService.getLocationsInCity( cityId ) );
+    }
+
+    @PostMapping(value = "/getLocationsInState")
+    private Response getLocationsInState(@RequestBody Long stateId){
+        return ResponseHelper.prepareSuccess( locationService.getLocationsInState( stateId ) );
+    }
+
+    @PostMapping(value = "/getLocationsInCountry")
+    private Response getLocationsInCountry(@RequestBody Long countryId){
+        return ResponseHelper.prepareSuccess( locationService.getLocationsInCountry( countryId ) );
+    }
+
     @PostMapping(value = "/getLocationsInBoundary")
     private Response getLocationsInBoundary(@RequestBody LocationBoundary locationBoundary){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInBoundary(locationBoundary) );

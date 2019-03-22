@@ -94,4 +94,16 @@ public class LocationService {
         }
     }
 
+    public List<Location> getLocationsInCity( Long cityId ){
+        return locationRepository.findAllByCityId( cityId );
+    }
+
+    public List<Location> getLocationsInState( Long stateId ){
+        return locationRepository.findAllByCity_StateId( stateId );
+    }
+
+    public List<Location> getLocationsInCountry( Long countryId ){
+        return locationRepository.findAllByCity_State_CountryId( countryId );
+    }
+
 }
