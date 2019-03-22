@@ -12,5 +12,7 @@ public class City {
     @OneToOne
     @JoinColumn(name = "STATE_ID")
     private State state;
+    private String latitude;
+    private String longitude;
 
 }

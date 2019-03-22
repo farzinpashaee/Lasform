@@ -12,5 +12,6 @@ public class State {
     @OneToOne
     @JoinColumn(name = "COUNTRY_ID")
     private Country country;
+    private String code;
 
 }
