@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -54,6 +55,24 @@ public class LocationService {
         location.setLongitude(locationDto.getLongitude());
         location.setAddress(locationDto.getAddress());
         return locationRepository.save(location);
+    }
+
+    public ArrayList<Location> saveBulk( List<LocationDto> locationDtos ) throws UnrecognizedCityException, UnrecognizedLocationTypeException {
+        ArrayList<Location> locations = new ArrayList<>();
+        for( LocationDto locationDto : locationDtos ){
+            Location location = new Location();
+            City city = cityRepository.findById(locationDto.getCityId()).get();
+            if( city != null ) location.setCity(city); else throw new UnrecognizedCityException();
+            LocationType locationType = locationTypeRepository.findById(locationDto.getLocationTypeId()).get();
+            if( locationType != null ) location.setLocationType(locationType); else throw new UnrecognizedLocationTypeException();
+            location.setName(locationDto.getName());
+            location.setLatitude(locationDto.getLatitude());
+            location.setLongitude(locationDto.getLongitude());
+            location.setAddress(locationDto.getAddress());
+            locations.add(location);
+        }
+        locationRepository.saveAll(locations);
+        return locations;
     }
 
     public Location update( LocationDto locationDto ) throws UnrecognizedCityException, UnrecognizedLocationException, UnrecognizedLocationTypeException {

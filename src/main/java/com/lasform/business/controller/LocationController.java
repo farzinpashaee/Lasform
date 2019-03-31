@@ -10,10 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/location")
 @EnableWebSecurity
-@Api(value="Location REST API", description="REST API for location base services")
 public class LocationController {
 
     @Autowired
@@ -22,7 +23,7 @@ public class LocationController {
     @Autowired
     LocationTypeService locationTypeService;
 
-    @RequestMapping(value="/echo", method = RequestMethod.POST)
+    @RequestMapping(value="/echo")
     private String echo(@RequestBody String  message){
         return message;
     }
@@ -37,32 +38,32 @@ public class LocationController {
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
-    @PostMapping(value = "/getLocationsInCity")
+    @PostMapping(value="/getLocationsInCity")
     private Response getLocationsInCity(@RequestBody Long cityId){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInCity( cityId ) );
     }
 
-    @PostMapping(value = "/getLocationsInState")
+    @PostMapping(value="/getLocationsInState")
     private Response getLocationsInState(@RequestBody Long stateId){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInState( stateId ) );
     }
 
-    @PostMapping(value = "/getLocationsInCountry")
+    @PostMapping(value="/getLocationsInCountry")
     private Response getLocationsInCountry(@RequestBody Long countryId){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInCountry( countryId ) );
     }
 
-    @PostMapping(value = "/getLocationsInBoundary")
+    @PostMapping(value="/getLocationsInBoundary")
     private Response getLocationsInBoundary(@RequestBody LocationBoundary locationBoundary){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInBoundary(locationBoundary) );
     }
 
-    @PostMapping(value = "/getLocationsCountInBoundary")
+    @PostMapping(value="/getLocationsCountInBoundary")
     private Response getLocationsCountInBoundary(@RequestBody LocationBoundary locationBoundary){
         return ResponseHelper.prepareSuccess( locationService.getLocationsCountInBoundary(locationBoundary) );
     }
 
-    @PostMapping(value = "/getLocationsInRadius")
+    @PostMapping(value="/getLocationsInRadius")
     private Response getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto){
         try {
             return ResponseHelper.prepareSuccess( locationService.getLocationsInRadius(radiusSearchDto) );
@@ -75,6 +76,15 @@ public class LocationController {
     private Response addLocation(@RequestBody LocationDto locationDto){
         try {
             return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
+        } catch (BusinessException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        }
+    }
+
+    @PostMapping(value="/addBulkLocation")
+    private Response addBulkLocations(@RequestBody List<LocationDto> locationDtos){
+        try {
+            return ResponseHelper.prepareSuccess( locationService.saveBulk(locationDtos) );
         } catch (BusinessException e) {
             return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
         }
@@ -111,5 +121,7 @@ public class LocationController {
             return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
         }
     }
+
+
 
 }
