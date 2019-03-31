@@ -2,13 +2,14 @@ package com.lasform.business.repository;
 
 import com.lasform.model.entity.Location;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface LocationRepository extends CrudRepository<Location,Long> {
+public interface LocationRepository extends CrudRepository<Location,Long>, JpaSpecificationExecutor<Location> {
 
     @Query("SELECT l FROM Location l WHERE l.name like %:nameQuery% ")
     public List<Location> searchByName(@Param("nameQuery")  String nameQuery );

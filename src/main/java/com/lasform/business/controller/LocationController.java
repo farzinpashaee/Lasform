@@ -38,6 +38,11 @@ public class LocationController {
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
+    @PostMapping(value="/searchLocations")
+    private Response searchLocations(@RequestBody LocationDto locationDto){
+        return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
+    }
+
     @PostMapping(value="/getLocationsInCity")
     private Response getLocationsInCity(@RequestBody Long cityId){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInCity( cityId ) );
@@ -81,7 +86,7 @@ public class LocationController {
         }
     }
 
-    @PostMapping(value="/addBulkLocation")
+    @PostMapping(value="/addBulkLocations")
     private Response addBulkLocations(@RequestBody List<LocationDto> locationDtos){
         try {
             return ResponseHelper.prepareSuccess( locationService.saveBulk(locationDtos) );

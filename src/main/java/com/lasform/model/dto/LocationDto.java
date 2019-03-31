@@ -14,5 +14,7 @@ public class LocationDto {
     private String locationTypeName;
     private long cityId;
     private String cityName;
+    private long locationGroupId;
+    private String locationGroupName;
 
 }

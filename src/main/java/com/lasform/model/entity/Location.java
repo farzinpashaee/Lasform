@@ -1,5 +1,7 @@
 package com.lasform.model.entity;
 
+import org.springframework.lang.Nullable;
+
 import javax.persistence.*;
 
 @Entity
@@ -23,6 +25,10 @@ public class Location {
     @OneToOne
     @JoinColumn(name = "LOCATION_TYPE_ID")
     private LocationType locationType;
+    @OneToOne
+    @Nullable
+    @JoinColumn(name = "LOCATION_GROUP_ID")
+    private LocationGroup locationGroup;
 
 
     public long getId() {

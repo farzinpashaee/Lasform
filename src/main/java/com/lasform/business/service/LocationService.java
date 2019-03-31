@@ -8,6 +8,7 @@ import com.lasform.business.exceptions.UnrecognizedLocationTypeException;
 import com.lasform.business.repository.CityRepository;
 import com.lasform.business.repository.LocationRepository;
 import com.lasform.business.repository.LocationTypeRepository;
+import com.lasform.business.specifications.LocationSearchSpecifications;
 import com.lasform.model.dto.LocationBoundary;
 import com.lasform.model.dto.LocationDto;
 import com.lasform.model.dto.RadiusSearchDto;
@@ -42,6 +43,11 @@ public class LocationService {
 
     public List<Location> searchByName( String nameQuery ){
         return locationRepository.searchByName( nameQuery );
+    }
+
+    public List<Location> search( LocationDto locationDto ){
+        LocationSearchSpecifications locationSearchSpecifications = new LocationSearchSpecifications(locationDto);
+        return locationRepository.findAll(locationSearchSpecifications);
     }
 
     public Location save( LocationDto locationDto ) throws UnrecognizedCityException, UnrecognizedLocationTypeException {
