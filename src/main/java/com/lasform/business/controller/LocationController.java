@@ -1,6 +1,7 @@
 package com.lasform.business.controller;
 
 import com.lasform.business.exceptions.*;
+import com.lasform.business.service.LocationGroupServices;
 import com.lasform.business.service.LocationService;
 import com.lasform.business.service.LocationTypeService;
 import com.lasform.helper.ResponseHelper;
@@ -22,6 +23,9 @@ public class LocationController {
 
     @Autowired
     LocationTypeService locationTypeService;
+
+    @Autowired
+    LocationGroupServices locationGroupServices;
 
     @RequestMapping(value="/echo")
     private String echo(@RequestBody String  message){
@@ -105,7 +109,7 @@ public class LocationController {
     }
 
     @PostMapping(value="/getLocationTypeList")
-    private Response getLocationTypeList(@RequestBody LocationTypeDto locationTypeDto){
+    private Response getLocationTypeList(){
         return ResponseHelper.prepareSuccess( locationTypeService.getLocationTypeList() );
     }
 
@@ -126,6 +130,30 @@ public class LocationController {
             return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
         }
     }
+
+    @PostMapping(value="/getLocationGroupList")
+    private Response getLocationGroupList(){
+        return ResponseHelper.prepareSuccess( locationGroupServices.getLocationGroupList() );
+    }
+
+    @PostMapping(value="/addLocationGroup")
+    private Response addLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
+        try {
+            return ResponseHelper.prepareSuccess( locationGroupServices.save(locationGroupDto) );
+        } catch (BusinessException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        }
+    }
+
+    @PostMapping(value="/updateLocationType")
+    private Response updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
+        try {
+            return ResponseHelper.prepareSuccess( locationGroupServices.update(locationGroupDto) );
+        } catch (BusinessException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        }
+    }
+
 
 
 
