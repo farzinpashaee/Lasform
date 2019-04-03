@@ -5,8 +5,8 @@ import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 
-@Entity
 @Data
+@Entity
 public class Location {
 
     @Id

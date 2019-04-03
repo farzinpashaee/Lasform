@@ -1,7 +1,10 @@
 package com.lasform.model.entity;
 
+import lombok.Data;
+
 import javax.persistence.*;
 
+@Data
 @Entity
 public class State {
 
