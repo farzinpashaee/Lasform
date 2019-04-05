@@ -1,24 +1,20 @@
 package com.lasform.model.entity;
 
-import com.lasform.C;
 import lombok.Data;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
 @Data
 @Entity
-public class Geofence {
+public class GeofenceGroup {
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
     private long id;
-    @Column(length=80)
     private String name;
-    @Column(length=200)
     private String description;
-    @OneToOne
-    @JoinColumn(name = "GEO_AREA_ID")
-    private GeoArea geoArea;
-
 
 }

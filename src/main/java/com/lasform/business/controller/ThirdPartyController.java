@@ -14,13 +14,13 @@ public class ThirdPartyController {
     @Autowired
     ThirdPartyService thirdPartyService;
 
-    @GetMapping(value = "/mapApi" , produces = "text/javascript")
-    private String googleApi(){
+    @GetMapping(value = "/script" , produces = "text/javascript")
+    private String script(){
         return thirdPartyService.getBaseApi();
     }
 
-    @PostMapping(value = "/mapDirection" , produces = "application/json")
-    private String googleDirection(@RequestBody DirectionRequest directionRequest){
+    @PostMapping(value = "/direction" , produces = "application/json")
+    private String direction(@RequestBody DirectionRequest directionRequest){
         return thirdPartyService.getDirection(directionRequest);
     }
 

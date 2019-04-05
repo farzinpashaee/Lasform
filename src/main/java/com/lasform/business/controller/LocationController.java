@@ -1,12 +1,11 @@
 package com.lasform.business.controller;
 
 import com.lasform.business.exceptions.*;
-import com.lasform.business.service.LocationGroupServices;
+import com.lasform.business.service.LocationGroupService;
 import com.lasform.business.service.LocationService;
 import com.lasform.business.service.LocationTypeService;
 import com.lasform.helper.ResponseHelper;
 import com.lasform.model.dto.*;
-import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +24,7 @@ public class LocationController {
     LocationTypeService locationTypeService;
 
     @Autowired
-    LocationGroupServices locationGroupServices;
+    LocationGroupService locationGroupService;
 
     @RequestMapping(value="/echo")
     private String echo(@RequestBody String  message){
@@ -133,13 +132,13 @@ public class LocationController {
 
     @PostMapping(value="/getLocationGroupList")
     private Response getLocationGroupList(){
-        return ResponseHelper.prepareSuccess( locationGroupServices.getLocationGroupList() );
+        return ResponseHelper.prepareSuccess( locationGroupService.getLocationGroupList() );
     }
 
     @PostMapping(value="/addLocationGroup")
     private Response addLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
         try {
-            return ResponseHelper.prepareSuccess( locationGroupServices.save(locationGroupDto) );
+            return ResponseHelper.prepareSuccess( locationGroupService.save(locationGroupDto) );
         } catch (BusinessException e) {
             return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
         }
@@ -148,7 +147,7 @@ public class LocationController {
     @PostMapping(value="/updateLocationType")
     private Response updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
         try {
-            return ResponseHelper.prepareSuccess( locationGroupServices.update(locationGroupDto) );
+            return ResponseHelper.prepareSuccess( locationGroupService.update(locationGroupDto) );
         } catch (BusinessException e) {
             return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
         }

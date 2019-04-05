@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class LocationGroupServices {
+public class LocationGroupService {
 
     @Autowired
     LocationGroupRepository locationGroupRepository;
