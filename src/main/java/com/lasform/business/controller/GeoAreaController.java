@@ -22,6 +22,16 @@ public class GeoAreaController {
     @Autowired
     GeoAreaService geoAreaService;
 
+    @PostMapping(value="/findById")
+    private Response findById(@RequestBody GeoAreaDto geoAreaDto){
+        return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
+    }
+
+    @PostMapping(value="/findByName")
+    private Response findByName(@RequestBody GeoAreaDto geoAreaDto){
+        return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
+    }
+
     @PostMapping(value="/addGeoAreaByList")
     private Response addGeoAreaByList(@RequestBody GeoAreaDto geoAreaDto){
         try {
@@ -30,5 +40,7 @@ public class GeoAreaController {
             return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
         }
     }
+
+
 
 }

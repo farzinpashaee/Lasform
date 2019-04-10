@@ -25,6 +25,14 @@ public class GeoAreaService {
         return geoAreaRepository.findById(id).get();
     }
 
+    public List<GeoArea> findByName( String name ){
+        return geoAreaRepository.findByName(name);
+    }
+
+    public List<GeoArea> findByNameContaining( String name ){
+        return geoAreaRepository.findByNameContaining(name);
+    }
+
     public List<Geofence> findByGroupId(long groupId ){
         return null;
     }

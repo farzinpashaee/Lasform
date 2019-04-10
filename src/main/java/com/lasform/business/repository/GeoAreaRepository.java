@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface GeoAreaRepository extends JpaRepository<GeoArea,Long> {
 
-
+    List<GeoArea> findByName( String name );
+    List<GeoArea> findByNameContaining( String name );
 
 }

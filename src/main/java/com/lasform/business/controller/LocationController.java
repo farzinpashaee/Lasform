@@ -36,13 +36,13 @@ public class LocationController {
         return ResponseHelper.prepareSuccess( locationService.findById(locationDto.getId()) );
     }
 
-    @PostMapping(value="/searchLocationByName")
-    private Response searchLocationByName(@RequestBody LocationDto locationDto){
+    @PostMapping(value="/findLocationByName")
+    private Response findLocationByName(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
-    @PostMapping(value="/searchLocations")
-    private Response searchLocations(@RequestBody LocationDto locationDto){
+    @PostMapping(value="/findLocations")
+    private Response findLocations(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
