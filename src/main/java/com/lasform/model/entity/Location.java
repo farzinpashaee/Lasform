@@ -12,9 +12,9 @@ public class Location {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private long id;
-    @Column(length=15)
+    @Column(length=25)
     private String latitude;
-    @Column(length=15)
+    @Column(length=25)
     private String longitude;
     @Column(length=80)
     private String name;

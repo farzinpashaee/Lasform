@@ -144,7 +144,7 @@ public class LocationController {
         }
     }
 
-    @PostMapping(value="/updateLocationType")
+    @PostMapping(value="/updateLocationGroup")
     private Response updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
         try {
             return ResponseHelper.prepareSuccess( locationGroupService.update(locationGroupDto) );

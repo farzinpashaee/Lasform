@@ -2,6 +2,7 @@ package com.lasform.business.service;
 
 import com.lasform.business.exceptions.EmptyFieldException;
 import com.lasform.business.repository.GeoAreaRepository;
+import com.lasform.helper.JsonHelper;
 import com.lasform.model.dto.GeoAreaDto;
 import com.lasform.model.dto.LatLng;
 import com.lasform.model.dto.LocationBoundary;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -31,22 +31,25 @@ public class GeoAreaService {
 
     public GeoArea saveByList(GeoAreaDto geoAreaDto) throws EmptyFieldException {
         GeoArea geoArea = new GeoArea();
-        if(geoAreaDto.getName()==null) {
+        if( geoAreaDto.getName() == null) {
             throw new EmptyFieldException("Name field can not be empty");
         }
-        if(geoAreaDto.getType()==null) {
+        if( geoAreaDto.getType() == null) {
             throw new EmptyFieldException("Type field can not be empty");
         }
-        if(geoAreaDto.getAreaList()==null || geoAreaDto.getAreaList().size() == 0 ) {
+        if( geoAreaDto.getAreaList() == null || geoAreaDto.getAreaList().size() == 0 ) {
             throw new EmptyFieldException("Area List field can not be empty");
         }
-        if( geoAreaDto.getAreaNortheast()==null || geoAreaDto.getAreaSouthwest()==null ) {
+        if( geoAreaDto.getAreaNortheast() == null || geoAreaDto.getAreaSouthwest() == null ) {
             LocationBoundary areaBoundary = calculateAreaBoundaryFromList(geoAreaDto);
             geoArea.setAreaNortheastLatitude(areaBoundary.getNortheast().getLatitude());
             geoArea.setAreaNortheastLongitude(areaBoundary.getNortheast().getLongitude());
             geoArea.setAreaSouthwestLatitude(areaBoundary.getSouthwest().getLatitude());
             geoArea.setAreaSouthwestLatitude(areaBoundary.getSouthwest().getLongitude());
         }
+        geoArea.setName(geoAreaDto.getName());
+        geoArea.setDescription(geoAreaDto.getDescription());
+        geoArea.setArea( JsonHelper.areaListToJsonString(geoAreaDto.getAreaList()) );
         return geoAreaRepository.save(geoArea);
     }
 
@@ -63,6 +66,7 @@ public class GeoAreaService {
         result.setSouthwest(new LatLng(Collections.min(Arrays.asList(lats)).toString() , Collections.min(Arrays.asList(lngs)).toString() ));
         return result;
     }
+
 
 
 }
