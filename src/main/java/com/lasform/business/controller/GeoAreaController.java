@@ -22,6 +22,11 @@ public class GeoAreaController {
     @Autowired
     GeoAreaService geoAreaService;
 
+    @PostMapping(value="/find")
+    private Response find(@RequestBody GeoAreaDto geoAreaDto){
+        return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
+    }
+
     @PostMapping(value="/findById")
     private Response findById(@RequestBody GeoAreaDto geoAreaDto){
         return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
