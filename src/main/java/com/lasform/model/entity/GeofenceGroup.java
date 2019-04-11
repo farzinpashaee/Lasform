@@ -18,7 +18,8 @@ public class GeofenceGroup {
     @GeneratedValue(strategy= GenerationType.AUTO)
     private long id;
     private String name;
-    private String description;    @CreatedDate
+    private String description;
+    @CreatedDate
     Date createDate;
     @LastModifiedDate
     Date modifiedDate;

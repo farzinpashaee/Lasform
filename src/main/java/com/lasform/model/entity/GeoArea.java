@@ -30,7 +30,8 @@ public class GeoArea {
     @Column(length=15)
     private String areaSouthwestLatitude;
     @Column(length=15)
-    private String areaSouthwestLongitude;    @CreatedDate
+    private String areaSouthwestLongitude;
+    @CreatedDate
     Date createDate;
     @LastModifiedDate
     Date modifiedDate;
