@@ -3,8 +3,11 @@ package com.lasform.model.entity;
 
 import com.lasform.C;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Data
 @Entity
@@ -27,5 +30,8 @@ public class GeoArea {
     @Column(length=15)
     private String areaSouthwestLatitude;
     @Column(length=15)
-    private String areaSouthwestLongitude;
+    private String areaSouthwestLongitude;    @CreatedDate
+    Date createDate;
+    @LastModifiedDate
+    Date modifiedDate;
 }

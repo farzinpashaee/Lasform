@@ -1,9 +1,12 @@
 package com.lasform.model.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Data
 @Entity
@@ -37,6 +40,10 @@ public class Location {
     @JoinColumn(name = "LOCATION_GROUP_ID")
     @Nullable
     private LocationGroup locationGroup;
+    @CreatedDate
+    Date createDate;
+    @LastModifiedDate
+    Date modifiedDate;
 
 
 }
