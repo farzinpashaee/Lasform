@@ -27,7 +27,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.lasform</groupId>
+            <groupId>com.lasform.core</groupId>
             <artifactId>core</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
