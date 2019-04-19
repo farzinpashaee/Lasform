@@ -46,6 +46,9 @@ public class GeoAreaController {
         }
     }
 
-
+    @PostMapping(value="/findGeofence")
+    private Response findGeofence(@RequestBody GeoAreaDto geoAreaDto){
+        return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
+    }
 
 }
