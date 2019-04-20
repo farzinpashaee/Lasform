@@ -1,5 +1,5 @@
 # Lasform
-Lasform is a location base platform implemented by Java using Spring Boot. Lasform can be reshaped and customized for any location based solution. The default artifact can be easily used and deployed in your production environment.
+[Lasform](http://lasform.ir) is a location base platform implemented by Java using Spring Boot. Lasform can be reshaped and customized for any location based solution. The default artifact can be easily used and deployed in your production environment.
 
 ## Introduction
 Lastform is a platform that consist of multiple module for different needs and tiers. These modules can be used separately or all at the same time based on your business needs.
@@ -22,7 +22,7 @@ MobileFace is a native android mobile application which provides a baseline for 
 
 ## Versioning
 
-1.0.0
+Lasform is currently availble in 0.0.1-SNAPSHOT version
 
 ## Authors
 
