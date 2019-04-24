@@ -14,7 +14,7 @@ app.controller('mapCtrl',  function($scope, $http , lfServices ) {
         var directionsService = new google.maps.DirectionsService();
         var directionsDisplay = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#8b0013" } });
 
-        var CONFIG = { MAP_DRAG_DELAY : 1000 }
+        var CONFIG = { MAP_DRAG_DELAY : 1000 , DEFAULT_ZOOM : 14 }
         var STYLE = [
             {
                 "featureType": "all",
@@ -203,12 +203,12 @@ app.controller('mapCtrl',  function($scope, $http , lfServices ) {
         $scope.initMap = function(){
             lfServices.log(lfServices.LOG.INFO,"Initiating Map");
             onViewResize();
-            lfServices.restCall("POST","/api/location/initialSetting" , {} ,function (payload) {
+            lfServices.restCall("POST","/api/webDelegate/initialSetting" , {} ,function (payload) {
                 lfServices.log(lfServices.LOG.INFO,"InitialSetting loaded");
                 // Creating map
                 map = new google.maps.Map(document.getElementById(e.map.substr(1,e.map.length-1)), {
                     center: {lat: parseInt(payload.initialMapCenter.latitude) , lng:  parseInt(payload.initialMapCenter.longitude)},
-                    zoom: 14,
+                    zoom: CONFIG.DEFAULT_ZOOM ,
                     disableDefaultUI: true,
                     styles: STYLE
                 });
@@ -352,7 +352,7 @@ app.controller('mapCtrl',  function($scope, $http , lfServices ) {
             $scope.loadingView = true;
             $scope.searchListView = false;
             $scope.locationDetailsView = false;
-            lfServices.restCall("POST","/api/location/searchByName",
+            lfServices.restCall("POST","/api/location/searchLocationByName",
                 { name : searchQuery } ,
                 function(data){
                     $scope.loadingView = false;
