@@ -13,6 +13,7 @@ public class GeoFenceService {
 
     public GeoFence findById(long id ){ return geoFenceRepository.findById(id).get(); }
 
+    public GeoFence findByName(String name ) { return geoFenceRepository.findByName( name ); }
 
 
 }
