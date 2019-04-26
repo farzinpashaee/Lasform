@@ -66,7 +66,7 @@ public class GeoAreaController {
 
     @PostMapping(value="/searchGeoFence")
     private Response searchGeoFence(@RequestBody GeoFenceDto geoFenceDto){
-        return null;
+        return ResponseHelper.prepareSuccess(geoFenceService.search(geoFenceDto));
     }
 
     @PostMapping(value="/addGeoFence")
