@@ -11,7 +11,7 @@ public class GeoAreaDto {
     private long id;
     private String name;
     private String description;
-    private C.GEOFENCE_TYPE type;
+    private C.GEO_AREA_TYPE type;
     private String areaString;
     private List<LatLng> areaList;
     private LatLng areaNortheast;

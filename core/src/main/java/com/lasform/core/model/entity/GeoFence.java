@@ -6,7 +6,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-public class Geofence {
+public class GeoFence {
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)

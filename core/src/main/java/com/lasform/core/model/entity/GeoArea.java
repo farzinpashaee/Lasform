@@ -20,7 +20,7 @@ public class GeoArea {
     private String name;
     @Column(length=200)
     private String description;
-    private C.GEOFENCE_TYPE type;
+    private C.GEO_AREA_TYPE type;
     @Column(length=250)
     private String area; // [{lat1,lng1},{lat2,lng2},...]
     @Column(length=15)

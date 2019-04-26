@@ -2,12 +2,13 @@ package com.lasform.core.business.service;
 
 import com.lasform.core.business.exceptions.EmptyFieldException;
 import com.lasform.core.business.repository.GeoAreaRepository;
+import com.lasform.core.business.specifications.GeoAreaSpecifications;
 import com.lasform.core.helper.JsonHelper;
 import com.lasform.core.model.dto.GeoAreaDto;
 import com.lasform.core.model.dto.LatLng;
 import com.lasform.core.model.dto.LocationBoundary;
 import com.lasform.core.model.entity.GeoArea;
-import com.lasform.core.model.entity.Geofence;
+import com.lasform.core.model.entity.GeoFence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class GeoAreaService {
         return geoAreaRepository.findByNameContaining(name);
     }
 
-    public List<Geofence> findByGroupId(long groupId ){
+    public List<GeoFence> findByGroupId(long groupId ){
         return null;
     }
 
@@ -75,6 +76,8 @@ public class GeoAreaService {
         return result;
     }
 
-
+    public List<GeoArea> search( GeoAreaDto geoAreaDto ){
+        return geoAreaRepository.findAll(new GeoAreaSpecifications().search(geoAreaDto)) ;
+    }
 
 }
