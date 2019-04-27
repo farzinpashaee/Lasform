@@ -3,6 +3,7 @@ package com.lasform.core.business.service;
 import com.lasform.core.business.exceptions.EmptyFieldException;
 import com.lasform.core.business.repository.GeoAreaRepository;
 import com.lasform.core.business.specifications.GeoAreaSpecifications;
+import com.lasform.core.helper.AreaHelper;
 import com.lasform.core.helper.JsonHelper;
 import com.lasform.core.model.dto.GeoAreaDto;
 import com.lasform.core.model.dto.LatLng;
@@ -50,7 +51,7 @@ public class GeoAreaService {
             throw new EmptyFieldException("Area List field can not be empty");
         }
         if( geoAreaDto.getAreaNortheast() == null || geoAreaDto.getAreaSouthwest() == null ) {
-            LocationBoundary areaBoundary = calculateAreaBoundaryFromList(geoAreaDto);
+            LocationBoundary areaBoundary = AreaHelper.calculateAreaBoundaryFromList(geoAreaDto);
             geoArea.setAreaNortheastLatitude(areaBoundary.getNortheast().getLatitude());
             geoArea.setAreaNortheastLongitude(areaBoundary.getNortheast().getLongitude());
             geoArea.setAreaSouthwestLatitude(areaBoundary.getSouthwest().getLatitude());
@@ -62,19 +63,7 @@ public class GeoAreaService {
         return geoAreaRepository.save(geoArea);
     }
 
-    public LocationBoundary calculateAreaBoundaryFromList(GeoAreaDto geoAreaDto ){
-        LocationBoundary result = new LocationBoundary();
-        int nodeSize = geoAreaDto.getAreaList().size();
-        Double[] lats = new Double[nodeSize];
-        Double[] lngs = new Double[nodeSize];
-        for(int i = 0 ; i < nodeSize ; i++ ){
-            lats[i] = Double.parseDouble( geoAreaDto.getAreaList().get(i).getLatitude() );
-            lngs[i] = Double.parseDouble( geoAreaDto.getAreaList().get(i).getLongitude() );
-        }
-        result.setNortheast(new LatLng(Collections.max(Arrays.asList(lats)).toString() , Collections.max(Arrays.asList(lngs)).toString() ));
-        result.setSouthwest(new LatLng(Collections.min(Arrays.asList(lats)).toString() , Collections.min(Arrays.asList(lngs)).toString() ));
-        return result;
-    }
+
 
     public List<GeoArea> search( GeoAreaDto geoAreaDto ){
         return geoAreaRepository.findAll(new GeoAreaSpecifications().search(geoAreaDto)) ;

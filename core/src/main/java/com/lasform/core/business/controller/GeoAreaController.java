@@ -70,8 +70,12 @@ public class GeoAreaController {
     }
 
     @PostMapping(value="/addGeoFence")
-    private Response addGeoFence(@RequestBody GeoFenceDto geoFenceDto){
-        return null;
+    private Response addGeoFenceByList(@RequestBody GeoFenceDto geoFenceDto){
+        try {
+            return ResponseHelper.prepareSuccess( geoFenceService.saveByList(geoFenceDto));
+        } catch (BusinessException e) {
+            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+        }
     }
 
 
