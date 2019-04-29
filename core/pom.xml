@@ -10,6 +10,7 @@
 
     <name>Lasform Core</name>
     <description>Location Base Platform Core Module</description>
+    <url>http://lasform.ir</url>
 
     <parent>
         <groupId>org.springframework.boot</groupId>

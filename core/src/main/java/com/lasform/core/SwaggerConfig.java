@@ -21,7 +21,7 @@ public class SwaggerConfig {
     @Bean
     public Docket productApi() {
         return new Docket(DocumentationType.SWAGGER_2)
-                .select().apis(RequestHandlerSelectors.basePackage("com.lasform.business.controller"))
+                .select().apis(RequestHandlerSelectors.basePackage("com.lasform.core.business.controller"))
                 .paths(regex("/api/.*"))
                 .build();
     }
