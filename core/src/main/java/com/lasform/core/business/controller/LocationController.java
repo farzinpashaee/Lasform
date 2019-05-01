@@ -42,13 +42,13 @@ public class LocationController {
         return ResponseHelper.prepareSuccess( locationService.findByName( locationDto.getName() ) );
     }
 
-    @PostMapping(value="/search")
-    private Response search(@RequestBody LocationDto locationDto){
+    @PostMapping(value="/searchLocations")
+    private Response searchLocations(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.search( locationDto ) );
     }
 
-    @PostMapping(value="/searchByName")
-    private Response searchByName(@RequestBody LocationDto locationDto){
+    @PostMapping(value="/searchLocationsByName")
+    private Response searchLocationsByName(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 

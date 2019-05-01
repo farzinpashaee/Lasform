@@ -58,4 +58,27 @@ public class WebServiceTests {
                 .andExpect(status().isOk());
     }
 
+
+    @Test
+    public void searchLocationsTest() throws Exception {
+        mockMvc.perform(
+                post("/api/location/searchLocations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Test\"}"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void searchLocationsByNameTest() throws Exception {
+        mockMvc.perform(
+                post("/api/location/searchLocationsByName")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Test\"}"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+
+
 }
