@@ -41,13 +41,15 @@ public class LocationService {
         return locationRepository.findById(id).get() ;
     }
 
-    public List<Location> searchByName( String nameQuery ){
-        return locationRepository.searchByName( nameQuery );
-    }
+    public Location findByName( String name ){ return locationRepository.findByName(name); }
 
     public List<Location> search( LocationDto locationDto ){
         LocationSearchSpecifications locationSearchSpecifications = new LocationSearchSpecifications(locationDto);
         return locationRepository.findAll(locationSearchSpecifications);
+    }
+
+    public List<Location> searchByName( String nameQuery ){
+        return locationRepository.searchByName( nameQuery );
     }
 
     public Location save( LocationDto locationDto ) throws UnrecognizedCityException, UnrecognizedLocationTypeException {
@@ -63,7 +65,7 @@ public class LocationService {
         return locationRepository.save(location);
     }
 
-    public ArrayList<Location> saveBulk( List<LocationDto> locationDtos ) throws UnrecognizedCityException, UnrecognizedLocationTypeException {
+    public ArrayList<Location> saveAll( List<LocationDto> locationDtos ) throws UnrecognizedCityException, UnrecognizedLocationTypeException {
         ArrayList<Location> locations = new ArrayList<Location>();
         for( LocationDto locationDto : locationDtos ){
             Location location = new Location();

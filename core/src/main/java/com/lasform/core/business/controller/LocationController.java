@@ -39,11 +39,16 @@ public class LocationController {
 
     @PostMapping(value="/findLocationByName")
     private Response findLocationByName(@RequestBody LocationDto locationDto){
-        return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
+        return ResponseHelper.prepareSuccess( locationService.findByName( locationDto.getName() ) );
     }
 
-    @PostMapping(value="/findLocations")
-    private Response findLocations(@RequestBody LocationDto locationDto){
+    @PostMapping(value="/search")
+    private Response search(@RequestBody LocationDto locationDto){
+        return ResponseHelper.prepareSuccess( locationService.search( locationDto ) );
+    }
+
+    @PostMapping(value="/searchByName")
+    private Response searchByName(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
@@ -93,7 +98,7 @@ public class LocationController {
     @PostMapping(value="/addBulkLocations")
     private Response addBulkLocations(@RequestBody List<LocationDto> locationDtos){
         try {
-            return ResponseHelper.prepareSuccess( locationService.saveBulk(locationDtos) );
+            return ResponseHelper.prepareSuccess( locationService.saveAll(locationDtos) );
         } catch (BusinessException e) {
             return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
         }

@@ -12,6 +12,11 @@ import java.util.List;
 @Repository
 public interface LocationRepository extends CrudRepository<Location,Long>, JpaSpecificationExecutor<Location> {
 
+    public Location findByName( String name );
+    public List<Location> findAllByCityId( Long cityId );
+    public List<Location> findAllByCity_StateId( Long stateId );
+    public List<Location> findAllByCity_State_CountryId( Long countryId );
+
     @Query("SELECT l FROM Location l WHERE l.name like %:nameQuery% ")
     public List<Location> searchByName(@Param("nameQuery")  String nameQuery );
 
@@ -32,8 +37,5 @@ public interface LocationRepository extends CrudRepository<Location,Long>, JpaSp
                                                   String southWestLat ,
                                                   String southWestLng );
 
-    public List<Location> findAllByCityId( Long cityId );
-    public List<Location> findAllByCity_StateId( Long stateId );
-    public List<Location> findAllByCity_State_CountryId( Long countryId );
 
 }
