@@ -1,4 +1,4 @@
-package com.lasform.webface.core.integration;
+package com.lasform.core.integration;
 
 
 import org.junit.Test;
@@ -36,7 +36,6 @@ public class WebServiceTests {
                 .andDo(print())
                 .andExpect(status().isOk());
     }
-
 
     @Test
     public void findLocationByIdTest() throws Exception {
@@ -79,6 +78,63 @@ public class WebServiceTests {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    public void getLocationsInCityTest() throws Exception {
+        mockMvc.perform(
+                post("/api/location/getLocationsInCity")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":0}"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
 
+    @Test
+    public void getLocationsInStateTest() throws Exception {
+        mockMvc.perform(
+                post("/api/location/getLocationsInState")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":0}"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
 
+    @Test
+    public void getLocationsInCountryTest() throws Exception {
+        mockMvc.perform(
+                post("/api/location/getLocationsInCountry")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":0}"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void getLocationsInBoundaryTest() throws Exception {
+        mockMvc.perform(
+                post("/api/location/getLocationsInBoundary")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"northeast\":{\"latitude\":\"0\",\"longitude\":\"0\"},\"southwest\":{\"latitude\":\"0\",\"longitude\":\"0\"}}"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void getLocationsCountInBoundaryTest() throws Exception {
+        mockMvc.perform(
+                post("/api/location/getLocationsCountInBoundary")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"northeast\":{\"latitude\":\"0\",\"longitude\":\"0\"},\"southwest\":{\"latitude\":\"0\",\"longitude\":\"0\"}}"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void getLocationsInRadiusTest() throws Exception {
+        mockMvc.perform(
+                post("/api/location/getLocationsInRadius")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"center\":{\"latitude\":\"0\",\"longitude\":\"0\"},\"radius\":1}"))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
 }

@@ -7,6 +7,9 @@ import com.lasform.core.business.exceptions.BusinessException;
 import com.lasform.core.business.exceptions.NativeQueryException;
 import com.lasform.core.helper.ResponseHelper;
 import com.lasform.core.model.dto.*;
+import com.lasform.core.model.entity.City;
+import com.lasform.core.model.entity.Country;
+import com.lasform.core.model.entity.State;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -53,18 +56,18 @@ public class LocationController {
     }
 
     @PostMapping(value="/getLocationsInCity")
-    private Response getLocationsInCity(@RequestBody Long cityId){
-        return ResponseHelper.prepareSuccess( locationService.getLocationsInCity( cityId ) );
+    private Response getLocationsInCity(@RequestBody City city){
+        return ResponseHelper.prepareSuccess( locationService.getLocationsInCity( city.getId() ) );
     }
 
     @PostMapping(value="/getLocationsInState")
-    private Response getLocationsInState(@RequestBody Long stateId){
-        return ResponseHelper.prepareSuccess( locationService.getLocationsInState( stateId ) );
+    private Response getLocationsInState(@RequestBody State state){
+        return ResponseHelper.prepareSuccess( locationService.getLocationsInState( state.getId() ) );
     }
 
     @PostMapping(value="/getLocationsInCountry")
-    private Response getLocationsInCountry(@RequestBody Long countryId){
-        return ResponseHelper.prepareSuccess( locationService.getLocationsInCountry( countryId ) );
+    private Response getLocationsInCountry(@RequestBody Country country){
+        return ResponseHelper.prepareSuccess( locationService.getLocationsInCountry( country.getId() ) );
     }
 
     @PostMapping(value="/getLocationsInBoundary")
