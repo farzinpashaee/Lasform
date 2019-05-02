@@ -1,4 +1,4 @@
-package com.lasform.core;
+package com.lasform.webface.core.integration;
 
 
 import org.junit.Test;
