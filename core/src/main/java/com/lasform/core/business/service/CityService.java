@@ -10,8 +10,12 @@ import java.util.List;
 @Service
 public class CityService {
 
+    private CityRepository cityRepository;
+
     @Autowired
-    CityRepository cityRepository;
+    CityService( CityRepository cityRepository ){
+        this.cityRepository = cityRepository;
+    }
 
     public List<City> getCityList(long stateId){
         return cityRepository.findAllByStateId( stateId );
