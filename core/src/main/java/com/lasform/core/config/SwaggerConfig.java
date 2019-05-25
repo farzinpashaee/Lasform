@@ -1,4 +1,4 @@
-package com.lasform.core;
+package com.lasform.core.config;
 
 
 import org.springframework.context.annotation.Bean;
