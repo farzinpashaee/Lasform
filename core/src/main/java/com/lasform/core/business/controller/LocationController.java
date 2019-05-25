@@ -1,6 +1,6 @@
 package com.lasform.core.business.controller;
 
-import com.lasform.core.business.service.LocationGroupService;
+import com.lasform.core.business.service.implementation.LocationGroupServiceImp;
 import com.lasform.core.business.service.LocationService;
 import com.lasform.core.business.service.LocationTypeService;
 import com.lasform.core.business.exceptions.BusinessException;
@@ -28,7 +28,7 @@ public class LocationController {
     LocationTypeService locationTypeService;
 
     @Autowired
-    LocationGroupService locationGroupService;
+    LocationGroupServiceImp locationGroupService;
 
     @RequestMapping(value="/echo")
     private String echo(@RequestParam String  message){

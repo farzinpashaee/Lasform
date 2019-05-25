@@ -1,8 +1,8 @@
 package com.lasform.core.business.controller;
 
 import com.lasform.core.business.exceptions.BusinessException;
-import com.lasform.core.business.service.GeoAreaService;
-import com.lasform.core.business.service.GeoFenceService;
+import com.lasform.core.business.service.implementation.GeoAreaServiceImp;
+import com.lasform.core.business.service.implementation.GeoFenceServiceImp;
 import com.lasform.core.helper.ResponseHelper;
 import com.lasform.core.model.dto.GeoAreaDto;
 import com.lasform.core.model.dto.GeoFenceDto;
@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class GeoAreaController {
 
     @Autowired
-    GeoAreaService geoAreaService;
+    GeoAreaServiceImp geoAreaService;
 
     @Autowired
-    GeoFenceService geoFenceService;
+    GeoFenceServiceImp geoFenceService;
 
     @PostMapping(value="/find")
     private Response find(@RequestBody GeoAreaDto geoAreaDto){
