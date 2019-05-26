@@ -5,7 +5,6 @@ import com.lasform.core.business.exceptions.EmptyFieldException;
 import com.lasform.core.business.exceptions.UnrecognizedLocationTypeException;
 import com.lasform.core.business.repository.LocationGroupRepository;
 import com.lasform.core.business.service.LocationGroupService;
-import com.lasform.core.business.service.LocationService;
 import com.lasform.core.model.dto.LocationGroupDto;
 import com.lasform.core.model.entity.LocationGroup;
 import org.springframework.beans.factory.annotation.Autowired;

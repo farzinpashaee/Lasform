@@ -1,8 +1,8 @@
 package com.lasform.core.business.controller;
 
 import com.lasform.core.business.service.implementation.LocationGroupServiceImp;
-import com.lasform.core.business.service.LocationService;
-import com.lasform.core.business.service.LocationTypeService;
+import com.lasform.core.business.service.implementation.LocationServiceImp;
+import com.lasform.core.business.service.implementation.LocationTypeServiceImp;
 import com.lasform.core.business.exceptions.BusinessException;
 import com.lasform.core.business.exceptions.NativeQueryException;
 import com.lasform.core.helper.ResponseHelper;
@@ -22,10 +22,10 @@ import java.util.List;
 public class LocationController {
 
     @Autowired
-    LocationService locationService;
+    LocationServiceImp locationService;
 
     @Autowired
-    LocationTypeService locationTypeService;
+    LocationTypeServiceImp locationTypeService;
 
     @Autowired
     LocationGroupServiceImp locationGroupService;
