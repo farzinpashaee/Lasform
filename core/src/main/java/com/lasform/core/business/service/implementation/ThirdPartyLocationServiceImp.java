@@ -1,4 +1,4 @@
-package com.lasform.core.business.service;
+package com.lasform.core.business.service.implementation;
 
 
 import com.lasform.core.helper.ResponseHelper;
@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-public class ThirdPartyService {
+public class ThirdPartyLocationServiceImp {
 
     @Value("${lasform.map.api.key}")
     private String apiKey ;
