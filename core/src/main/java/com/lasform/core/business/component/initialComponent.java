@@ -31,6 +31,9 @@ public class initialComponent {
     @Autowired
     LocationTypeRepository locationTypeRepository;
 
+    @Autowired
+    SettingRepository settingRepository;
+
     @PostConstruct
     public void initialSampleData(){
         // Add sample data
@@ -104,6 +107,12 @@ public class initialComponent {
             locations.add(location3);
 
             locationRepository.saveAll(locations);
+
+            Setting setting = new Setting();
+            setting.setId(1);
+            setting.setInitialMapCenter("35.6892,51.3890");
+            setting.setUserLocationPolicy(false);
+            settingRepository.save(setting);
 
         }
     }

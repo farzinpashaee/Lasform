@@ -203,7 +203,7 @@ app.controller('mapCtrl',  function($scope, $http , lfServices ) {
         $scope.initMap = function(){
             lfServices.log(lfServices.LOG.INFO,"Initiating Map");
             onViewResize();
-            lfServices.restCall("POST","/api/webDelegate/initialSetting" , {} ,function (payload) {
+            lfServices.restCall("POST","http://localhost:8088/api/webDelegate/initialSetting" , {} ,function (payload) {
                 lfServices.log(lfServices.LOG.INFO,"InitialSetting loaded");
                 // Creating map
                 map = new google.maps.Map(document.getElementById(e.map.substr(1,e.map.length-1)), {
