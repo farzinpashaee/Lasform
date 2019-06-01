@@ -1,5 +1,7 @@
 package com.lasform.webface.business.controller;
 
+import com.lasform.core.config.properties.LasformProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -8,7 +10,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class PagesController {
 
-    @Value("${lasform.application.mode}")
+    @Value("${lasform.application.core.mode}")
     String applicationMode;
 
     @GetMapping("/")
