@@ -1,6 +1,7 @@
 package com.lasform.core.business.component;
 
 import com.lasform.core.business.repository.*;
+import com.lasform.core.config.properties.LasformProperties;
 import com.lasform.core.model.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,8 +14,8 @@ import java.util.List;
 @Component
 public class initialComponent {
 
-    @Value("${lasform.application.initialSampleData}")
-    private boolean initialData = false;
+    @Autowired
+    LasformProperties lasformProperties;
 
     @Autowired
     LocationRepository locationRepository;
@@ -37,7 +38,7 @@ public class initialComponent {
     @PostConstruct
     public void initialSampleData(){
         // Add sample data
-        if(initialData){
+        if(lasformProperties.isInitialSampleData()){
 
             Country country = new Country();
             country.setName("Iran");

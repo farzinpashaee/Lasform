@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class PagesController {
 
-    @Value("${lasform.application.mode}")
+    @Value("${lasform.application.core.mode}")
     String applicationMode;
 
     @GetMapping("/")
