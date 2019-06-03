@@ -18,7 +18,7 @@ public class WebDelegateController {
     @Autowired
     ApplicationService applicationService;
 
-    @CrossOrigin(origins = "http://localhost:8080")
+    @CrossOrigin(origins = "${lasform.application.web-face-url}")
     @PostMapping(value="/initialSetting")
     private Response initialSetting(){
         return ResponseHelper.prepareSuccess( applicationService.getInitialSetting() );
