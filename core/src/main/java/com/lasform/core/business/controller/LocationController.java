@@ -7,10 +7,13 @@ import com.lasform.core.business.exceptions.BusinessException;
 import com.lasform.core.business.exceptions.NativeQueryException;
 import com.lasform.core.helper.ResponseHelper;
 import com.lasform.core.model.dto.*;
+import com.lasform.core.model.dto.Error;
 import com.lasform.core.model.entity.City;
 import com.lasform.core.model.entity.Country;
 import com.lasform.core.model.entity.State;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,6 +36,24 @@ public class LocationController {
     @RequestMapping(value="/echo")
     private String echo(@RequestParam String  message){
         return message;
+    }
+
+    @RequestMapping(value = "/sample1")
+    private ResponseEntity<City> sample1(){
+        City city = new City();
+        city.setName("Tabriz");
+        city.setLatitude("0.0");
+        city.setLongitude("0.0");
+        return ResponseEntity.ok().body(city);
+    }
+
+    @RequestMapping(value = "/sample2")
+    private ResponseEntity sample2(@RequestParam String test ){
+        if(test.equals("22")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Error());
+        } else {
+            return ResponseEntity.ok().body(new City());
+        }
     }
 
     @PostMapping(value="/findLocationById")
