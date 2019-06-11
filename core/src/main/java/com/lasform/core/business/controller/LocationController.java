@@ -38,148 +38,138 @@ public class LocationController {
         return message;
     }
 
-    @RequestMapping(value = "/sample1")
-    private ResponseEntity<City> sample1(){
-        City city = new City();
-        city.setName("Tabriz");
-        city.setLatitude("0.0");
-        city.setLongitude("0.0");
-        return ResponseEntity.ok().body(city);
-    }
-
-    @RequestMapping(value = "/sample2")
-    private ResponseEntity sample2(@RequestParam String test ){
-        if(test.equals("22")){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Error());
-        } else {
-            return ResponseEntity.ok().body(new City());
-        }
-    }
-
     @PostMapping(value="/findLocationById")
-    private Response findLocationById(@RequestBody LocationDto locationDto){
+    private ResponseEntity findLocationById(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.findById(locationDto.getId()) );
     }
 
     @PostMapping(value="/findLocationByName")
-    private Response findLocationByName(@RequestBody LocationDto locationDto){
+    private ResponseEntity findLocationByName(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.findByName( locationDto.getName() ) );
     }
 
     @PostMapping(value="/searchLocations")
-    private Response searchLocations(@RequestBody LocationDto locationDto){
+    private ResponseEntity searchLocations(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.search( locationDto ) );
     }
 
     @PostMapping(value="/searchLocationsByName")
-    private Response searchLocationsByName(@RequestBody LocationDto locationDto){
+    private ResponseEntity searchLocationsByName(@RequestBody LocationDto locationDto){
         return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
     }
 
     @PostMapping(value="/getLocationsInCity")
-    private Response getLocationsInCity(@RequestBody City city){
+    private ResponseEntity getLocationsInCity(@RequestBody City city){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInCity( city.getId() ) );
     }
 
     @PostMapping(value="/getLocationsInState")
-    private Response getLocationsInState(@RequestBody State state){
+    private ResponseEntity getLocationsInState(@RequestBody State state){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInState( state.getId() ) );
     }
 
     @PostMapping(value="/getLocationsInCountry")
-    private Response getLocationsInCountry(@RequestBody Country country){
+    private ResponseEntity getLocationsInCountry(@RequestBody Country country){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInCountry( country.getId() ) );
     }
 
     @PostMapping(value="/getLocationsInBoundary")
-    private Response getLocationsInBoundary(@RequestBody LocationBoundary locationBoundary){
+    private ResponseEntity getLocationsInBoundary(@RequestBody LocationBoundary locationBoundary){
         return ResponseHelper.prepareSuccess( locationService.getLocationsInBoundary(locationBoundary) );
     }
 
     @PostMapping(value="/getLocationsCountInBoundary")
-    private Response getLocationsCountInBoundary(@RequestBody LocationBoundary locationBoundary){
+    private ResponseEntity getLocationsCountInBoundary(@RequestBody LocationBoundary locationBoundary){
         return ResponseHelper.prepareSuccess( locationService.getLocationsCountInBoundary(locationBoundary) );
     }
 
     @PostMapping(value="/getLocationsInRadius")
-    private Response getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto){
+    private ResponseEntity getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto){
         try {
             return ResponseHelper.prepareSuccess( locationService.getLocationsInRadius(radiusSearchDto) );
         } catch (NativeQueryException e) {
-            return ResponseHelper.prepareError( 0 , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(0 , e.getMessage() ) );
         }
     }
 
     @PostMapping(value="/addLocation")
-    private Response addLocation(@RequestBody LocationDto locationDto){
+    private ResponseEntity addLocation(@RequestBody LocationDto locationDto){
         try {
             return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
     @PostMapping(value="/addBulkLocations")
-    private Response addBulkLocations(@RequestBody List<LocationDto> locationDtos){
+    private ResponseEntity addBulkLocations(@RequestBody List<LocationDto> locationDtos){
         try {
             return ResponseHelper.prepareSuccess( locationService.saveAll(locationDtos) );
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
     @PostMapping(value="/updateLocation")
-    private Response updateLocation(@RequestBody LocationDto locationDto){
+    private ResponseEntity updateLocation(@RequestBody LocationDto locationDto){
         try{
             return ResponseHelper.prepareSuccess( locationService.update(locationDto) );
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
     @PostMapping(value="/getLocationTypeList")
-    private Response getLocationTypeList(){
+    private ResponseEntity getLocationTypeList(){
         return ResponseHelper.prepareSuccess( locationTypeService.getLocationTypeList() );
     }
 
     @PostMapping(value="/addLocationType")
-    private Response addLocationType(@RequestBody LocationTypeDto locationTypeDto){
+    private ResponseEntity addLocationType(@RequestBody LocationTypeDto locationTypeDto){
         try {
             return ResponseHelper.prepareSuccess( locationTypeService.save(locationTypeDto) );
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
     @PostMapping(value="/updateLocationType")
-    private Response updateLocationType(@RequestBody LocationTypeDto locationTypeDto){
+    private ResponseEntity updateLocationType(@RequestBody LocationTypeDto locationTypeDto){
         try {
             return ResponseHelper.prepareSuccess( locationTypeService.update(locationTypeDto) );
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
     @PostMapping(value="/getLocationGroupList")
-    private Response getLocationGroupList(){
+    private ResponseEntity getLocationGroupList(){
         return ResponseHelper.prepareSuccess( locationGroupService.getLocationGroupList() );
     }
 
     @PostMapping(value="/addLocationGroup")
-    private Response addLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
+    private ResponseEntity addLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
         try {
             return ResponseHelper.prepareSuccess( locationGroupService.save(locationGroupDto) );
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
     @PostMapping(value="/updateLocationGroup")
-    private Response updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
+    private ResponseEntity updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
         try {
             return ResponseHelper.prepareSuccess( locationGroupService.update(locationGroupDto) );
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
