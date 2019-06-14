@@ -13,6 +13,7 @@ app.controller('mapCtrl',  function($scope, $http , lfServices ) {
         var userCurrentLocation = null;
         var directionsService = new google.maps.DirectionsService();
         var directionsDisplay = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#8b0013" } });
+        var coreServiceUrl = "http://localhost:8088/";
 
         var CONFIG = { MAP_DRAG_DELAY : 1000 , DEFAULT_ZOOM : 14 }
         var STYLE = [
@@ -238,7 +239,7 @@ app.controller('mapCtrl',  function($scope, $http , lfServices ) {
             // Checking map bound area
             var northeastCurrent = map.getBounds().getNorthEast();
             var southwestCurrent = map.getBounds().getSouthWest();
-            lfServices.restCall("POST","/api/location/getLocationsInBoundary",{
+            lfServices.restCall("POST",coreServiceUrl + "api/location/getLocationsInBoundary",{
                 northeast: {latitude: northeastCurrent.lat(), longitude: northeastCurrent.lng()},
                 southwest: {latitude: southwestCurrent.lat(), longitude: southwestCurrent.lng()}
             },function(payload){

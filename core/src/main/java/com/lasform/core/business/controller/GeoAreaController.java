@@ -7,7 +7,10 @@ import com.lasform.core.helper.ResponseHelper;
 import com.lasform.core.model.dto.GeoAreaDto;
 import com.lasform.core.model.dto.GeoFenceDto;
 import com.lasform.core.model.dto.Response;
+import com.lasform.core.model.dto.ResponseErrorPayload;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,55 +29,57 @@ public class GeoAreaController {
     GeoFenceServiceImp geoFenceService;
 
     @PostMapping(value="/find")
-    private Response find(@RequestBody GeoAreaDto geoAreaDto){
+    private ResponseEntity find(@RequestBody GeoAreaDto geoAreaDto){
         return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
     }
 
     @PostMapping(value="/findById")
-    private Response findById(@RequestBody GeoAreaDto geoAreaDto){
+    private ResponseEntity findById(@RequestBody GeoAreaDto geoAreaDto){
         return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
     }
 
     @PostMapping(value="/findByName")
-    private Response findByName(@RequestBody GeoAreaDto geoAreaDto){
+    private ResponseEntity findByName(@RequestBody GeoAreaDto geoAreaDto){
         return ResponseHelper.prepareSuccess( geoAreaService.findByName(geoAreaDto.getName()));
     }
 
     @PostMapping(value="/search")
-    private Response search(@RequestBody GeoAreaDto geoAreaDto){
+    private ResponseEntity search(@RequestBody GeoAreaDto geoAreaDto){
         return ResponseHelper.prepareSuccess( geoAreaService.search( geoAreaDto ) );
     }
 
     @PostMapping(value="/addGeoAreaByList")
-    private Response addGeoAreaByList(@RequestBody GeoAreaDto geoAreaDto){
+    private ResponseEntity addGeoAreaByList(@RequestBody GeoAreaDto geoAreaDto){
         try {
             return ResponseHelper.prepareSuccess( geoAreaService.saveByList(geoAreaDto));
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
     @PostMapping(value="/findGeoFenceById")
-    private Response findGeoFenceById(@RequestBody GeoFenceDto geoFenceDto){
+    private ResponseEntity findGeoFenceById(@RequestBody GeoFenceDto geoFenceDto){
         return ResponseHelper.prepareSuccess( geoFenceService.findById( geoFenceDto.getId() ) );
     }
 
     @PostMapping(value="/findGeoFenceByName")
-    private Response findGeoFenceByName(@RequestBody GeoFenceDto geoFenceDto){
+    private ResponseEntity findGeoFenceByName(@RequestBody GeoFenceDto geoFenceDto){
         return ResponseHelper.prepareSuccess( geoFenceService.findByName( geoFenceDto.getName() ) );
     }
 
     @PostMapping(value="/searchGeoFence")
-    private Response searchGeoFence(@RequestBody GeoFenceDto geoFenceDto){
+    private ResponseEntity searchGeoFence(@RequestBody GeoFenceDto geoFenceDto){
         return ResponseHelper.prepareSuccess(geoFenceService.search(geoFenceDto));
     }
 
     @PostMapping(value="/addGeoFence")
-    private Response addGeoFenceByList(@RequestBody GeoFenceDto geoFenceDto){
+    private ResponseEntity addGeoFenceByList(@RequestBody GeoFenceDto geoFenceDto){
         try {
             return ResponseHelper.prepareSuccess( geoFenceService.saveByList(geoFenceDto));
         } catch (BusinessException e) {
-            return ResponseHelper.prepareError( e.getBusinessExceptionCode() , e.getMessage() );
+            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
+                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
     }
 
