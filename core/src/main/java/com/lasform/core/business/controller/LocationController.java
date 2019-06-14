@@ -1,18 +1,15 @@
 package com.lasform.core.business.controller;
 
+import com.lasform.core.business.exceptions.*;
 import com.lasform.core.business.service.implementation.LocationGroupServiceImp;
 import com.lasform.core.business.service.implementation.LocationServiceImp;
 import com.lasform.core.business.service.implementation.LocationTypeServiceImp;
-import com.lasform.core.business.exceptions.BusinessException;
-import com.lasform.core.business.exceptions.NativeQueryException;
 import com.lasform.core.helper.ResponseHelper;
 import com.lasform.core.model.dto.*;
-import com.lasform.core.model.dto.Error;
 import com.lasform.core.model.entity.City;
 import com.lasform.core.model.entity.Country;
 import com.lasform.core.model.entity.State;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -84,43 +81,23 @@ public class LocationController {
     }
 
     @PostMapping(value="/getLocationsInRadius")
-    private ResponseEntity getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationService.getLocationsInRadius(radiusSearchDto) );
-        } catch (NativeQueryException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(0 , e.getMessage() ) );
-        }
+    private ResponseEntity getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto) throws NativeQueryException {
+        return ResponseHelper.prepareSuccess( locationService.getLocationsInRadius(radiusSearchDto) );
     }
 
     @PostMapping(value="/addLocation")
-    private ResponseEntity addLocation(@RequestBody LocationDto locationDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
+    private ResponseEntity addLocation(@RequestBody LocationDto locationDto) throws UnrecognizedCityException, UnrecognizedLocationTypeException {
+        return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
     }
 
     @PostMapping(value="/addBulkLocations")
-    private ResponseEntity addBulkLocations(@RequestBody List<LocationDto> locationDtos){
-        try {
-            return ResponseHelper.prepareSuccess( locationService.saveAll(locationDtos) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
+    private ResponseEntity addBulkLocations(@RequestBody List<LocationDto> locationDtos) throws UnrecognizedCityException, UnrecognizedLocationTypeException {
+        return ResponseHelper.prepareSuccess( locationService.saveAll(locationDtos) );
     }
 
     @PostMapping(value="/updateLocation")
-    private ResponseEntity updateLocation(@RequestBody LocationDto locationDto){
-        try{
-            return ResponseHelper.prepareSuccess( locationService.update(locationDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
+    private ResponseEntity updateLocation(@RequestBody LocationDto locationDto) throws UnrecognizedLocationTypeException, UnrecognizedLocationException, UnrecognizedCityException {
+        return ResponseHelper.prepareSuccess( locationService.update(locationDto) );
     }
 
     @PostMapping(value="/getLocationTypeList")
@@ -129,23 +106,13 @@ public class LocationController {
     }
 
     @PostMapping(value="/addLocationType")
-    private ResponseEntity addLocationType(@RequestBody LocationTypeDto locationTypeDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationTypeService.save(locationTypeDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
+    private ResponseEntity addLocationType(@RequestBody LocationTypeDto locationTypeDto) throws EmptyFieldException {
+        return ResponseHelper.prepareSuccess( locationTypeService.save(locationTypeDto) );
     }
 
     @PostMapping(value="/updateLocationType")
-    private ResponseEntity updateLocationType(@RequestBody LocationTypeDto locationTypeDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationTypeService.update(locationTypeDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
+    private ResponseEntity updateLocationType(@RequestBody LocationTypeDto locationTypeDto) throws EmptyFieldException, UnrecognizedLocationTypeException {
+        return ResponseHelper.prepareSuccess( locationTypeService.update(locationTypeDto) );
     }
 
     @PostMapping(value="/getLocationGroupList")
@@ -154,23 +121,13 @@ public class LocationController {
     }
 
     @PostMapping(value="/addLocationGroup")
-    private ResponseEntity addLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationGroupService.save(locationGroupDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
+    private ResponseEntity addLocationGroup(@RequestBody LocationGroupDto locationGroupDto) throws EmptyFieldException {
+        return ResponseHelper.prepareSuccess( locationGroupService.save(locationGroupDto) );
     }
 
     @PostMapping(value="/updateLocationGroup")
-    private ResponseEntity updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationGroupService.update(locationGroupDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
+    private ResponseEntity updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto) throws EmptyFieldException, UnrecognizedLocationTypeException {
+        return ResponseHelper.prepareSuccess( locationGroupService.update(locationGroupDto) );
     }
 
 
