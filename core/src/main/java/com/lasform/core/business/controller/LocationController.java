@@ -14,6 +14,7 @@ import com.lasform.core.model.entity.State;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,9 @@ public class LocationController {
 
     @Autowired
     LocationGroupServiceImp locationGroupService;
+
+    @Autowired
+    private JmsTemplate jmsTemplate;
 
     @RequestMapping(value="/echo")
     private String echo(@RequestParam String  message){
@@ -101,6 +105,12 @@ public class LocationController {
             return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
                     new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
         }
+    }
+
+    @PostMapping(value="/addLocationMessage")
+    private ResponseEntity addLocationMessage(@RequestBody LocationDto locationDto){
+        jmsTemplate.convertAndSend("addLocationQueue", locationDto);
+        return ResponseHelper.prepareSuccess("{}");
     }
 
     @PostMapping(value="/addBulkLocations")
