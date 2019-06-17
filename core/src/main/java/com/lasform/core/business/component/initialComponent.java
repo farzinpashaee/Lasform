@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class InitialComponent {
+public class initialComponent {
 
     @Autowired
     LasformProperties lasformProperties;
