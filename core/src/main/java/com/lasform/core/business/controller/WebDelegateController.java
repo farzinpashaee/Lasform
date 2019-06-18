@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/webDelegate")
-@EnableWebSecurity
 public class WebDelegateController {
 
     @Autowired

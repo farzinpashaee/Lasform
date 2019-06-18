@@ -11,14 +11,12 @@ import com.lasform.core.model.entity.Country;
 import com.lasform.core.model.entity.State;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/location")
-@EnableWebSecurity
 public class LocationController {
 
     @Autowired
@@ -129,8 +127,5 @@ public class LocationController {
     private ResponseEntity updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto) throws EmptyFieldException, UnrecognizedLocationTypeException {
         return ResponseHelper.prepareSuccess( locationGroupService.update(locationGroupDto) );
     }
-
-
-
 
 }
