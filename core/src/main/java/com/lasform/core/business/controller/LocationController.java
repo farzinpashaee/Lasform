@@ -11,6 +11,8 @@ import com.lasform.core.model.entity.Country;
 import com.lasform.core.model.entity.State;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +29,9 @@ public class LocationController {
 
     @Autowired
     LocationGroupServiceImp locationGroupService;
+
+    @Autowired
+    JmsTemplate jmsTemplate;
 
     @RequestMapping(value="/echo")
     private String echo(@RequestParam String  message){
@@ -88,6 +93,12 @@ public class LocationController {
         return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
     }
 
+    @PostMapping(value="/addLocationMessage")
+    private ResponseEntity addLocationMessage(@RequestBody LocationDto locationDto){
+        jmsTemplate.convertAndSend("addLocationQueue", locationDto);
+        return ResponseHelper.prepareSuccess("{}");
+    }
+
     @PostMapping(value="/addBulkLocations")
     private ResponseEntity addBulkLocations(@RequestBody List<LocationDto> locationDtos) throws UnrecognizedCityException, UnrecognizedLocationTypeException {
         return ResponseHelper.prepareSuccess( locationService.saveAll(locationDtos) );
@@ -127,5 +138,8 @@ public class LocationController {
     private ResponseEntity updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto) throws EmptyFieldException, UnrecognizedLocationTypeException {
         return ResponseHelper.prepareSuccess( locationGroupService.update(locationGroupDto) );
     }
+
+
+
 
 }
