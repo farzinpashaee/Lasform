@@ -1,0 +1,78 @@
+{
+	"info": {
+		"_postman_id": "7cf2b631-1126-4287-9623-2960a3e54709",
+		"name": "Lasform",
+		"description": "Lasform test api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "echoLocale",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept-Language",
+						"value": "fa",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:8088/api/location/echoLocale",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8088",
+					"path": [
+						"api",
+						"location",
+						"echoLocale"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "findLocationById",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"id\":2}"
+				},
+				"url": {
+					"raw": "http://localhost:8088/api/location/findLocationById",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8088",
+					"path": [
+						"api",
+						"location",
+						"findLocationById"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
