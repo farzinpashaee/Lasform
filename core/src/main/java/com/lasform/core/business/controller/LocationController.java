@@ -10,12 +10,14 @@ import com.lasform.core.model.entity.City;
 import com.lasform.core.model.entity.Country;
 import com.lasform.core.model.entity.State;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/location")
@@ -33,9 +35,17 @@ public class LocationController {
     @Autowired
     JmsTemplate jmsTemplate;
 
+    @Autowired
+    MessageSource messageSource;
+
     @RequestMapping(value="/echo")
     private String echo(@RequestParam String  message){
         return message;
+    }
+
+    @RequestMapping(value="/echoLocale")
+    private String echoLocale(@RequestHeader(name="Accept-Language",required = false) Locale locale){
+        return messageSource.getMessage("test.message.hello",null,locale);
     }
 
     @PostMapping(value="/findLocationById")

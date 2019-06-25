@@ -14,7 +14,7 @@ public class LocationComponent {
     @Autowired
     private LocationService locationService;
 
-    @JmsListener(destination = "addLocationQueue", containerFactory = "locationAddFactory")
+    //@JmsListener(destination = "addLocationQueue", containerFactory = "locationAddFactory")
     public void receiveLocationMessage(LocationDto locationDto) {
         try {
             locationService.save(locationDto);

@@ -2,14 +2,13 @@ package com.lasform.core;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
-import javax.sql.DataSource;
+import java.util.Locale;
 
 @SpringBootApplication
 @EnableWebSecurity
@@ -19,4 +18,17 @@ public class LasformCoreApplication {
         SpringApplication.run(LasformCoreApplication.class, args);
     }
 
+    @Bean
+    public LocaleResolver localeResolver(){
+        SessionLocaleResolver localeResolver = new SessionLocaleResolver();
+        localeResolver.setDefaultLocale(Locale.US);
+        return localeResolver;
+    }
+
+    @Bean
+    public ResourceBundleMessageSource boundMessageSource(){
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        return messageSource;
+    }
 }

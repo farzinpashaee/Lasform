@@ -17,6 +17,8 @@ public class Path {
     private long id;
     private String name;
     private String description;
+    private String departureLocation;
+    private String destinationLocation;
     @OneToMany
     @JoinColumn(name = "PATH_LOCATIONS")
     private List<PathLocation> pathLocations;
