@@ -18,5 +18,5 @@ public class LasformCoreApplication {
         SpringApplication.run(LasformCoreApplication.class, args);
     }
 
-    
+
 }
