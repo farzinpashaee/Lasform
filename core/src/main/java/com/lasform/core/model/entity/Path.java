@@ -1,5 +1,6 @@
 package com.lasform.core.model.entity;
 
+import com.lasform.core.model.dto.LatLng;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
