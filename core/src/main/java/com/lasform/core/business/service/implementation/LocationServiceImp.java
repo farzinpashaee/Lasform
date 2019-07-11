@@ -117,13 +117,13 @@ public class LocationServiceImp implements LocationService {
                 locationBoundary.getSouthwest().getLongitude() );
     }
 
-    public List<Location> getLocationsInRadius(RadiusSearchDto radiusSearchDto, Locale locale) throws NativeQueryException {
+    public List<Location> getLocationsInRadius(RadiusSearchDto radiusSearchDto) throws NativeQueryException {
         if( datasourceDriver.equals(C.DB_DRIVERS.MYSQL) ){
             return locationRepository.getLocationsInRadius(radiusSearchDto.getCenter().getLatitude() ,
                     radiusSearchDto.getCenter().getLongitude(),
                     radiusSearchDto.getRadius());
         } else {
-            throw new NativeQueryException( messageSource.getMessage("error.message.native-query-exception",null, locale));
+            throw new NativeQueryException( "Native query not provided for this service" );
         }
     }
 

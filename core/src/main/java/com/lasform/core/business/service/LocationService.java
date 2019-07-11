@@ -32,7 +32,7 @@ public interface LocationService {
     Location update( LocationDto locationDto ) throws UnrecognizedCityException, UnrecognizedLocationException, UnrecognizedLocationTypeException;
     List<Location> getLocationsInBoundary(LocationBoundary locationBoundary);
     long getLocationsCountInBoundary(LocationBoundary locationBoundary);
-    List<Location> getLocationsInRadius(RadiusSearchDto radiusSearchDto, Locale locale) throws NativeQueryException;
+    List<Location> getLocationsInRadius(RadiusSearchDto radiusSearchDto) throws NativeQueryException;
     List<Location> getLocationsInCity( Long cityId );
     List<Location> getLocationsInState( Long stateId );
     List<Location> getLocationsInCountry( Long countryId );

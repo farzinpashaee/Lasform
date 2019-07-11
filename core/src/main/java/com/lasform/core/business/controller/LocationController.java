@@ -93,9 +93,8 @@ public class LocationController {
     }
 
     @PostMapping(value="/getLocationsInRadius")
-    private ResponseEntity getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto,
-                                                @RequestHeader(name="Accept-Language",required = false) Locale locale) throws NativeQueryException {
-        return ResponseHelper.prepareSuccess( locationService.getLocationsInRadius(radiusSearchDto,locale) );
+    private ResponseEntity getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto) throws NativeQueryException {
+        return ResponseHelper.prepareSuccess( locationService.getLocationsInRadius(radiusSearchDto) );
     }
 
     @PostMapping(value="/addLocation")

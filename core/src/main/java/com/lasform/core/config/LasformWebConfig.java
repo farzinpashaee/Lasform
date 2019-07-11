@@ -19,10 +19,10 @@ public class LasformWebConfig implements WebMvcConfigurer {
         registry.addMapping("/**");
     }
 
-    @Override
-    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-        configurer.defaultContentType(MediaType.APPLICATION_JSON_UTF8);
-    }
+//    @Override
+//    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+//        configurer.defaultContentType(MediaType.APPLICATION_JSON_UTF8);
+//    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

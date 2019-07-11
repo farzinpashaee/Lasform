@@ -9,12 +9,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/thirdParty")
 @EnableWebSecurity
+@CrossOrigin(origins = "${lasform.application.web-face-url}")
 public class ThirdPartyController {
 
     @Autowired
     ThirdPartyLocationServiceImp thirdPartyService;
 
-    @GetMapping(value = "/script" , produces = "text/javascript")
+    @GetMapping(value = "/script" , produces = "text/javascript; charset=utf-8")
     private String script(){
         return thirdPartyService.getBaseApi();
     }
