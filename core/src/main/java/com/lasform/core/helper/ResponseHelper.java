@@ -18,7 +18,7 @@ public class ResponseHelper {
         return new Response( true , payload).toString();
     }
 
-    public static ResponseEntity prepareError( int code , ResponseErrorPayload responseErrorPayload ){
+    public static ResponseEntity<ResponseErrorPayload> prepareError( int code , ResponseErrorPayload responseErrorPayload ){
         return ResponseEntity.status(code).body( responseErrorPayload );
     }
 

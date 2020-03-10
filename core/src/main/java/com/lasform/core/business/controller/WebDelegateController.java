@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.lasform.core.business.service.ApplicationService;
 import com.lasform.core.helper.ResponseHelper;
+import com.lasform.core.model.dto.SettingDto;
 
 @RestController
 @RequestMapping("/api/webDelegate")
@@ -19,7 +20,7 @@ public class WebDelegateController {
 
 	@CrossOrigin(origins = "${lasform.application.web-face-url}")
 	@PostMapping(value = "/initialSetting")
-	private ResponseEntity initialSetting() {
+	private ResponseEntity<SettingDto> initialSetting() {
 		return ResponseHelper.prepareSuccess(applicationService.getInitialSetting());
 	}
 }

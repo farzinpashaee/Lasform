@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface GeoAreaRepository extends JpaRepository<GeoArea,Long>, JpaSpecificationExecutor<GeoArea> {
 
-    List<GeoArea> findByName( String name );
+    GeoArea findByName( String name );
     List<GeoArea> findByNameContaining( String name );
 
 }
