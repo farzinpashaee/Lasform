@@ -6,8 +6,12 @@ import org.springframework.http.ResponseEntity;
 
 public class ResponseHelper {
 
-    public static ResponseEntity prepareSuccess(Object payload ){
+    public static <T> ResponseEntity<T> prepareSuccess( T payload ){
         return ResponseEntity.ok().body( payload );
+    }
+    
+    public static <T> ResponseEntity<T> prepareSuccess(){
+        return ResponseEntity.ok().build();
     }
 
     public static String prepareStringSuccess( String payload ){
