@@ -12,12 +12,12 @@ import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LocationComponent {
+public class LocationMessagingComponent {
 
     @Autowired
     private LocationService locationService;
 
-    //@JmsListener(destination = "addLocationQueue", containerFactory = "locationAddFactory")
+    @JmsListener(destination = "addLocationQueue")
     public void receiveLocationMessage(LocationDto locationDto) {
         try {
             locationService.save(locationDto);
@@ -28,7 +28,7 @@ public class LocationComponent {
         }
     }
     
-    //@JmsListener(destination = "addBulkLocationQueue", containerFactory = "locationBulkAddFactory")
+    @JmsListener(destination = "addBulkLocationQueue")
     public void receiveLocationMessage(List<LocationDto> locationDtos) {
         try {
             locationService.saveAll(locationDtos);
@@ -39,6 +39,7 @@ public class LocationComponent {
         }
     }
 
+    
 
 
 }
