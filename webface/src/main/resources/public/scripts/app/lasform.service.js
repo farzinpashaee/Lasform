@@ -31,11 +31,11 @@ app.service('lfServices', function($http){
             data : data
         }).then(function mySuccess(response) {
             lfServices.log(LOG.DEBUG_NO_TAG,response.data);
-            if(response.data.state){
-                callback(response.data.payload);
-            } else {
-                lfServices.log(LOG.ERR,"Error fetching data from " + url);
-            }
+            //if(response.data.state){
+                callback(response.data);
+            // } else {
+            //     lfServices.log(LOG.ERR,"Error fetching data from " + url);
+            // }
         }, function myError(err) {
             lfServices.log(LOG.ERR,err);
         });

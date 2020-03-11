@@ -1,179 +1,232 @@
 package com.lasform.core.business.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.lasform.core.business.exceptions.EmptyFieldException;
+import com.lasform.core.business.exceptions.NativeQueryException;
+import com.lasform.core.business.exceptions.UnrecognizedCityException;
+import com.lasform.core.business.exceptions.UnrecognizedLocationException;
+import com.lasform.core.business.exceptions.UnrecognizedLocationTypeException;
 import com.lasform.core.business.service.implementation.LocationGroupServiceImp;
 import com.lasform.core.business.service.implementation.LocationServiceImp;
 import com.lasform.core.business.service.implementation.LocationTypeServiceImp;
-import com.lasform.core.business.exceptions.BusinessException;
-import com.lasform.core.business.exceptions.NativeQueryException;
 import com.lasform.core.helper.ResponseHelper;
-import com.lasform.core.model.dto.*;
-import com.lasform.core.model.dto.Error;
-import com.lasform.core.model.entity.City;
-import com.lasform.core.model.entity.Country;
-import com.lasform.core.model.entity.State;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.web.bind.annotation.*;
+import com.lasform.core.model.dto.LocationBoundary;
+import com.lasform.core.model.dto.LocationDto;
+import com.lasform.core.model.dto.LocationGroupDto;
+import com.lasform.core.model.dto.LocationTypeDto;
+import com.lasform.core.model.dto.RadiusSearchDto;
+import com.lasform.core.model.entity.Location;
+import com.lasform.core.model.entity.LocationGroup;
+import com.lasform.core.model.entity.LocationType;
 
-import java.util.List;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 @RestController
 @RequestMapping("/api/location")
-@EnableWebSecurity
 public class LocationController {
 
-    @Autowired
-    LocationServiceImp locationService;
+	@Autowired
+	LocationServiceImp locationService;
 
-    @Autowired
-    LocationTypeServiceImp locationTypeService;
+	@Autowired
+	LocationTypeServiceImp locationTypeService;
 
-    @Autowired
-    LocationGroupServiceImp locationGroupService;
+	@Autowired
+	LocationGroupServiceImp locationGroupService;
 
-    @RequestMapping(value="/echo")
-    private String echo(@RequestParam String  message){
-        return message;
-    }
+	@Autowired
+	JmsTemplate jmsTemplate;
 
-    @PostMapping(value="/findLocationById")
-    private ResponseEntity findLocationById(@RequestBody LocationDto locationDto){
-        return ResponseHelper.prepareSuccess( locationService.findById(locationDto.getId()) );
-    }
+	@Autowired
+	MessageSource messageSource;
 
-    @PostMapping(value="/findLocationByName")
-    private ResponseEntity findLocationByName(@RequestBody LocationDto locationDto){
-        return ResponseHelper.prepareSuccess( locationService.findByName( locationDto.getName() ) );
-    }
+	@GetMapping(value = "/echo")
+	private String echo(@RequestParam String message) {
+		return message;
+	}
 
-    @PostMapping(value="/searchLocations")
-    private ResponseEntity searchLocations(@RequestBody LocationDto locationDto){
-        return ResponseHelper.prepareSuccess( locationService.search( locationDto ) );
-    }
+	@GetMapping(value = "/getById/{locationId}")
+	@ApiOperation(value = "Get the location using the Location ID")
+	private ResponseEntity<Location> findLocationById(
+			@ApiParam(value = "Location ID", required = true) @PathVariable Long locationId) {
+		return ResponseHelper.prepareSuccess(locationService.findById(locationId));
+	}
 
-    @PostMapping(value="/searchLocationsByName")
-    private ResponseEntity searchLocationsByName(@RequestBody LocationDto locationDto){
-        return ResponseHelper.prepareSuccess( locationService.searchByName( locationDto.getName() ) );
-    }
+	@GetMapping(value = "/getByName/{locationName}")
+	@ApiOperation(value = "Get the location using the Location Name")
+	private ResponseEntity<Location> findLocationByName(
+			@ApiParam(value = "Location Name", required = true) @PathVariable String locationName) {
+		return ResponseHelper.prepareSuccess(locationService.findByName(locationName));
+	}
 
-    @PostMapping(value="/getLocationsInCity")
-    private ResponseEntity getLocationsInCity(@RequestBody City city){
-        return ResponseHelper.prepareSuccess( locationService.getLocationsInCity( city.getId() ) );
-    }
+	@PostMapping(value = "/search")
+	@ApiOperation(value = "Search locations using the Location DTO object")
+	private ResponseEntity<List<Location>> searchLocations(
+			@ApiParam(value = "Location Search Object", required = true) @RequestBody LocationDto locationDto) {
+		return ResponseHelper.prepareSuccess(locationService.search(locationDto));
+	}
 
-    @PostMapping(value="/getLocationsInState")
-    private ResponseEntity getLocationsInState(@RequestBody State state){
-        return ResponseHelper.prepareSuccess( locationService.getLocationsInState( state.getId() ) );
-    }
+	@GetMapping(value = "/searchByName/{locationName}")
+	@ApiOperation(value = "Search locations using the Location Name")
+	private ResponseEntity<List<Location>> searchLocationsByName(
+			@ApiParam(value = "Location Name", required = true) @PathVariable String locationName) {
+		return ResponseHelper.prepareSuccess(locationService.searchByName(locationName));
+	}
 
-    @PostMapping(value="/getLocationsInCountry")
-    private ResponseEntity getLocationsInCountry(@RequestBody Country country){
-        return ResponseHelper.prepareSuccess( locationService.getLocationsInCountry( country.getId() ) );
-    }
+	@GetMapping(value = "/getInCity/{cityId}")
+	@ApiOperation(value = "Get locations that are registered under given City ID")
+	private ResponseEntity<List<Location>> getLocationsInCity(
+			@ApiParam(value = "Location ID", required = true) @PathVariable Long cityId) {
+		return ResponseHelper.prepareSuccess(locationService.getLocationsInCity(cityId));
+	}
 
-    @PostMapping(value="/getLocationsInBoundary")
-    private ResponseEntity getLocationsInBoundary(@RequestBody LocationBoundary locationBoundary){
-        return ResponseHelper.prepareSuccess( locationService.getLocationsInBoundary(locationBoundary) );
-    }
+	@GetMapping(value = "/getInState/{stateId}")
+	@ApiOperation(value = "Get locations that are registered under given State ID")
+	private ResponseEntity<List<Location>> getLocationsInState(
+			@ApiParam(value = "State ID", required = true) @PathVariable Long stateId) {
+		return ResponseHelper.prepareSuccess(locationService.getLocationsInState(stateId));
+	}
 
-    @PostMapping(value="/getLocationsCountInBoundary")
-    private ResponseEntity getLocationsCountInBoundary(@RequestBody LocationBoundary locationBoundary){
-        return ResponseHelper.prepareSuccess( locationService.getLocationsCountInBoundary(locationBoundary) );
-    }
+	@GetMapping(value = "/getInCountry/{countryId}")
+	@ApiOperation(value = "Get locations that are registered under given Country ID")
+	private ResponseEntity<List<Location>> getLocationsInCountry(
+			@ApiParam(value = "Country ID", required = true) @PathVariable Long countryId) {
+		return ResponseHelper.prepareSuccess(locationService.getLocationsInCountry(countryId));
+	}
 
-    @PostMapping(value="/getLocationsInRadius")
-    private ResponseEntity getLocationsInRadius(@RequestBody RadiusSearchDto radiusSearchDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationService.getLocationsInRadius(radiusSearchDto) );
-        } catch (NativeQueryException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(0 , e.getMessage() ) );
-        }
-    }
+	@PostMapping(value = "/getInBoundary")
+	@ApiOperation(value = "Get locations that are registered in the given boundary")
+	private ResponseEntity<List<Location>> getLocationsInBoundary(
+			@ApiParam(value = "Location Boundary Object", required = true) @RequestBody LocationBoundary locationBoundary) {
+		return ResponseHelper.prepareSuccess(locationService.getLocationsInBoundary(locationBoundary));
+	}
 
-    @PostMapping(value="/addLocation")
-    private ResponseEntity addLocation(@RequestBody LocationDto locationDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationService.save(locationDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
+	@PostMapping(value = "/getInBoundaryCount")
+	@ApiOperation(value = "Get locations' count that are registered in the given boundary")
+	private ResponseEntity<Long> getLocationsCountInBoundary(
+			@ApiParam(value = "Location Boundary Object", required = true) @RequestBody LocationBoundary locationBoundary) {
+		return ResponseHelper.prepareSuccess(locationService.getLocationsCountInBoundary(locationBoundary));
+	}
 
-    @PostMapping(value="/addBulkLocations")
-    private ResponseEntity addBulkLocations(@RequestBody List<LocationDto> locationDtos){
-        try {
-            return ResponseHelper.prepareSuccess( locationService.saveAll(locationDtos) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
+	@PostMapping(value = "/getInRadius")
+	@ApiOperation(value = "Get locations  that are registered in the given radius")
+	private ResponseEntity<List<Location>> getLocationsInRadius(
+			@ApiParam(value = "Radius Search Object", required = true) @RequestBody RadiusSearchDto radiusSearchDto)
+			throws NativeQueryException {
+		return ResponseHelper.prepareSuccess(locationService.getLocationsInRadius(radiusSearchDto));
+	}
 
-    @PostMapping(value="/updateLocation")
-    private ResponseEntity updateLocation(@RequestBody LocationDto locationDto){
-        try{
-            return ResponseHelper.prepareSuccess( locationService.update(locationDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
+	@PostMapping(value = "/add")
+	@ApiOperation(value = "Add a location using data from Location DTO")
+	private ResponseEntity<Location> addLocation(
+			@ApiParam(value = "Location Add Object", required = true) @RequestBody LocationDto locationDto)
+			throws UnrecognizedCityException, UnrecognizedLocationTypeException {
+		return ResponseHelper.prepareSuccess(locationService.save(locationDto));
+	}
 
-    @PostMapping(value="/getLocationTypeList")
-    private ResponseEntity getLocationTypeList(){
-        return ResponseHelper.prepareSuccess( locationTypeService.getLocationTypeList() );
-    }
+	@PostMapping(value = "/add/bulk")
+	@ApiOperation(value = "Add a locations using data from list of Location DTOs")
+	private ResponseEntity<List<Location>> addBulkLocations(
+			@ApiParam(value = "Location Add Objects", required = true) @RequestBody List<LocationDto> locationDtos)
+			throws UnrecognizedCityException, UnrecognizedLocationTypeException {
+		return ResponseHelper.prepareSuccess(locationService.saveAll(locationDtos));
+	}
 
-    @PostMapping(value="/addLocationType")
-    private ResponseEntity addLocationType(@RequestBody LocationTypeDto locationTypeDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationTypeService.save(locationTypeDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
+	@PostMapping(value = "/jms/add")
+	@ApiOperation(value = "Add a location using data from Location DTO by JMS")
+	private ResponseEntity<Void> addLocationMessage(
+			@ApiParam(value = "Location Add Object", required = true) @RequestBody LocationDto locationDto) {
+		jmsTemplate.convertAndSend("addLocationQueue", locationDto);
+		return ResponseHelper.prepareSuccess();
+	}
 
-    @PostMapping(value="/updateLocationType")
-    private ResponseEntity updateLocationType(@RequestBody LocationTypeDto locationTypeDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationTypeService.update(locationTypeDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
+	@PostMapping(value = "/jms/add/bulk")
+	@ApiOperation(value = "Add a locations using data from list of Location DTOs by JMS")
+	private ResponseEntity<Void> addBulkLocationMessage(
+			@ApiParam(value = "Location Add Objects", required = true) @RequestBody List<LocationDto> locationDtos) {
+		jmsTemplate.convertAndSend("addBulkLocationQueue", locationDtos);
+		return ResponseHelper.prepareSuccess();
+	}
 
-    @PostMapping(value="/getLocationGroupList")
-    private ResponseEntity getLocationGroupList(){
-        return ResponseHelper.prepareSuccess( locationGroupService.getLocationGroupList() );
-    }
+	@PutMapping(value = "/update")
+	@ApiOperation(value = "Update location using data from Location DTO")
+	private ResponseEntity<Location> updateLocation(
+			@ApiParam(value = "Location Update Objects", required = true) @RequestBody LocationDto locationDto)
+			throws UnrecognizedLocationTypeException, UnrecognizedLocationException, UnrecognizedCityException {
+		return ResponseHelper.prepareSuccess(locationService.update(locationDto));
+	}
 
-    @PostMapping(value="/addLocationGroup")
-    private ResponseEntity addLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationGroupService.save(locationGroupDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
+	@GetMapping(value = "/type/get/{locationTypeId}")
+	@ApiOperation(value = "Get the location types by LocationType ID")
+	private ResponseEntity<LocationType> getLocationType(
+			@ApiParam(value = "LocationType ID", required = true) @PathVariable Long locationTypeId) {
+		return null;
+	}
 
-    @PostMapping(value="/updateLocationGroup")
-    private ResponseEntity updateLocationGroup(@RequestBody LocationGroupDto locationGroupDto){
-        try {
-            return ResponseHelper.prepareSuccess( locationGroupService.update(locationGroupDto) );
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
+	@GetMapping(value = "/type/getList")
+	@ApiOperation(value = "Get the location types list")
+	private ResponseEntity<List<LocationType>> getLocationTypeList() {
+		return ResponseHelper.prepareSuccess(locationTypeService.getLocationTypeList());
+	}
 
+	@PostMapping(value = "/type/add")
+	@ApiOperation(value = "Add new Location Type")
+	private ResponseEntity<LocationType> addLocationType(
+			@ApiParam(value = "LocationType Add Object", required = true) @RequestBody LocationTypeDto locationTypeDto)
+			throws EmptyFieldException {
+		return ResponseHelper.prepareSuccess(locationTypeService.save(locationTypeDto));
+	}
 
+	@PutMapping(value = "/type/update")
+	@ApiOperation(value = "Update Location Type")
+	private ResponseEntity<LocationType> updateLocationType(
+			@ApiParam(value = "LocationType Update Object", required = true) @RequestBody LocationTypeDto locationTypeDto)
+			throws EmptyFieldException, UnrecognizedLocationTypeException {
+		return ResponseHelper.prepareSuccess(locationTypeService.update(locationTypeDto));
+	}
 
+	@GetMapping(value = "/type/get/{locationGroupId}")
+	@ApiOperation(value = "Get the location types by LocationType ID")
+	private ResponseEntity<LocationType> getLocationGroup(
+			@ApiParam(value = "LocationGroup ID", required = true) @PathVariable Long locationGroupId) {
+		return null;
+	}
+
+	@PostMapping(value = "/group/groupList")
+	@ApiOperation(value = "Get the Location Groups list")
+	private ResponseEntity<List<LocationGroup>> getLocationGroupList() {
+		return ResponseHelper.prepareSuccess(locationGroupService.getLocationGroupList());
+	}
+
+	@PostMapping(value = "/group/add")
+	@ApiOperation(value = "Add new Location Group")
+	private ResponseEntity<LocationGroup> addLocationGroup(
+			@ApiParam(value = "LocationGroup Add Object", required = true) @RequestBody LocationGroupDto locationGroupDto)
+			throws EmptyFieldException {
+		return ResponseHelper.prepareSuccess(locationGroupService.save(locationGroupDto));
+	}
+
+	@PutMapping(value = "/group/update")
+	@ApiOperation(value = "Update Location Group")
+	private ResponseEntity<LocationGroup> updateLocationGroup(
+			@ApiParam(value = "LocationGroup Update Object", required = true) @RequestBody LocationGroupDto locationGroupDto)
+			throws EmptyFieldException, UnrecognizedLocationTypeException {
+		return ResponseHelper.prepareSuccess(locationGroupService.update(locationGroupDto));
+	}
 
 }

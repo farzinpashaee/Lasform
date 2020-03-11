@@ -1,87 +1,74 @@
 package com.lasform.core.business.controller;
 
-import com.lasform.core.business.exceptions.BusinessException;
-import com.lasform.core.business.service.implementation.GeoAreaServiceImp;
-import com.lasform.core.business.service.implementation.GeoFenceServiceImp;
-import com.lasform.core.helper.ResponseHelper;
-import com.lasform.core.model.dto.GeoAreaDto;
-import com.lasform.core.model.dto.GeoFenceDto;
-import com.lasform.core.model.dto.Response;
-import com.lasform.core.model.dto.ResponseErrorPayload;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lasform.core.business.exceptions.EmptyFieldException;
+import com.lasform.core.business.service.implementation.GeoAreaServiceImp;
+import com.lasform.core.business.service.implementation.GeoFenceServiceImp;
+import com.lasform.core.helper.ResponseHelper;
+import com.lasform.core.model.dto.GeoAreaDto;
+import com.lasform.core.model.dto.GeoFenceDto;
+import com.lasform.core.model.entity.GeoArea;
+import com.lasform.core.model.entity.GeoFence;
+
 @RestController
 @RequestMapping("/api/geoArea")
-@EnableWebSecurity
+// @EnableWebSecurity
 public class GeoAreaController {
 
-    @Autowired
-    GeoAreaServiceImp geoAreaService;
+	@Autowired
+	GeoAreaServiceImp geoAreaService;
 
-    @Autowired
-    GeoFenceServiceImp geoFenceService;
+	@Autowired
+	GeoFenceServiceImp geoFenceService;
 
-    @PostMapping(value="/find")
-    private ResponseEntity find(@RequestBody GeoAreaDto geoAreaDto){
-        return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
-    }
+	@GetMapping(value = "/getById/{geoAreaId}")
+	private ResponseEntity<GeoArea> find(@RequestBody Long geoAreaId) {
+		return ResponseHelper.prepareSuccess(geoAreaService.findById(geoAreaId));
+	}
 
-    @PostMapping(value="/findById")
-    private ResponseEntity findById(@RequestBody GeoAreaDto geoAreaDto){
-        return ResponseHelper.prepareSuccess( geoAreaService.findById(geoAreaDto.getId()));
-    }
+	@GetMapping(value = "/getByName/{geoAreaName}")
+	private ResponseEntity<GeoArea> findByName(@RequestBody String geoAreaName) {
+		return ResponseHelper.prepareSuccess(geoAreaService.findByName(geoAreaName));
+	}
 
-    @PostMapping(value="/findByName")
-    private ResponseEntity findByName(@RequestBody GeoAreaDto geoAreaDto){
-        return ResponseHelper.prepareSuccess( geoAreaService.findByName(geoAreaDto.getName()));
-    }
+	@PostMapping(value = "/search")
+	private ResponseEntity<List<GeoArea>> search(@RequestBody GeoAreaDto geoAreaDto) {
+		return ResponseHelper.prepareSuccess(geoAreaService.search(geoAreaDto));
+	}
 
-    @PostMapping(value="/search")
-    private ResponseEntity search(@RequestBody GeoAreaDto geoAreaDto){
-        return ResponseHelper.prepareSuccess( geoAreaService.search( geoAreaDto ) );
-    }
+	@PostMapping(value = "/addByList")
+	private ResponseEntity<GeoArea> addGeoAreaByList(@RequestBody GeoAreaDto geoAreaDto) throws EmptyFieldException {
+		return ResponseHelper.prepareSuccess(geoAreaService.saveByList(geoAreaDto));
+	}
 
-    @PostMapping(value="/addGeoAreaByList")
-    private ResponseEntity addGeoAreaByList(@RequestBody GeoAreaDto geoAreaDto){
-        try {
-            return ResponseHelper.prepareSuccess( geoAreaService.saveByList(geoAreaDto));
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
+	@GetMapping(value = "/fence/getById/{geoFenceId}")
+	private ResponseEntity<GeoFence> findGeoFenceById(@RequestBody Long geoFenceId) {
+		return ResponseHelper.prepareSuccess(geoFenceService.findById(geoFenceId));
+	}
 
-    @PostMapping(value="/findGeoFenceById")
-    private ResponseEntity findGeoFenceById(@RequestBody GeoFenceDto geoFenceDto){
-        return ResponseHelper.prepareSuccess( geoFenceService.findById( geoFenceDto.getId() ) );
-    }
+	@GetMapping(value = "/fence/getByName/{geoFenceByName}")
+	private ResponseEntity<GeoFence> findGeoFenceByName(@RequestBody String geoFenceByName) {
+		return ResponseHelper.prepareSuccess(geoFenceService.findByName(geoFenceByName));
+	}
 
-    @PostMapping(value="/findGeoFenceByName")
-    private ResponseEntity findGeoFenceByName(@RequestBody GeoFenceDto geoFenceDto){
-        return ResponseHelper.prepareSuccess( geoFenceService.findByName( geoFenceDto.getName() ) );
-    }
+	@PostMapping(value = "/fence/search")
+	private ResponseEntity<List<GeoFence>> searchGeoFence(@RequestBody GeoFenceDto geoFenceDto) {
+		return ResponseHelper.prepareSuccess(geoFenceService.search(geoFenceDto));
+	}
 
-    @PostMapping(value="/searchGeoFence")
-    private ResponseEntity searchGeoFence(@RequestBody GeoFenceDto geoFenceDto){
-        return ResponseHelper.prepareSuccess(geoFenceService.search(geoFenceDto));
-    }
-
-    @PostMapping(value="/addGeoFence")
-    private ResponseEntity addGeoFenceByList(@RequestBody GeoFenceDto geoFenceDto){
-        try {
-            return ResponseHelper.prepareSuccess( geoFenceService.saveByList(geoFenceDto));
-        } catch (BusinessException e) {
-            return ResponseHelper.prepareError( HttpStatus.INTERNAL_SERVER_ERROR.value() ,
-                    new ResponseErrorPayload(e.getBusinessExceptionCode() , e.getMessage() ) );
-        }
-    }
-
+	@PostMapping(value = "/fence/add")
+	private ResponseEntity<GeoFence> addGeoFenceByList(@RequestBody GeoFenceDto geoFenceDto)
+			throws EmptyFieldException {
+		return ResponseHelper.prepareSuccess(geoFenceService.saveByList(geoFenceDto));
+	}
 
 }

@@ -20,6 +20,14 @@ MobileFace is a native android mobile application which provides a baseline for 
 
 ![General Look](https://raw.githubusercontent.com/farzinpashaee/Lasform/master/documents/images/lasform-infog.png)
 
+## API documentation
+APIs in Lasform are documented using swagger and available through this address
+[http://localhost:8088/swagger-ui.html](http://localhost:8088/swagger-ui.html)
+
+## Monitoring
+You can monitor services using this address with actuator hal UI
+[http://localhost:8088/browser/index.html#/actuator](http://localhost:8088/browser/index.html#/actuator)
+
 ## Versioning
 
 Lasform is currently availble in 0.0.1-SNAPSHOT version

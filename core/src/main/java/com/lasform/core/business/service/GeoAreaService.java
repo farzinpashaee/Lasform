@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface GeoAreaService {
      GeoArea findById(long id );
-     List<GeoArea> findByName(String name );
+     GeoArea findByName(String name );
      List<GeoArea> findByNameContaining( String name );
      List<GeoFence> findByGroupId(long groupId );
      GeoArea saveByList(GeoAreaDto geoAreaDto) throws EmptyFieldException;

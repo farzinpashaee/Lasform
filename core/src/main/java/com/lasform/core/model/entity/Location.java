@@ -3,14 +3,19 @@ package com.lasform.core.model.entity;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.util.Date;
 
+import static javax.persistence.TemporalType.TIMESTAMP;
+
 @Data
 @Entity
-public class Location {
+@EntityListeners(AuditingEntityListener.class)
+public class Location extends Auditable<String> {
 
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
@@ -40,10 +45,10 @@ public class Location {
     @JoinColumn(name = "LOCATION_GROUP_ID")
     @Nullable
     private LocationGroup locationGroup;
-    @CreatedDate
-    Date createDate;
-    @LastModifiedDate
-    Date modifiedDate;
+//    @CreatedDate
+//    Date createDate;
+//    @LastModifiedDate
+//    Date modifiedDate;
 
 
 }

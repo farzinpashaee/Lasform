@@ -353,7 +353,7 @@ app.controller('mapCtrl',  function($scope, $http , lfServices ) {
             $scope.loadingView = true;
             $scope.searchListView = false;
             $scope.locationDetailsView = false;
-            lfServices.restCall("POST","/api/location/searchLocationByName",
+            lfServices.restCall("POST",coreServiceUrl+"api/location/searchLocationsByName",
                 { name : searchQuery } ,
                 function(data){
                     $scope.loadingView = false;
@@ -449,11 +449,6 @@ app.controller('mapCtrl',  function($scope, $http , lfServices ) {
 
         }
 
-
-        $scope.test = function() {
-            lfServices.log(lfServices.LOG.DEBUG,"-----------------");
-        }
-
         $scope.showAdvanced = function(ev) {
             lfServices.log(lfServices.LOG.DEBUG,"Add new location using context menu");
             $mdDialog.show({
@@ -532,4 +527,4 @@ app.filter('trustAsHtml',['$sce', function($sce) {
         return function(text) {
             return $sce.trustAsHtml(text);
         };
-    }]);
+}]);

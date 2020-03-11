@@ -25,7 +25,7 @@ public class GeoAreaServiceImp implements GeoAreaService {
         return geoAreaRepository.findById(id).get();
     }
 
-    public List<GeoArea> findByName( String name ){
+    public GeoArea findByName( String name ){
         return geoAreaRepository.findByName(name);
     }
 

@@ -18,10 +18,12 @@ import com.lasform.core.model.entity.City;
 import com.lasform.core.model.entity.LocationType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class LocationServiceImp implements LocationService {
@@ -37,6 +39,9 @@ public class LocationServiceImp implements LocationService {
 
     @Value("${spring.datasource.driverClassName}")
     String datasourceDriver;
+
+    @Autowired
+    MessageSource messageSource;
 
     public Location findById( long id ){
         return locationRepository.findById(id).get() ;
@@ -118,7 +123,7 @@ public class LocationServiceImp implements LocationService {
                     radiusSearchDto.getCenter().getLongitude(),
                     radiusSearchDto.getRadius());
         } else {
-            throw new NativeQueryException("Native query not provided for this service");
+            throw new NativeQueryException( "Native query not provided for this service" );
         }
     }
 
