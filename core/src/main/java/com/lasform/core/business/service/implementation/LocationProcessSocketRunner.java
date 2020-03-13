@@ -5,7 +5,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.lasform.core.config.LasformSocketServiceConfig;
+import com.lasform.core.config.properties.SocketServiceProperties;
+
 public class LocationProcessSocketRunner implements Runnable {
+
+	@Autowired
+	SocketServiceProperties threadPoolProperties;
 
 	protected Socket clientSocket = null;
 
@@ -20,23 +28,45 @@ public class LocationProcessSocketRunner implements Runnable {
 			BufferedReader reader = new BufferedReader(streamReader);
 
 			clientSocket.setSoTimeout(2000);
-			StringBuilder sb = new StringBuilder();
-			int ch;
-			System.out.println("client port: " + clientSocket.getPort());
+			StringBuilder data = new StringBuilder();
+			StringBuilder length = new StringBuilder();
+			StringBuilder sourceIdentifier = new StringBuilder();
+			StringBuilder type = new StringBuilder();
+
+			int ch, counter = 0, dataCounter = 0;
 			while ((ch = reader.read()) != -1) {
-				if (ch == 88) break;
-				if (ch == 124) {
-					if (sb.length() == 10) {
-						System.out.println("Location Token: " + sb.toString());
-					} else {
-						System.out.println("Invalid location token:" + sb.toString());
-					}
-					sb.setLength(0);
+				counter++;
+				if (ch == 59)
+					break;
+
+				if (counter <= LasformSocketServiceConfig.TYPE_TAG_SIZE) {
+					type.append((char) ch);
+				} else if (counter > LasformSocketServiceConfig.TYPE_TAG_SIZE
+						&& counter <= LasformSocketServiceConfig.LENGTH_TAG_END_INDEX) {
+					length.append((char) ch);
+				} else if (counter > LasformSocketServiceConfig.LENGTH_TAG_END_INDEX
+						&& counter <= LasformSocketServiceConfig.IDENTIFIER_TAG_END_INDEX) {
+					sourceIdentifier.append((char) ch);
 				} else {
-					sb.append((char) ch);
+					dataCounter++;
+					if (type.toString().equals("01")) {
+						data.append((char) ch);
+						if (dataCounter == 30) {
+							String message = data.toString();
+							System.out.println(message);
+							data.setLength(0);
+							dataCounter = 0;
+						}
+					}
 				}
 			}
-			System.out.println("closing socket" + sb.toString());
+
+			System.out.println("sourceIdentifier: " + sourceIdentifier + " type: " + type + ", length: " + length);
+			data = null;
+			length = null;
+			sourceIdentifier = null;
+			type = null;
+
 			reader.close();
 			clientSocket.close();
 		} catch (IOException e) {

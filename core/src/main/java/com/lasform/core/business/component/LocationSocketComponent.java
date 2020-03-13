@@ -11,9 +11,13 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
 import com.lasform.core.business.service.implementation.LocationProcessSocketRunner;
+import com.lasform.core.config.properties.SocketServiceProperties;
 
 @Component
 public class LocationSocketComponent {
+	
+	@Autowired
+	SocketServiceProperties socketServiceProperties;
 
 	@Autowired
 	TaskExecutor executor;
@@ -26,14 +30,14 @@ public class LocationSocketComponent {
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-					server = new ServerSocket(8089);
+					System.out.println(socketServiceProperties.getPort());
+					server = new ServerSocket(socketServiceProperties.getPort());
 					while (true) {
 						try {
 							Socket socket = server.accept();
-
 							executor.execute(new LocationProcessSocketRunner(socket));
 						} catch (Exception e) {
-							System.out.println("ERROR:" + e.getMessage());
+							System.out.println("ERROR: " + e.getMessage());
 						}
 					}
 				} catch (IOException e) {
