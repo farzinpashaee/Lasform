@@ -11,6 +11,8 @@ import lombok.Data;
 @PropertySource("classpath:application.properties")
 @ConfigurationProperties(prefix = "lasform.socket-service")
 public class SocketServiceProperties {
+
+	private boolean enable = true;
 	
 	private int port = 8089;
 	private int timeout = 2000;
@@ -18,7 +20,6 @@ public class SocketServiceProperties {
 	private int threadPoolCorePoolSize = 50 ;
 	private int threadPoolMaxPoolSize = 300 ;
 	private int threadPoolQueueCapacity = 50 ;
-	
 	
 
 }

@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.lasform.core.business.component.LocationSocketComponent;
 import com.lasform.core.config.LasformSocketServiceConfig;
 import com.lasform.core.config.properties.SocketServiceProperties;
 
@@ -16,6 +19,7 @@ public class LocationProcessSocketRunner implements Runnable {
 	SocketServiceProperties threadPoolProperties;
 
 	protected Socket clientSocket = null;
+	private static final Logger log = LoggerFactory.getLogger(LocationSocketComponent.class);
 
 	public LocationProcessSocketRunner(Socket clientSocket) {
 		this.clientSocket = clientSocket;
@@ -51,9 +55,9 @@ public class LocationProcessSocketRunner implements Runnable {
 					dataCounter++;
 					if (type.toString().equals("01")) {
 						data.append((char) ch);
-						if (dataCounter == 30) {
+						if (dataCounter == LasformSocketServiceConfig.LOCATION_SERIES_DATA_SEGMENT_LENGTH ) {
 							String message = data.toString();
-							System.out.println(message);
+							log.info(message);
 							data.setLength(0);
 							dataCounter = 0;
 						}
@@ -61,7 +65,7 @@ public class LocationProcessSocketRunner implements Runnable {
 				}
 			}
 
-			System.out.println("sourceIdentifier: " + sourceIdentifier + " type: " + type + ", length: " + length);
+			log.info("sourceIdentifier: " + sourceIdentifier + " type: " + type + ", length: " + length);
 			data = null;
 			length = null;
 			sourceIdentifier = null;
