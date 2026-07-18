@@ -1,0 +1,19 @@
+package com.csl.lasform.model.entity.enums;
+
+public enum EventType {
+    DEVICE_REGISTERED,
+    DEVICE_UPDATED,
+    DEVICE_DELETED,
+    LOCATION_RECEIVED,
+    GEOFENCE_CREATED,
+    GEOFENCE_UPDATED,
+    GEOFENCE_DELETED,
+    ALERT_TRIGGERED,
+    ALERT_ACKNOWLEDGED,
+    ALERT_RESOLVED,
+    USER_LOGIN,
+    USER_LOGOUT,
+    USER_CREATED,
+    SYSTEM_ERROR,
+    OTHER
+}
