@@ -7,14 +7,11 @@ import java.util.Map;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,45 +22,33 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- * Append-only device position ping. High write volume; no update timestamp is kept.
+ * A named place/waypoint, independent of any single device. Per-device position
+ * tracking (with speed/heading/accuracy) lives on {@link Event}.
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode
 @ToString
 @Document(collection = "locations")
-@CompoundIndexes({
-        @CompoundIndex(name = "device_recordedAt_idx", def = "{'deviceId': 1, 'recordedAt': -1}")
-})
-public class Location {
+public class Location extends Auditable implements Identifiable {
 
     @Id
     private String id;
-
-    @Indexed
-    @NotBlank
-    private String deviceId;
 
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     @NotNull
     private GeoJsonPoint point;
 
+    private String name;
+
+    private String description;
+
     private Double altitude;
 
-    /** Speed over ground, in meters/second. */
-    private Double speed;
-
-    /** Heading in degrees, 0-360. */
-    private Double heading;
-
-    /** Reported accuracy radius, in meters. */
-    private Double accuracy;
-
     /** Reverse-geocoded address, cached to avoid repeated lookups. */
-    private String address;
+    private Address address;
 
     @Indexed
     @NotNull

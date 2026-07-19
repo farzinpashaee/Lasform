@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import com.csl.lasform.model.entity.enums.UserRole;
 import com.csl.lasform.model.entity.enums.UserStatus;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -33,7 +33,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Document(collection = "users")
-public class User extends Auditable {
+public class User extends Auditable implements Identifiable {
 
     @Id
     private String id;
@@ -47,7 +47,7 @@ public class User extends Auditable {
     @NotBlank
     private String email;
 
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @NotBlank
     @Field("password_hash")
     private String passwordHash;

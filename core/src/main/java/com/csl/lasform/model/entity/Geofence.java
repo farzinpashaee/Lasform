@@ -39,7 +39,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Document(collection = "geofences")
-public class Geofence extends Auditable {
+public class Geofence extends Auditable implements Identifiable {
 
     @Id
     private String id;

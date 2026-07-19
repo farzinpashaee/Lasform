@@ -35,7 +35,7 @@ import lombok.experimental.SuperBuilder;
 @CompoundIndexes({
         @CompoundIndex(name = "device_status_idx", def = "{'deviceId': 1, 'status': 1}")
 })
-public class Alert extends Auditable {
+public class Alert extends Auditable implements Identifiable {
 
     @Id
     private String id;

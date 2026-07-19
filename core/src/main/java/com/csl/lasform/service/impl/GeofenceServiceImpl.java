@@ -10,8 +10,6 @@ import com.csl.lasform.model.entity.enums.GeofenceStatus;
 import com.csl.lasform.repository.GeofenceRepository;
 import com.csl.lasform.service.GeofenceService;
 
-import jakarta.validation.Valid;
-
 @Service
 @Validated
 public class GeofenceServiceImpl extends AbstractCrudService<Geofence, String> implements GeofenceService {
@@ -21,11 +19,6 @@ public class GeofenceServiceImpl extends AbstractCrudService<Geofence, String> i
     public GeofenceServiceImpl(GeofenceRepository geofenceRepository) {
         super(geofenceRepository);
         this.geofenceRepository = geofenceRepository;
-    }
-
-    @Override
-    public Geofence create(@Valid Geofence entity) {
-        return super.create(entity);
     }
 
     @Override

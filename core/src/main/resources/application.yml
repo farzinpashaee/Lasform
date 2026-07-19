@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: lasform
+
+  # Connection settings live under spring.mongodb.* (not spring.data.mongodb.*) as of
+  # Spring Boot 4's MongoProperties/DataMongoProperties split. Getting this prefix wrong
+  # fails silently: Boot falls back to its built-in default URI (mongodb://localhost/test)
+  # instead of failing to start, so the app "works" but writes to the wrong database.
+  mongodb:
+    uri: mongodb://localhost:27017/lasform
+    database: lasform
+
+  # spring.data.mongodb.* is the Spring Data behavior prefix. @Indexed/@GeoSpatialIndexed/
+  # @CompoundIndex on the entities are otherwise inert: Spring Data Mongo does not create
+  # indexes from annotations unless this is set.
+  data:
+    mongodb:
+      auto-index-creation: true

@@ -6,6 +6,9 @@ import java.util.Map;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -33,7 +36,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 @Document(collection = "events")
-public class Event {
+public class Event implements Identifiable {
 
     @Id
     private String id;
@@ -48,6 +51,18 @@ public class Event {
     private String deviceId;
 
     private String userId;
+
+    private Double speed;
+
+    private Double heading;
+
+    private Double accuracy;
+
+    private Double altitude;
+
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+    @NotNull
+    private GeoJsonPoint point;
 
     @Builder.Default
     private Map<String, Object> payload = new HashMap<>();

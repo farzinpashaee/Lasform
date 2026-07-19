@@ -9,8 +9,6 @@ import com.csl.lasform.model.entity.User;
 import com.csl.lasform.repository.UserRepository;
 import com.csl.lasform.service.UserService;
 
-import jakarta.validation.Valid;
-
 @Service
 @Validated
 public class UserServiceImpl extends AbstractCrudService<User, String> implements UserService {
@@ -23,7 +21,7 @@ public class UserServiceImpl extends AbstractCrudService<User, String> implement
     }
 
     @Override
-    public User create(@Valid User entity) {
+    public User create(User entity) {
         if (userRepository.existsByUsername(entity.getUsername())) {
             throw new DuplicateResourceException("Username already in use: " + entity.getUsername());
         }

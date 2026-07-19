@@ -10,8 +10,6 @@ import com.csl.lasform.model.entity.enums.AlertStatus;
 import com.csl.lasform.repository.AlertRepository;
 import com.csl.lasform.service.AlertService;
 
-import jakarta.validation.Valid;
-
 @Service
 @Validated
 public class AlertServiceImpl extends AbstractCrudService<Alert, String> implements AlertService {
@@ -21,11 +19,6 @@ public class AlertServiceImpl extends AbstractCrudService<Alert, String> impleme
     public AlertServiceImpl(AlertRepository alertRepository) {
         super(alertRepository);
         this.alertRepository = alertRepository;
-    }
-
-    @Override
-    public Alert create(@Valid Alert entity) {
-        return super.create(entity);
     }
 
     @Override

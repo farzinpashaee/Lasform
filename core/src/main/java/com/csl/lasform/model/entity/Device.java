@@ -33,7 +33,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Document(collection = "devices")
-public class Device extends Auditable {
+public class Device extends Auditable implements Identifiable {
 
     @Id
     private String id;

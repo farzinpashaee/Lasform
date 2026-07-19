@@ -11,8 +11,6 @@ import com.csl.lasform.model.entity.enums.EventType;
 import com.csl.lasform.repository.EventRepository;
 import com.csl.lasform.service.EventService;
 
-import jakarta.validation.Valid;
-
 @Service
 @Validated
 public class EventServiceImpl extends AbstractCrudService<Event, String> implements EventService {
@@ -22,11 +20,6 @@ public class EventServiceImpl extends AbstractCrudService<Event, String> impleme
     public EventServiceImpl(EventRepository eventRepository) {
         super(eventRepository);
         this.eventRepository = eventRepository;
-    }
-
-    @Override
-    public Event create(@Valid Event entity) {
-        return super.create(entity);
     }
 
     @Override

@@ -12,8 +12,6 @@ import com.csl.lasform.model.entity.enums.DeviceStatus;
 import com.csl.lasform.repository.DeviceRepository;
 import com.csl.lasform.service.DeviceService;
 
-import jakarta.validation.Valid;
-
 @Service
 @Validated
 public class DeviceServiceImpl extends AbstractCrudService<Device, String> implements DeviceService {
@@ -26,7 +24,7 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
     }
 
     @Override
-    public Device create(@Valid Device entity) {
+    public Device create(Device entity) {
         if (deviceRepository.existsByDeviceIdentifier(entity.getDeviceIdentifier())) {
             throw new DuplicateResourceException(
                     "Device identifier already registered: " + entity.getDeviceIdentifier());
