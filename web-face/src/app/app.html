@@ -1,0 +1,58 @@
+<div class="map-page">
+  <div #mapContainer class="map-container"></div>
+
+  <div class="top-bar">
+    <form class="search-bar" (ngSubmit)="onSearchSubmit()">
+      <span class="icon search-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            fill="currentColor"
+            d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"
+          />
+        </svg>
+      </span>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Search Lasform Maps"
+        [(ngModel)]="searchQuery"
+        name="search"
+      />
+      <button class="icon-button directions-button" type="button" aria-label="Directions">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            fill="currentColor"
+            d="M21.71 11.29l-9-9a1 1 0 0 0-1.42 0l-9 9a1 1 0 0 0 0 1.42l9 9a1 1 0 0 0 1.42 0l9-9a1 1 0 0 0 0-1.42zM14 14.5V12h-4v3H8v-4a1 1 0 0 1 1-1h5V7.5l3.5 3.5z"
+          />
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <div class="top-right">
+    <button class="icon-button round" type="button" aria-label="Apps">
+      <svg viewBox="0 0 24 24" width="20" height="20">
+        <path
+          fill="currentColor"
+          d="M4 8h2V6H4v2zm0 5h2v-2H4v2zm0 5h2v-2H4v2zm5-10h2V6H9v2zm0 5h2v-2H9v2zm0 5h2v-2H9v2zm5-10h2V6h-2v2zm0 5h2v-2h-2v2zm0 5h2v-2h-2v2zm5-10h2V6h-2v2zm0 5h2v-2h-2v2zm0 5h2v-2h-2v2z"
+          />
+      </svg>
+    </button>
+    <button class="avatar" type="button" aria-label="Account">F</button>
+  </div>
+
+  <div class="bottom-right controls">
+    <button class="icon-button round" type="button" aria-label="My location" (click)="locateMe()">
+      <svg viewBox="0 0 24 24" width="20" height="20">
+        <path
+          fill="currentColor"
+          d="M12 8a4 4 0 1 0 4 4 4 4 0 0 0-4-4zm8.94 3a8.99 8.99 0 0 0-7.94-7.94V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06a8.99 8.99 0 0 0 7.94 7.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2zM12 19a7 7 0 1 1 7-7 7 7 0 0 1-7 7z"
+          />
+      </svg>
+    </button>
+    <div class="zoom-stack">
+      <button class="icon-button square" type="button" aria-label="Zoom in" (click)="zoomIn()">+</button>
+      <button class="icon-button square" type="button" aria-label="Zoom out" (click)="zoomOut()">−</button>
+    </div>
+  </div>
+</div>
