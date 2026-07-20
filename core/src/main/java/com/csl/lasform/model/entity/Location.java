@@ -1,8 +1,12 @@
 package com.csl.lasform.model.entity;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -49,6 +53,15 @@ public class Location extends Auditable implements Identifiable {
 
     /** Reverse-geocoded address, cached to avoid repeated lookups. */
     private Address address;
+
+    /** {@link Category} ids this location is classified under; a location may have several. */
+    @Builder.Default
+    private Set<String> categoryIds = new HashSet<>();
+
+    /** Free-form labels for search/filtering, independent of {@link #categoryIds}. */
+    @Indexed
+    @Builder.Default
+    private List<String> tags = new ArrayList<>();
 
     @Indexed
     @NotNull

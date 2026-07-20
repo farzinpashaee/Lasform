@@ -35,13 +35,22 @@ public class DeviceController extends AbstractCrudController<Device> {
     @GetMapping("/search")
     public List<Device> search(
             @RequestParam(required = false) String ownerId,
-            @RequestParam(required = false) DeviceStatus status) {
+            @RequestParam(required = false) DeviceStatus status,
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false) List<String> tags) {
         if (ownerId != null) {
             return deviceService.findByOwnerId(ownerId);
         }
         if (status != null) {
             return deviceService.findByStatus(status);
         }
-        throw new IllegalArgumentException("At least one of 'ownerId' or 'status' must be provided");
+        if (tag != null) {
+            return deviceService.findByTag(tag);
+        }
+        if (tags != null && !tags.isEmpty()) {
+            return deviceService.findByTagsIn(tags);
+        }
+        throw new IllegalArgumentException(
+                "At least one of 'ownerId', 'status', 'tag' or 'tags' must be provided");
     }
 }

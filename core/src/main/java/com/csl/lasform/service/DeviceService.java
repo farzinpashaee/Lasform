@@ -12,4 +12,8 @@ public interface DeviceService extends CrudService<Device, String> {
     List<Device> findByOwnerId(String ownerId);
 
     List<Device> findByStatus(DeviceStatus status);
+
+    List<Device> findByTag(String tag);
+
+    List<Device> findByTagsIn(List<String> tags);
 }

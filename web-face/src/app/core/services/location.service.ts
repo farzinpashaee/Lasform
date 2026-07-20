@@ -17,4 +17,23 @@ export class LocationService extends CrudService<Location> {
       params: buildHttpParams({ lat, lng, radiusMeters }),
     });
   }
+
+  findByCategoryId(categoryId: string): Observable<Location[]> {
+    return this.http.get<Location[]>(`${this.resourceUrl}/search`, {
+      params: buildHttpParams({ categoryId }),
+    });
+  }
+
+  findByTag(tag: string): Observable<Location[]> {
+    return this.http.get<Location[]>(`${this.resourceUrl}/search`, {
+      params: buildHttpParams({ tag }),
+    });
+  }
+
+  /** Locations having at least one of the given tags. */
+  findByTagsIn(tags: string[]): Observable<Location[]> {
+    return this.http.get<Location[]>(`${this.resourceUrl}/search`, {
+      params: buildHttpParams({ tags }),
+    });
+  }
 }

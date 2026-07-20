@@ -9,6 +9,8 @@ export interface Location extends Auditable {
   description?: string;
   altitude?: number;
   address?: Address;
+  categoryIds?: string[];
+  tags?: string[];
   recordedAt: string;
   receivedAt?: string;
   metadata?: Record<string, unknown>;

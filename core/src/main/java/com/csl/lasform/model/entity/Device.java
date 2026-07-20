@@ -1,7 +1,9 @@
 package com.csl.lasform.model.entity;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.annotation.Id;
@@ -64,6 +66,11 @@ public class Device extends Auditable implements Identifiable {
     private Instant lastSeenAt;
 
     private Integer batteryLevel;
+
+    /** Free-form labels for search/filtering. */
+    @Indexed
+    @Builder.Default
+    private List<String> tags = new ArrayList<>();
 
     @Builder.Default
     private Map<String, String> metadata = new HashMap<>();

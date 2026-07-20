@@ -50,6 +50,16 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
     }
 
     @Override
+    public List<Device> findByTag(String tag) {
+        return deviceRepository.findByTagsContaining(tag);
+    }
+
+    @Override
+    public List<Device> findByTagsIn(List<String> tags) {
+        return deviceRepository.findByTagsIn(tags);
+    }
+
+    @Override
     protected void applyUpdate(Device existing, Device incoming) {
         existing.setName(incoming.getName());
         existing.setType(incoming.getType());
@@ -57,6 +67,7 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
         existing.setLastKnownPoint(incoming.getLastKnownPoint());
         existing.setLastSeenAt(incoming.getLastSeenAt());
         existing.setBatteryLevel(incoming.getBatteryLevel());
+        existing.setTags(incoming.getTags());
         existing.setMetadata(incoming.getMetadata());
     }
 

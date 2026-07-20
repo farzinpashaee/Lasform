@@ -1,5 +1,7 @@
 package com.csl.lasform.service.impl;
 
+import java.util.List;
+
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
@@ -27,12 +29,29 @@ public class LocationServiceImpl extends AbstractCrudService<Location, String> i
     }
 
     @Override
+    public List<Location> findByCategoryId(String categoryId) {
+        return locationRepository.findByCategoryIdsContaining(categoryId);
+    }
+
+    @Override
+    public List<Location> findByTag(String tag) {
+        return locationRepository.findByTagsContaining(tag);
+    }
+
+    @Override
+    public List<Location> findByTagsIn(List<String> tags) {
+        return locationRepository.findByTagsIn(tags);
+    }
+
+    @Override
     protected void applyUpdate(Location existing, Location incoming) {
         existing.setPoint(incoming.getPoint());
         existing.setName(incoming.getName());
         existing.setDescription(incoming.getDescription());
         existing.setAltitude(incoming.getAltitude());
         existing.setAddress(incoming.getAddress());
+        existing.setCategoryIds(incoming.getCategoryIds());
+        existing.setTags(incoming.getTags());
         existing.setRecordedAt(incoming.getRecordedAt());
         existing.setMetadata(incoming.getMetadata());
     }

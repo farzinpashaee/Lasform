@@ -1,5 +1,7 @@
 package com.csl.lasform.controller;
 
+import java.util.List;
+
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
@@ -32,5 +34,22 @@ public class LocationController extends AbstractCrudController<Location> {
             @RequestParam double lng,
             @RequestParam double radiusMeters) {
         return locationService.findNear(new Point(lng, lat), new Distance(radiusMeters));
+    }
+
+    @GetMapping("/search")
+    public List<Location> search(
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false) List<String> tags) {
+        if (categoryId != null) {
+            return locationService.findByCategoryId(categoryId);
+        }
+        if (tag != null) {
+            return locationService.findByTag(tag);
+        }
+        if (tags != null && !tags.isEmpty()) {
+            return locationService.findByTagsIn(tags);
+        }
+        throw new IllegalArgumentException("At least one of 'categoryId', 'tag' or 'tags' must be provided");
     }
 }

@@ -2,6 +2,7 @@ export * from './address.model';
 export * from './alert.model';
 export * from './api-error.model';
 export * from './auditable.model';
+export * from './category.model';
 export * from './device.model';
 export * from './enums';
 export * from './event.model';

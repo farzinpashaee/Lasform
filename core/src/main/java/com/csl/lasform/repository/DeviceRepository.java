@@ -16,5 +16,10 @@ public interface DeviceRepository extends MongoRepository<Device, String> {
 
     List<Device> findByStatus(DeviceStatus status);
 
+    List<Device> findByTagsContaining(String tag);
+
+    /** Devices having at least one of the given tags. */
+    List<Device> findByTagsIn(List<String> tags);
+
     boolean existsByDeviceIdentifier(String deviceIdentifier);
 }
