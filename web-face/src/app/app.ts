@@ -1,6 +1,16 @@
-import { AfterViewInit, Component, ElementRef, signal, viewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import * as L from 'leaflet';
+
+import { MAP_PROVIDER, MapProvider } from './core/maps';
+import { LocationService } from './core/services/location.service';
 
 @Component({
   selector: 'app-root',
@@ -8,33 +18,45 @@ import * as L from 'leaflet';
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App implements AfterViewInit {
+export class App implements AfterViewInit, OnDestroy {
   protected readonly title = signal('LasformWebFace');
 
+  private readonly locationService = inject(LocationService);
+  private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
+
   private readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
-  private map!: L.Map;
 
   protected readonly searchQuery = signal('');
 
-  ngAfterViewInit(): void {
-    this.map = L.map(this.mapContainer().nativeElement, {
-      center: [43.8628, -79.4308],
+  async ngAfterViewInit(): Promise<void> {
+    await this.mapProvider.initialize(this.mapContainer().nativeElement, {
+      center: { lat: 43.8628, lng: -79.4308 },
       zoom: 14,
-      zoomControl: false,
-      attributionControl: false,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-    }).addTo(this.map);
+    this.loadLocationMarkers();
+  }
+
+  ngOnDestroy(): void {
+    this.mapProvider.destroy();
+  }
+
+  private loadLocationMarkers(): void {
+    this.locationService.findAll({ size: 200 }).subscribe((page) => {
+      const markers = page.content.map((location) => {
+        const [lng, lat] = location.point.coordinates;
+        return { lat, lng, title: location.name };
+      });
+      this.mapProvider.setMarkers(markers);
+    });
   }
 
   protected zoomIn(): void {
-    this.map.zoomIn();
+    this.mapProvider.zoomIn();
   }
 
   protected zoomOut(): void {
-    this.map.zoomOut();
+    this.mapProvider.zoomOut();
   }
 
   protected locateMe(): void {
@@ -43,7 +65,7 @@ export class App implements AfterViewInit {
     }
     navigator.geolocation.getCurrentPosition((position) => {
       const { latitude, longitude } = position.coords;
-      this.map.setView([latitude, longitude], 15);
+      this.mapProvider.panTo(latitude, longitude, 15);
     });
   }
 
