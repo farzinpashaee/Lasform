@@ -23,6 +23,11 @@ public class EventServiceImpl extends AbstractCrudService<Event, String> impleme
     }
 
     @Override
+    public List<Event> createAll(List<Event> entities) {
+        return eventRepository.saveAll(entities);
+    }
+
+    @Override
     public List<Event> findByDeviceId(String deviceId) {
         return eventRepository.findByDeviceIdOrderByOccurredAtDesc(deviceId);
     }

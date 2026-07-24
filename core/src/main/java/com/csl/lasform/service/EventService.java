@@ -8,6 +8,8 @@ import com.csl.lasform.model.entity.enums.EventType;
 
 public interface EventService extends CrudService<Event, String> {
 
+    List<Event> createAll(List<Event> entities);
+
     List<Event> findByDeviceId(String deviceId);
 
     List<Event> findByUserId(String userId);

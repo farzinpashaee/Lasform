@@ -5,13 +5,18 @@ import java.util.List;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.csl.lasform.model.entity.Location;
 import com.csl.lasform.service.LocationService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/locations")
@@ -26,6 +31,11 @@ public class LocationController extends AbstractCrudController<Location> {
     @Override
     protected LocationService service() {
         return locationService;
+    }
+
+    @PostMapping
+    public ResponseEntity<Location> create(@Valid @RequestBody Location entity) {
+        return createOne(entity);
     }
 
     @GetMapping("/near")

@@ -2,8 +2,11 @@ package com.csl.lasform.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.csl.lasform.model.entity.Device;
 import com.csl.lasform.model.entity.enums.DeviceStatus;
 import com.csl.lasform.service.DeviceService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/devices")
@@ -25,6 +30,11 @@ public class DeviceController extends AbstractCrudController<Device> {
     @Override
     protected DeviceService service() {
         return deviceService;
+    }
+
+    @PostMapping
+    public ResponseEntity<Device> create(@Valid @RequestBody Device entity) {
+        return createOne(entity);
     }
 
     @GetMapping("/by-identifier/{deviceIdentifier}")
