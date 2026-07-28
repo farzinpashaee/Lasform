@@ -66,6 +66,7 @@
 	</dependencies>
 
 	<build>
+        <finalName>${project.artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -115,6 +116,48 @@
 					</execution>
 				</executions>
 			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-starter-script</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <echo file="${project.build.directory}/starter.sh">#!/bin/bash
+cd "$(dirname "$0")"
+
+if [ -f starter.pid ]; then
+  OLD_PID=$(cat starter.pid)
+  if ps -p "$OLD_PID" > /dev/null 2>&amp;1; then
+    echo "Existing process running with PID $OLD_PID. Stopping it..."
+    kill "$OLD_PID"
+    sleep 2
+    if ps -p "$OLD_PID" > /dev/null 2>&amp;1; then
+      echo "Process did not stop gracefully. Forcing kill..."
+      kill -9 "$OLD_PID"
+    fi
+  else
+    echo "PID file found but process $OLD_PID is not running. Cleaning up."
+  fi
+  rm -f starter.pid
+fi
+
+nohup java -jar ${project.build.finalName}.jar "$@" > starter.log 2>&amp;1 &amp;
+echo $! > starter.pid
+echo "Started with PID $(cat starter.pid)"
+                                </echo>
+                                <chmod file="${project.build.directory}/starter.sh" perm="755"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 
