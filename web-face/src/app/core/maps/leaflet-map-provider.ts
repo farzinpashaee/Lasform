@@ -2,6 +2,16 @@ import * as L from 'leaflet';
 
 import { MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
 
+// Leaflet's default icon resolves its image URLs relative to the stylesheet that
+// declared it, which esbuild's bundling breaks — markers render as a broken-image
+// icon unless the URLs are pointed at the assets explicitly, once, up front.
+delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: 'leaflet/images/marker-icon.png',
+  iconRetinaUrl: 'leaflet/images/marker-icon-2x.png',
+  shadowUrl: 'leaflet/images/marker-shadow.png',
+});
+
 export class LeafletMapProvider implements MapProvider {
   private map?: L.Map;
   private markersLayer?: L.LayerGroup;
