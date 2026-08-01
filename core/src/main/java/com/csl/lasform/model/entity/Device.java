@@ -3,8 +3,10 @@ package com.csl.lasform.model.entity;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
@@ -67,7 +69,11 @@ public class Device extends Auditable implements Identifiable {
 
     private Integer batteryLevel;
 
-    /** Free-form labels for search/filtering. */
+    /** {@link Category} ids this device is classified under; a device may have several. */
+    @Builder.Default
+    private Set<String> categoryIds = new HashSet<>();
+
+    /** Free-form labels for search/filtering, independent of {@link #categoryIds}. */
     @Indexed
     @Builder.Default
     private List<String> tags = new ArrayList<>();

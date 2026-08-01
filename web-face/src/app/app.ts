@@ -9,8 +9,12 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { MAP_PROVIDER, MapProvider } from './core/maps';
+import { MAP_PROVIDER, MapMarkerData, MapProvider } from './core/maps';
+import { Device } from './core/models/device.model';
+import { Location } from './core/models/location.model';
+import { SearchHit } from './core/models/search.model';
 import { LocationService } from './core/services/location.service';
+import { SearchService } from './core/services/search.service';
 
 @Component({
   selector: 'app-root',
@@ -22,11 +26,16 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly title = signal('LasformWebFace');
 
   private readonly locationService = inject(LocationService);
+  private readonly searchService = inject(SearchService);
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
 
   private readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
 
   protected readonly searchQuery = signal('');
+  protected readonly searchResults = signal<SearchHit[]>([]);
+  protected readonly searching = signal(false);
+  protected readonly searchError = signal<string | null>(null);
+  protected readonly hasSearched = signal(false);
 
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
@@ -74,6 +83,63 @@ export class App implements AfterViewInit, OnDestroy {
     if (!query) {
       return;
     }
-    // Placeholder: wire up to a real geocoding/search service later.
+    this.hasSearched.set(true);
+    this.searching.set(true);
+    this.searchError.set(null);
+
+    this.searchService.search({ q: query, size: 50 }).subscribe({
+      next: (page) => {
+        this.searching.set(false);
+        this.searchResults.set(page.content);
+        this.showResultsOnMap(page.content);
+      },
+      error: () => {
+        this.searching.set(false);
+        this.searchResults.set([]);
+        this.searchError.set('Search failed. Please try again.');
+      },
+    });
+  }
+
+  protected selectResult(hit: SearchHit): void {
+    const point = this.hitPoint(hit);
+    if (!point) {
+      return;
+    }
+    const [lng, lat] = point.coordinates;
+    this.mapProvider.panTo(lat, lng, 16);
+  }
+
+  protected resultTitle(hit: SearchHit): string {
+    return hit.data.name || (hit.type === 'LOCATION' ? 'Unnamed location' : 'Unnamed device');
+  }
+
+  protected resultSubtitle(hit: SearchHit): string {
+    if (hit.type === 'LOCATION') {
+      const location = hit.data as Location;
+      return location.address?.address || location.description || 'Location';
+    }
+    const device = hit.data as Device;
+    return device.deviceIdentifier || 'Device';
+  }
+
+  private showResultsOnMap(hits: SearchHit[]): void {
+    const markers: MapMarkerData[] = [];
+    for (const hit of hits) {
+      const point = this.hitPoint(hit);
+      if (!point) {
+        continue;
+      }
+      const [lng, lat] = point.coordinates;
+      markers.push({ lat, lng, title: this.resultTitle(hit) });
+    }
+    this.mapProvider.setMarkers(markers);
+    if (markers.length > 0) {
+      this.mapProvider.panTo(markers[0].lat, markers[0].lng);
+    }
+  }
+
+  private hitPoint(hit: SearchHit) {
+    return hit.type === 'LOCATION' ? (hit.data as Location).point : (hit.data as Device).lastKnownPoint;
   }
 }

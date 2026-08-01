@@ -21,9 +21,22 @@ $radius: 8px;
   right: 12px;
   z-index: 500;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   flex-wrap: wrap;
+  /* Stretched full-width so children can lay out, but most of that area is empty —
+     let clicks/drags fall through to the map except where content actually is. */
+  pointer-events: none;
+}
+
+.search-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  flex: 0 0 auto;
+  pointer-events: auto;
 }
 
 .search-bar {
@@ -35,8 +48,7 @@ $radius: 8px;
   box-shadow: $shadow;
   padding: 0 8px 0 16px;
   height: 48px;
-  min-width: 280px;
-  flex: 0 0 auto;
+  width: 100%;
 }
 
 .search-icon {
@@ -58,9 +70,105 @@ $radius: 8px;
   }
 }
 
-.directions-button {
-  background: #f1f3f4;
+.results-card {
+  background: #fff;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  overflow: hidden;
+}
+
+.results-status {
+  padding: 16px;
+  font-size: 14px;
+  color: #5f6368;
+}
+
+.results-error {
+  color: #d93025;
+}
+
+.results-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #dadce0;
+    border-radius: 4px;
+  }
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: #f1f3f4;
+  }
+}
+
+.result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e8f0fe;
   color: #1a73e8;
+}
+
+.result-icon-device {
+  background: #e6f4ea;
+  color: #188038;
+}
+
+.result-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.result-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #202124;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-subtitle {
+  font-size: 12px;
+  color: #5f6368;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .icon-button {

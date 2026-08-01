@@ -10,4 +10,5 @@ export * from './geo.model';
 export * from './geofence.model';
 export * from './location.model';
 export * from './page.model';
+export * from './search.model';
 export * from './user.model';

@@ -2,31 +2,67 @@
   <div #mapContainer class="map-container"></div>
 
   <div class="top-bar">
-    <form class="search-bar" (ngSubmit)="onSearchSubmit()">
-      <span class="icon search-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            fill="currentColor"
-            d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"
-          />
-        </svg>
-      </span>
-      <input
-        class="search-input"
-        type="text"
-        placeholder="Search Lasform Maps"
-        [(ngModel)]="searchQuery"
-        name="search"
-      />
-      <button class="icon-button directions-button" type="button" aria-label="Directions">
-        <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            fill="currentColor"
-            d="M21.71 11.29l-9-9a1 1 0 0 0-1.42 0l-9 9a1 1 0 0 0 0 1.42l9 9a1 1 0 0 0 1.42 0l9-9a1 1 0 0 0 0-1.42zM14 14.5V12h-4v3H8v-4a1 1 0 0 1 1-1h5V7.5l3.5 3.5z"
-          />
-        </svg>
-      </button>
-    </form>
+    <div class="search-column">
+      <form class="search-bar" (ngSubmit)="onSearchSubmit()">
+        <span class="icon search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path
+              fill="currentColor"
+              d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"
+            />
+          </svg>
+        </span>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Search Lasform Maps"
+          [(ngModel)]="searchQuery"
+          name="search"
+        />
+      </form>
+
+      @if (hasSearched()) {
+        <div class="results-card">
+          @if (searching()) {
+            <div class="results-status">Searching…</div>
+          } @else if (searchError()) {
+            <div class="results-status results-error">{{ searchError() }}</div>
+          } @else if (searchResults().length === 0) {
+            <div class="results-status">No results for "{{ searchQuery() }}"</div>
+          } @else {
+            <ul class="results-list">
+              @for (hit of searchResults(); track $index) {
+                <li>
+                  <button type="button" class="result-item" (click)="selectResult(hit)">
+                    <span class="result-icon" [class.result-icon-device]="hit.type === 'DEVICE'" aria-hidden="true">
+                      @if (hit.type === 'DEVICE') {
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                          <path
+                            fill="currentColor"
+                            d="M17 1H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm0 18H7V5h10z"
+                          />
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                          <path
+                            fill="currentColor"
+                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"
+                          />
+                        </svg>
+                      }
+                    </span>
+                    <span class="result-text">
+                      <span class="result-title">{{ resultTitle(hit) }}</span>
+                      <span class="result-subtitle">{{ resultSubtitle(hit) }}</span>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
   </div>
 
   <div class="top-right">

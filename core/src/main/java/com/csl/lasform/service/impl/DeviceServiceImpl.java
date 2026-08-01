@@ -67,6 +67,7 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
         existing.setLastKnownPoint(incoming.getLastKnownPoint());
         existing.setLastSeenAt(incoming.getLastSeenAt());
         existing.setBatteryLevel(incoming.getBatteryLevel());
+        existing.setCategoryIds(incoming.getCategoryIds());
         existing.setTags(incoming.getTags());
         existing.setMetadata(incoming.getMetadata());
     }

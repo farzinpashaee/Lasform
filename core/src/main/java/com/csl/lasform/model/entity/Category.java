@@ -13,7 +13,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-/** A tag a {@link Location} can be classified under; a location may carry several. */
+/** A tag a {@link Location} or {@link Device} can be classified under; either may carry several. */
 @Getter
 @Setter
 @NoArgsConstructor
