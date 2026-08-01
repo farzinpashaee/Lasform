@@ -7,6 +7,8 @@ export interface MapViewOptions {
 }
 
 export interface MapMarkerData {
+  /** Stable key used to look the marker back up later, e.g. for openMarkerPopup. */
+  id?: string;
   lat: number;
   lng: number;
   title?: string;
@@ -22,6 +24,9 @@ export interface MapProvider {
 
   /** Replaces all markers currently on the map. */
   setMarkers(markers: MapMarkerData[]): void;
+
+  /** Opens the tooltip/info window for the marker with the given id, if it's currently on the map. */
+  openMarkerPopup(id: string): void;
 
   zoomIn(): void;
 

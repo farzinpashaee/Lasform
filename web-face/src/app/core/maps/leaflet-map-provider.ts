@@ -15,6 +15,7 @@ L.Icon.Default.mergeOptions({
 export class LeafletMapProvider implements MapProvider {
   private map?: L.Map;
   private markersLayer?: L.LayerGroup;
+  private markersById = new Map<string, L.Marker>();
 
   initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
     this.map = L.map(container, {
@@ -36,14 +37,22 @@ export class LeafletMapProvider implements MapProvider {
       return;
     }
     this.markersLayer?.remove();
+    this.markersById.clear();
     const leafletMarkers = markers.map((marker) => {
       const leafletMarker = L.marker([marker.lat, marker.lng]);
       if (marker.title) {
         leafletMarker.bindPopup(marker.title);
       }
+      if (marker.id) {
+        this.markersById.set(marker.id, leafletMarker);
+      }
       return leafletMarker;
     });
     this.markersLayer = L.layerGroup(leafletMarkers).addTo(this.map);
+  }
+
+  openMarkerPopup(id: string): void {
+    this.markersById.get(id)?.openPopup();
   }
 
   zoomIn(): void {
@@ -69,5 +78,6 @@ export class LeafletMapProvider implements MapProvider {
     this.map?.remove();
     this.map = undefined;
     this.markersLayer = undefined;
+    this.markersById.clear();
   }
 }

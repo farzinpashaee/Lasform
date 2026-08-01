@@ -54,7 +54,7 @@ export class App implements AfterViewInit, OnDestroy {
     this.locationService.findAll({ size: 200 }).subscribe((page) => {
       const markers = page.content.map((location) => {
         const [lng, lat] = location.point.coordinates;
-        return { lat, lng, title: location.name };
+        return { id: location.id, lat, lng, title: location.name };
       });
       this.mapProvider.setMarkers(markers);
     });
@@ -108,6 +108,9 @@ export class App implements AfterViewInit, OnDestroy {
     }
     const [lng, lat] = point.coordinates;
     this.mapProvider.panTo(lat, lng, 16);
+    if (hit.data.id) {
+      this.mapProvider.openMarkerPopup(hit.data.id);
+    }
   }
 
   protected resultTitle(hit: SearchHit): string {
@@ -131,7 +134,7 @@ export class App implements AfterViewInit, OnDestroy {
         continue;
       }
       const [lng, lat] = point.coordinates;
-      markers.push({ lat, lng, title: this.resultTitle(hit) });
+      markers.push({ id: hit.data.id, lat, lng, title: this.resultTitle(hit) });
     }
     this.mapProvider.setMarkers(markers);
     if (markers.length > 0) {

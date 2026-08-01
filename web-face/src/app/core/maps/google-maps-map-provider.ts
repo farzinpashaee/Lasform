@@ -5,6 +5,7 @@ export class GoogleMapsMapProvider implements MapProvider {
   private map?: google.maps.Map;
   private infoWindow?: google.maps.InfoWindow;
   private markers: google.maps.Marker[] = [];
+  private markersById = new Map<string, { marker: google.maps.Marker; title?: string }>();
 
   constructor(private readonly apiKey: string) {}
 
@@ -36,7 +37,21 @@ export class GoogleMapsMapProvider implements MapProvider {
         });
       }
       this.markers.push(marker);
+      if (markerData.id) {
+        this.markersById.set(markerData.id, { marker, title: markerData.title });
+      }
     }
+  }
+
+  openMarkerPopup(id: string): void {
+    const entry = this.markersById.get(id);
+    if (!entry || !this.infoWindow) {
+      return;
+    }
+    if (entry.title) {
+      this.infoWindow.setContent(entry.title);
+    }
+    this.infoWindow.open(this.map, entry.marker);
   }
 
   zoomIn(): void {
@@ -72,5 +87,6 @@ export class GoogleMapsMapProvider implements MapProvider {
   private clearMarkers(): void {
     this.markers.forEach((marker) => marker.setMap(null));
     this.markers = [];
+    this.markersById.clear();
   }
 }
