@@ -32,7 +32,7 @@ export class LeafletMapProvider implements MapProvider {
     return Promise.resolve();
   }
 
-  setMarkers(markers: MapMarkerData[]): void {
+  setMarkers(markers: MapMarkerData[], onMarkerClick?: (id: string) => void): void {
     if (!this.map) {
       return;
     }
@@ -45,6 +45,9 @@ export class LeafletMapProvider implements MapProvider {
       }
       if (marker.id) {
         this.markersById.set(marker.id, leafletMarker);
+        if (onMarkerClick) {
+          leafletMarker.on('click', () => onMarkerClick(marker.id!));
+        }
       }
       return leafletMarker;
     });

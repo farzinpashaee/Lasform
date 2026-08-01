@@ -22,8 +22,8 @@ export interface MapProvider {
   /** Renders the map into `container`. Resolves once the map is ready for markers. */
   initialize(container: HTMLElement, options: MapViewOptions): Promise<void>;
 
-  /** Replaces all markers currently on the map. */
-  setMarkers(markers: MapMarkerData[]): void;
+  /** Replaces all markers currently on the map. onMarkerClick fires with a marker's id when it's clicked. */
+  setMarkers(markers: MapMarkerData[], onMarkerClick?: (id: string) => void): void;
 
   /** Opens the tooltip/info window for the marker with the given id, if it's currently on the map. */
   openMarkerPopup(id: string): void;

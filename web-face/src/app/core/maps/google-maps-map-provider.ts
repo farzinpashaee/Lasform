@@ -20,7 +20,7 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.infoWindow = new google.maps.InfoWindow();
   }
 
-  setMarkers(markers: MapMarkerData[]): void {
+  setMarkers(markers: MapMarkerData[], onMarkerClick?: (id: string) => void): void {
     if (!this.map) {
       return;
     }
@@ -30,10 +30,15 @@ export class GoogleMapsMapProvider implements MapProvider {
         position: { lat: markerData.lat, lng: markerData.lng },
         map: this.map,
       });
-      if (markerData.title) {
+      if (markerData.title || markerData.id) {
         marker.addListener('click', () => {
-          this.infoWindow?.setContent(markerData.title!);
-          this.infoWindow?.open(this.map, marker);
+          if (markerData.title) {
+            this.infoWindow?.setContent(markerData.title!);
+            this.infoWindow?.open(this.map, marker);
+          }
+          if (markerData.id) {
+            onMarkerClick?.(markerData.id);
+          }
         });
       }
       this.markers.push(marker);

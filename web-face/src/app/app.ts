@@ -7,6 +7,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { MAP_PROVIDER, MapMarkerData, MapProvider } from './core/maps';
@@ -18,7 +19,7 @@ import { SearchService } from './core/services/search.service';
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule],
+  imports: [FormsModule, NgTemplateOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -30,6 +31,9 @@ export class App implements AfterViewInit, OnDestroy {
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
 
   private readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
+
+  /** All locations shown as markers before any search; looked up on marker click when hasSearched() is false. */
+  private allLocationHits: SearchHit[] = [];
 
   protected readonly searchQuery = signal('');
   protected readonly searchResults = signal<SearchHit[]>([]);
@@ -53,11 +57,12 @@ export class App implements AfterViewInit, OnDestroy {
 
   private loadLocationMarkers(): void {
     this.locationService.findAll({ size: 200 }).subscribe((page) => {
+      this.allLocationHits = page.content.map((location) => ({ type: 'LOCATION' as const, data: location }));
       const markers = page.content.map((location) => {
         const [lng, lat] = location.point.coordinates;
         return { id: location.id, lat, lng, title: location.name };
       });
-      this.mapProvider.setMarkers(markers);
+      this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
     });
   }
 
@@ -117,8 +122,16 @@ export class App implements AfterViewInit, OnDestroy {
     }
   }
 
-  protected backToList(): void {
+  protected closeDetails(): void {
     this.selectedResult.set(null);
+  }
+
+  private onMarkerClicked(id: string): void {
+    const source = this.hasSearched() ? this.searchResults() : this.allLocationHits;
+    const hit = source.find((candidate) => candidate.data.id === id);
+    if (hit) {
+      this.selectedResult.set(hit);
+    }
   }
 
   protected resultTitle(hit: SearchHit): string {
@@ -197,7 +210,7 @@ export class App implements AfterViewInit, OnDestroy {
       const [lng, lat] = point.coordinates;
       markers.push({ id: hit.data.id, lat, lng, title: this.resultTitle(hit) });
     }
-    this.mapProvider.setMarkers(markers);
+    this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
     if (markers.length > 0) {
       this.mapProvider.panTo(markers[0].lat, markers[0].lng);
     }
