@@ -36,6 +36,7 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly searching = signal(false);
   protected readonly searchError = signal<string | null>(null);
   protected readonly hasSearched = signal(false);
+  protected readonly selectedResult = signal<SearchHit | null>(null);
 
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
@@ -86,6 +87,7 @@ export class App implements AfterViewInit, OnDestroy {
     this.hasSearched.set(true);
     this.searching.set(true);
     this.searchError.set(null);
+    this.selectedResult.set(null);
 
     this.searchService.search({ q: query, size: 50 }).subscribe({
       next: (page) => {
@@ -102,6 +104,8 @@ export class App implements AfterViewInit, OnDestroy {
   }
 
   protected selectResult(hit: SearchHit): void {
+    this.selectedResult.set(hit);
+
     const point = this.hitPoint(hit);
     if (!point) {
       return;
@@ -111,6 +115,10 @@ export class App implements AfterViewInit, OnDestroy {
     if (hit.data.id) {
       this.mapProvider.openMarkerPopup(hit.data.id);
     }
+  }
+
+  protected backToList(): void {
+    this.selectedResult.set(null);
   }
 
   protected resultTitle(hit: SearchHit): string {
@@ -124,6 +132,59 @@ export class App implements AfterViewInit, OnDestroy {
     }
     const device = hit.data as Device;
     return device.deviceIdentifier || 'Device';
+  }
+
+  protected resultDetailFields(hit: SearchHit): { label: string; value: string }[] {
+    if (hit.type === 'LOCATION') {
+      return this.locationDetailFields(hit.data as Location);
+    }
+    return this.deviceDetailFields(hit.data as Device);
+  }
+
+  private locationDetailFields(location: Location): { label: string; value: string }[] {
+    const fields: { label: string; value: string }[] = [];
+    if (location.description) {
+      fields.push({ label: 'Description', value: location.description });
+    }
+    const address = [location.address?.address, location.address?.city, location.address?.country]
+      .filter(Boolean)
+      .join(', ');
+    if (address) {
+      fields.push({ label: 'Address', value: address });
+    }
+    const [lng, lat] = location.point.coordinates;
+    fields.push({ label: 'Coordinates', value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+    if (location.recordedAt) {
+      fields.push({ label: 'Recorded', value: new Date(location.recordedAt).toLocaleString() });
+    }
+    if (location.tags?.length) {
+      fields.push({ label: 'Tags', value: location.tags.join(', ') });
+    }
+    return fields;
+  }
+
+  private deviceDetailFields(device: Device): { label: string; value: string }[] {
+    const fields: { label: string; value: string }[] = [
+      { label: 'Identifier', value: device.deviceIdentifier },
+      { label: 'Type', value: device.type },
+    ];
+    if (device.status) {
+      fields.push({ label: 'Status', value: device.status });
+    }
+    if (device.batteryLevel != null) {
+      fields.push({ label: 'Battery', value: `${device.batteryLevel}%` });
+    }
+    if (device.lastSeenAt) {
+      fields.push({ label: 'Last seen', value: new Date(device.lastSeenAt).toLocaleString() });
+    }
+    if (device.lastKnownPoint) {
+      const [lng, lat] = device.lastKnownPoint.coordinates;
+      fields.push({ label: 'Last location', value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+    }
+    if (device.tags?.length) {
+      fields.push({ label: 'Tags', value: device.tags.join(', ') });
+    }
+    return fields;
   }
 
   private showResultsOnMap(hits: SearchHit[]): void {
