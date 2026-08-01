@@ -15,7 +15,12 @@
 	<description/>
 	<url/>
 	<licenses>
-		<license/>
+		<license>
+			<name>PolyForm Noncommercial License 1.0.0 (dual-licensed; commercial license available)</name>
+			<url>https://github.com/farzinpashaee/Lasform/blob/master/LICENSE</url>
+			<distribution>repo</distribution>
+			<comments>See COMMERCIAL-LICENSE.md in the repository root for commercial licensing terms.</comments>
+		</license>
 	</licenses>
 	<developers>
 		<developer/>
