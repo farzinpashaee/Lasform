@@ -11,6 +11,10 @@
 npm-debug.log
 yarn-error.log
 
+# Local Node/npm installed by the core module's "with-frontend" Maven profile
+# (com.github.eirslett:frontend-maven-plugin)
+/node
+
 # IDEs and editors
 .idea/
 .project
