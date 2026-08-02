@@ -155,6 +155,34 @@ $radius: 8px;
   }
 }
 
+.details-standalone {
+  position: relative;
+
+  .details-header {
+    padding-right: 48px;
+  }
+}
+
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #5f6368;
+  cursor: pointer;
+
+  &:hover {
+    background: #f1f3f4;
+  }
+}
+
 .details-header {
   display: flex;
   align-items: center;
