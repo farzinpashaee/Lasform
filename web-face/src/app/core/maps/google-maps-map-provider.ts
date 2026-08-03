@@ -73,9 +73,13 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.map.setZoom((this.map.getZoom() ?? 0) - 1);
   }
 
-  panTo(lat: number, lng: number, zoom?: number): void {
+  panTo(lat: number, lng: number, zoom?: number, onComplete?: () => void): void {
     if (!this.map) {
+      onComplete?.();
       return;
+    }
+    if (onComplete) {
+      google.maps.event.addListenerOnce(this.map, 'idle', onComplete);
     }
     this.map.panTo({ lat, lng });
     if (zoom !== undefined) {

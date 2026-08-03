@@ -41,6 +41,7 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly searchError = signal<string | null>(null);
   protected readonly hasSearched = signal(false);
   protected readonly selectedResult = signal<SearchHit | null>(null);
+  protected readonly locating = signal(false);
 
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
@@ -75,13 +76,24 @@ export class App implements AfterViewInit, OnDestroy {
   }
 
   protected locateMe(): void {
-    if (!navigator.geolocation) {
+    if (!navigator.geolocation || this.locating()) {
       return;
     }
-    navigator.geolocation.getCurrentPosition((position) => {
-      const { latitude, longitude } = position.coords;
-      this.mapProvider.panTo(latitude, longitude, 15);
-    });
+    this.locating.set(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Guards against the map already being centered there, where moveend/idle may never fire.
+        const stopLoading = () => this.locating.set(false);
+        const fallback = setTimeout(stopLoading, 3000);
+        this.mapProvider.panTo(latitude, longitude, 15, () => {
+          clearTimeout(fallback);
+          stopLoading();
+        });
+      },
+      () => this.locating.set(false),
+    );
   }
 
   protected onSearchSubmit(): void {

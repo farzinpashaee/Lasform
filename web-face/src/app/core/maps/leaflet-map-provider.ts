@@ -66,9 +66,13 @@ export class LeafletMapProvider implements MapProvider {
     this.map?.zoomOut();
   }
 
-  panTo(lat: number, lng: number, zoom?: number): void {
+  panTo(lat: number, lng: number, zoom?: number, onComplete?: () => void): void {
     if (!this.map) {
+      onComplete?.();
       return;
+    }
+    if (onComplete) {
+      this.map.once('moveend', onComplete);
     }
     if (zoom !== undefined) {
       this.map.setView([lat, lng], zoom);

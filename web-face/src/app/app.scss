@@ -22,8 +22,9 @@ $radius: 8px;
   z-index: 500;
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   /* Stretched full-width so children can lay out, but most of that area is empty —
      let clicks/drags fall through to the map except where content actually is. */
   pointer-events: none;
@@ -33,9 +34,11 @@ $radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: 384px;
-  max-width: calc(100vw - 24px);
-  flex: 0 0 auto;
+  /* Shrinks below its 384px preferred width once the top-right buttons need the room,
+     instead of running underneath them; .search-input's own min-width is the floor. */
+  flex: 1 1 384px;
+  min-width: 0;
+  max-width: 384px;
   pointer-events: auto;
 }
 
@@ -71,6 +74,10 @@ $radius: 8px;
 }
 
 .results-card {
+  /* Fixed width, independent of .search-column's shrinking — only the search bar
+     itself should narrow to avoid the top-right buttons; the card stays full size. */
+  width: 384px;
+  max-width: calc(100vw - 24px);
   background: #fff;
   border-radius: $radius;
   box-shadow: $shadow;
@@ -293,6 +300,25 @@ $radius: 8px;
   &:hover {
     background: #f1f3f4;
   }
+
+  &:disabled {
+    cursor: default;
+    color: #1a73e8;
+
+    &:hover {
+      background: #fff;
+    }
+  }
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .icon-button.round {
@@ -319,13 +345,11 @@ $radius: 8px;
 }
 
 .top-right {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 500;
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 0 0 auto;
+  pointer-events: auto;
 }
 
 .avatar {

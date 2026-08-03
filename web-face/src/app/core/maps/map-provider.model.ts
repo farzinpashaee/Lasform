@@ -32,8 +32,8 @@ export interface MapProvider {
 
   zoomOut(): void;
 
-  /** Recenters the map, optionally changing zoom. */
-  panTo(lat: number, lng: number, zoom?: number): void;
+  /** Recenters the map, optionally changing zoom. onComplete fires once the move finishes. */
+  panTo(lat: number, lng: number, zoom?: number, onComplete?: () => void): void;
 
   /** Releases the underlying map instance and any listeners/resources it holds. */
   destroy(): void;

@@ -113,28 +113,40 @@
         </dl>
       </ng-template>
     </div>
-  </div>
 
-  <div class="top-right">
-    <button class="icon-button round" type="button" aria-label="Settings">
-      <svg viewBox="0 0 24 24" width="20" height="20">
-        <path
-          fill="currentColor"
-          d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.44.17-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.86a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.95 0 .32.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.25.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6"
-          />
-      </svg>
-    </button>
-    <button class="avatar" type="button" aria-label="Account">F</button>
+    <div class="top-right">
+      <button class="icon-button round" type="button" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            fill="currentColor"
+            d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.44.17-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.86a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.95 0 .32.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.25.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6"
+            />
+        </svg>
+      </button>
+      <button class="avatar" type="button" aria-label="Account">F</button>
+    </div>
   </div>
 
   <div class="bottom-right controls">
-    <button class="icon-button round" type="button" aria-label="My location" (click)="locateMe()">
-      <svg viewBox="0 0 24 24" width="20" height="20">
-        <path
-          fill="currentColor"
-          d="M12 8a4 4 0 1 0 4 4 4 4 0 0 0-4-4zm8.94 3a8.99 8.99 0 0 0-7.94-7.94V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06a8.99 8.99 0 0 0 7.94 7.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2zM12 19a7 7 0 1 1 7-7 7 7 0 0 1-7 7z"
-          />
-      </svg>
+    <button
+      class="icon-button round"
+      type="button"
+      aria-label="My location"
+      [disabled]="locating()"
+      (click)="locateMe()"
+    >
+      @if (locating()) {
+        <svg class="spinner" viewBox="0 0 24 24" width="20" height="20">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="40 100" />
+        </svg>
+      } @else {
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            fill="currentColor"
+            d="M12 8a4 4 0 1 0 4 4 4 4 0 0 0-4-4zm8.94 3a8.99 8.99 0 0 0-7.94-7.94V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06a8.99 8.99 0 0 0 7.94 7.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2zM12 19a7 7 0 1 1 7-7 7 7 0 0 1-7 7z"
+            />
+        </svg>
+      }
     </button>
     <div class="zoom-stack">
       <button class="icon-button square" type="button" aria-label="Zoom in" (click)="zoomIn()">+</button>
