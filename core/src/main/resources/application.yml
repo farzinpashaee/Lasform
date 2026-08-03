@@ -18,3 +18,14 @@ spring:
   data:
     mongodb:
       auto-index-creation: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+lasform:
+  storage:
+    images:
+      # Root directory Location/Device images are stored under, one subfolder per entity id.
+      base-path: ./data/images

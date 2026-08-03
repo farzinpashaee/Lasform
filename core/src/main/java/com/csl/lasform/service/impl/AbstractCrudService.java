@@ -50,6 +50,7 @@ public abstract class AbstractCrudService<T, ID> implements CrudService<T, ID> {
             throw new ResourceNotFoundException(entityName() + " not found: " + id);
         }
         repository.deleteById(id);
+        afterDelete(id);
     }
 
     @Override
@@ -61,4 +62,8 @@ public abstract class AbstractCrudService<T, ID> implements CrudService<T, ID> {
     protected abstract void applyUpdate(T existing, T incoming);
 
     protected abstract String entityName();
+
+    /** Hook for subclasses to clean up resources tied to a deleted entity (e.g. files on disk). No-op by default. */
+    protected void afterDelete(ID id) {
+    }
 }

@@ -5,7 +5,7 @@ import java.util.List;
 import com.csl.lasform.model.entity.Device;
 import com.csl.lasform.model.entity.enums.DeviceStatus;
 
-public interface DeviceService extends CrudService<Device, String> {
+public interface DeviceService extends CrudService<Device, String>, ImageAttachable {
 
     Device findByDeviceIdentifier(String deviceIdentifier);
 

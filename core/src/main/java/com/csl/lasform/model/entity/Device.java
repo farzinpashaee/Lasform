@@ -37,7 +37,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Document(collection = "devices")
-public class Device extends Auditable implements Identifiable {
+public class Device extends Auditable implements Identifiable, Imageable {
 
     @Id
     private String id;
@@ -77,6 +77,10 @@ public class Device extends Auditable implements Identifiable {
     @Indexed
     @Builder.Default
     private List<String> tags = new ArrayList<>();
+
+    /** Images stored on disk under {@code ImageStorageProperties.basePath}/{@link #id}/{filename}. */
+    @Builder.Default
+    private List<Image> images = new ArrayList<>();
 
     @Builder.Default
     private Map<String, String> metadata = new HashMap<>();

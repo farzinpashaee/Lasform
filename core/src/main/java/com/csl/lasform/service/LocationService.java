@@ -8,7 +8,7 @@ import org.springframework.data.geo.Point;
 
 import com.csl.lasform.model.entity.Location;
 
-public interface LocationService extends CrudService<Location, String> {
+public interface LocationService extends CrudService<Location, String>, ImageAttachable {
 
     GeoResults<Location> findNear(Point point, Distance distance);
 
