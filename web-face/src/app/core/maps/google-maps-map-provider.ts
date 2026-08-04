@@ -1,4 +1,4 @@
-import { MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
+import { MapContextMenuEvent, MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
 import { loadGoogleMaps } from './google-maps-script-loader';
 
 export class GoogleMapsMapProvider implements MapProvider {
@@ -85,6 +85,25 @@ export class GoogleMapsMapProvider implements MapProvider {
     if (zoom !== undefined) {
       this.map.setZoom(zoom);
     }
+  }
+
+  onContextMenu(handler: (event: MapContextMenuEvent) => void): void {
+    if (!this.map) {
+      return;
+    }
+    this.map.addListener('rightclick', (e: google.maps.MapMouseEvent) => {
+      if (!e.latLng) {
+        return;
+      }
+      const domEvent = e.domEvent as MouseEvent | undefined;
+      domEvent?.preventDefault();
+      handler({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng(),
+        clientX: domEvent?.clientX ?? 0,
+        clientY: domEvent?.clientY ?? 0,
+      });
+    });
   }
 
   destroy(): void {

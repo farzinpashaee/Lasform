@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  HostListener,
   OnDestroy,
   inject,
   signal,
@@ -10,12 +11,19 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { MAP_PROVIDER, MapMarkerData, MapProvider } from './core/maps';
+import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider } from './core/maps';
 import { Device } from './core/models/device.model';
 import { Location } from './core/models/location.model';
 import { SearchHit } from './core/models/search.model';
 import { LocationService } from './core/services/location.service';
 import { SearchService } from './core/services/search.service';
+
+interface MapContextMenuState {
+  lat: number;
+  lng: number;
+  x: number;
+  y: number;
+}
 
 @Component({
   selector: 'app-root',
@@ -43,6 +51,13 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly selectedResult = signal<SearchHit | null>(null);
   protected readonly locating = signal(false);
 
+  protected readonly mapContextMenu = signal<MapContextMenuState | null>(null);
+  protected readonly newLocationTarget = signal<{ lat: number; lng: number } | null>(null);
+  protected readonly newLocationName = signal('');
+  protected readonly newLocationDescription = signal('');
+  protected readonly addingLocation = signal(false);
+  protected readonly addLocationError = signal<string | null>(null);
+
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
       center: { lat: 43.8628, lng: -79.4308 },
@@ -50,6 +65,13 @@ export class App implements AfterViewInit, OnDestroy {
     });
 
     this.loadLocationMarkers();
+    this.mapProvider.onContextMenu((event) => this.openMapContextMenu(event));
+  }
+
+  @HostListener('document:keydown.escape')
+  protected closeOverlays(): void {
+    this.mapContextMenu.set(null);
+    this.closeAddLocationModal();
   }
 
   ngOnDestroy(): void {
@@ -94,6 +116,83 @@ export class App implements AfterViewInit, OnDestroy {
       },
       () => this.locating.set(false),
     );
+  }
+
+  private openMapContextMenu(event: MapContextMenuEvent): void {
+    const menuSize = { width: 220, height: 132 };
+    const x = Math.min(event.clientX, window.innerWidth - menuSize.width - 8);
+    const y = Math.min(event.clientY, window.innerHeight - menuSize.height - 8);
+    this.mapContextMenu.set({ lat: event.lat, lng: event.lng, x, y });
+  }
+
+  protected closeMapContextMenu(): void {
+    this.mapContextMenu.set(null);
+  }
+
+  protected copyMapContextCoordinates(): void {
+    const menu = this.mapContextMenu();
+    if (!menu) {
+      return;
+    }
+    navigator.clipboard?.writeText(`${menu.lat.toFixed(5)},${menu.lng.toFixed(5)}`).catch(() => {
+      // Clipboard access can be denied (permissions, insecure context, ...); not worth surfacing to the user.
+    });
+    this.closeMapContextMenu();
+  }
+
+  protected centerMapContextMenuHere(): void {
+    const menu = this.mapContextMenu();
+    if (!menu) {
+      return;
+    }
+    this.mapProvider.panTo(menu.lat, menu.lng);
+    this.closeMapContextMenu();
+  }
+
+  protected openAddLocationModal(): void {
+    const menu = this.mapContextMenu();
+    if (!menu) {
+      return;
+    }
+    this.newLocationTarget.set({ lat: menu.lat, lng: menu.lng });
+    this.newLocationName.set('');
+    this.newLocationDescription.set('');
+    this.addLocationError.set(null);
+    this.closeMapContextMenu();
+  }
+
+  protected closeAddLocationModal(): void {
+    this.newLocationTarget.set(null);
+    this.addingLocation.set(false);
+  }
+
+  protected submitAddLocation(): void {
+    const target = this.newLocationTarget();
+    const name = this.newLocationName().trim();
+    if (!target || !name || this.addingLocation()) {
+      return;
+    }
+    this.addingLocation.set(true);
+    this.addLocationError.set(null);
+
+    const location: Location = {
+      point: { type: 'Point', coordinates: [target.lng, target.lat] },
+      name,
+      description: this.newLocationDescription().trim() || undefined,
+      recordedAt: new Date().toISOString(),
+    };
+
+    this.locationService.create(location).subscribe({
+      next: () => {
+        this.addingLocation.set(false);
+        this.closeAddLocationModal();
+        this.loadLocationMarkers();
+      },
+      error: () => {
+        this.addingLocation.set(false);
+        this.addLocationError.set('Failed to add location. Please try again.');
+      },
+    });
   }
 
   protected onSearchSubmit(): void {

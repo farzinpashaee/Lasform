@@ -1,6 +1,6 @@
 import * as L from 'leaflet';
 
-import { MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
+import { MapContextMenuEvent, MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
 
 // Leaflet's default icon resolves its image URLs relative to the stylesheet that
 // declared it, which esbuild's bundling breaks — markers render as a broken-image
@@ -79,6 +79,22 @@ export class LeafletMapProvider implements MapProvider {
     } else {
       this.map.panTo([lat, lng]);
     }
+  }
+
+  onContextMenu(handler: (event: MapContextMenuEvent) => void): void {
+    if (!this.map) {
+      return;
+    }
+    this.map.on('contextmenu', (e: L.LeafletMouseEvent) => {
+      // Leaflet doesn't suppress the browser's native context menu on its own.
+      e.originalEvent.preventDefault();
+      handler({
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+        clientX: e.originalEvent.clientX,
+        clientY: e.originalEvent.clientY,
+      });
+    });
   }
 
   destroy(): void {

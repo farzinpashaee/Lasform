@@ -14,6 +14,14 @@ export interface MapMarkerData {
   title?: string;
 }
 
+export interface MapContextMenuEvent {
+  lat: number;
+  lng: number;
+  /** Viewport-relative coordinates of the right-click, for positioning a custom menu. */
+  clientX: number;
+  clientY: number;
+}
+
 /**
  * Abstraction over a map rendering library (Leaflet, Google Maps, ...), so
  * components depend on this contract instead of a specific vendor SDK.
@@ -34,6 +42,9 @@ export interface MapProvider {
 
   /** Recenters the map, optionally changing zoom. onComplete fires once the move finishes. */
   panTo(lat: number, lng: number, zoom?: number, onComplete?: () => void): void;
+
+  /** Registers the handler fired on right-click on the map surface. */
+  onContextMenu(handler: (event: MapContextMenuEvent) => void): void;
 
   /** Releases the underlying map instance and any listeners/resources it holds. */
   destroy(): void;

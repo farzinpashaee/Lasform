@@ -383,3 +383,148 @@ $radius: 8px;
   border-radius: $radius;
   overflow: hidden;
 }
+
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 901;
+  width: 220px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border-radius: $radius;
+  box-shadow: $shadow;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #202124;
+  font-size: 14px;
+  text-align: left;
+
+  svg {
+    flex: 0 0 auto;
+    color: #5f6368;
+  }
+
+  &:hover {
+    background: #f1f3f4;
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  padding: 20px;
+}
+
+.modal-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #202124;
+}
+
+.modal-subtitle {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #5f6368;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #5f6368;
+
+  input,
+  textarea {
+    font: inherit;
+    font-size: 14px;
+    color: #202124;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 8px 10px;
+    resize: vertical;
+
+    &:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+  }
+}
+
+.modal-error {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #d93025;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modal-button {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-button-secondary {
+  background: transparent;
+  color: #5f6368;
+
+  &:hover {
+    background: #f1f3f4;
+  }
+}
+
+.modal-button-primary {
+  background: #1a73e8;
+  color: #fff;
+
+  &:hover {
+    background: #1765cc;
+  }
+
+  &:disabled {
+    background: #dadce0;
+    color: #80868b;
+    cursor: default;
+  }
+}
