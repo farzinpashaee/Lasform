@@ -123,6 +123,21 @@
             />
         </svg>
       </button>
+      <button
+        class="icon-button round"
+        type="button"
+        aria-label="Toggle marker clustering"
+        [class.active]="clusteringEnabled()"
+        [attr.aria-pressed]="clusteringEnabled()"
+        (click)="toggleClustering()"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6" />
+          <circle cx="9" cy="10" r="1.7" fill="currentColor" />
+          <circle cx="15" cy="10" r="1.7" fill="currentColor" />
+          <circle cx="12" cy="15" r="1.7" fill="currentColor" />
+        </svg>
+      </button>
       <button class="avatar" type="button" aria-label="Account">F</button>
     </div>
   </div>

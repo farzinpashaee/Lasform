@@ -50,6 +50,7 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly hasSearched = signal(false);
   protected readonly selectedResult = signal<SearchHit | null>(null);
   protected readonly locating = signal(false);
+  protected readonly clusteringEnabled = signal(false);
 
   protected readonly mapContextMenu = signal<MapContextMenuState | null>(null);
   protected readonly newLocationTarget = signal<{ lat: number; lng: number } | null>(null);
@@ -87,6 +88,11 @@ export class App implements AfterViewInit, OnDestroy {
       });
       this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
     });
+  }
+
+  protected toggleClustering(): void {
+    this.clusteringEnabled.update((enabled) => !enabled);
+    this.mapProvider.setClusteringEnabled(this.clusteringEnabled());
   }
 
   protected zoomIn(): void {

@@ -1,4 +1,5 @@
 import * as L from 'leaflet';
+import 'leaflet.markercluster';
 
 import { MapContextMenuEvent, MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
 
@@ -16,6 +17,8 @@ export class LeafletMapProvider implements MapProvider {
   private map?: L.Map;
   private markersLayer?: L.LayerGroup;
   private markersById = new Map<string, L.Marker>();
+  private allMarkers: L.Marker[] = [];
+  private clusteringEnabled = false;
 
   initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
     this.map = L.map(container, {
@@ -29,6 +32,12 @@ export class LeafletMapProvider implements MapProvider {
       maxZoom: 19,
     }).addTo(this.map);
 
+    // Leaflet caches the container's size at construction time; if the browser hasn't finished
+    // laying out the page yet (common right after Angular's view init), that cache is 0x0 and
+    // every layer — tiles included — renders as if the map had no visible area. A deferred
+    // invalidateSize() forces a re-measure once layout has actually settled.
+    setTimeout(() => this.map?.invalidateSize(), 0);
+
     return Promise.resolve();
   }
 
@@ -36,9 +45,8 @@ export class LeafletMapProvider implements MapProvider {
     if (!this.map) {
       return;
     }
-    this.markersLayer?.remove();
     this.markersById.clear();
-    const leafletMarkers = markers.map((marker) => {
+    this.allMarkers = markers.map((marker) => {
       const leafletMarker = L.marker([marker.lat, marker.lng]);
       if (marker.title) {
         leafletMarker.bindPopup(marker.title);
@@ -51,11 +59,44 @@ export class LeafletMapProvider implements MapProvider {
       }
       return leafletMarker;
     });
-    this.markersLayer = L.layerGroup(leafletMarkers).addTo(this.map);
+    this.rebuildMarkersLayer();
+  }
+
+  setClusteringEnabled(enabled: boolean): void {
+    if (this.clusteringEnabled === enabled) {
+      return;
+    }
+    this.clusteringEnabled = enabled;
+    this.rebuildMarkersLayer();
   }
 
   openMarkerPopup(id: string): void {
-    this.markersById.get(id)?.openPopup();
+    const marker = this.markersById.get(id);
+    if (!marker) {
+      return;
+    }
+    if (this.markersLayer instanceof L.MarkerClusterGroup) {
+      // A clustered marker isn't in the DOM until its cluster is zoomed/spidered open,
+      // so openPopup() alone would silently no-op — zoomToShowLayer handles that first.
+      this.markersLayer.zoomToShowLayer(marker, () => marker.openPopup());
+    } else {
+      marker.openPopup();
+    }
+  }
+
+  private rebuildMarkersLayer(): void {
+    if (!this.map) {
+      return;
+    }
+    this.markersLayer?.remove();
+    if (this.clusteringEnabled) {
+      const clusterGroup = L.markerClusterGroup();
+      clusterGroup.addLayers(this.allMarkers);
+      this.markersLayer = clusterGroup;
+    } else {
+      this.markersLayer = L.layerGroup(this.allMarkers);
+    }
+    this.markersLayer.addTo(this.map);
   }
 
   zoomIn(): void {
@@ -102,5 +143,6 @@ export class LeafletMapProvider implements MapProvider {
     this.map = undefined;
     this.markersLayer = undefined;
     this.markersById.clear();
+    this.allMarkers = [];
   }
 }

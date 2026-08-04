@@ -309,6 +309,15 @@ $radius: 8px;
       background: #fff;
     }
   }
+
+  &.active {
+    background: #e8f0fe;
+    color: #1a73e8;
+
+    &:hover {
+      background: #d2e3fc;
+    }
+  }
 }
 
 .spinner {

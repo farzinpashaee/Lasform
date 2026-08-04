@@ -36,6 +36,9 @@ export interface MapProvider {
   /** Opens the tooltip/info window for the marker with the given id, if it's currently on the map. */
   openMarkerPopup(id: string): void;
 
+  /** Toggles grouping nearby markers into cluster badges; re-applies to whatever markers are current. */
+  setClusteringEnabled(enabled: boolean): void;
+
   zoomIn(): void;
 
   zoomOut(): void;

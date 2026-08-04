@@ -1,3 +1,5 @@
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
+
 import { MapContextMenuEvent, MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
 import { loadGoogleMaps } from './google-maps-script-loader';
 
@@ -6,6 +8,8 @@ export class GoogleMapsMapProvider implements MapProvider {
   private infoWindow?: google.maps.InfoWindow;
   private markers: google.maps.Marker[] = [];
   private markersById = new Map<string, { marker: google.maps.Marker; title?: string }>();
+  private clusterer?: MarkerClusterer;
+  private clusteringEnabled = false;
 
   constructor(private readonly apiKey: string) {}
 
@@ -24,11 +28,12 @@ export class GoogleMapsMapProvider implements MapProvider {
     if (!this.map) {
       return;
     }
-    this.clearMarkers();
+    this.teardownMarkers();
     for (const markerData of markers) {
+      // No `map` here — applyClustering() below decides whether the clusterer or this
+      // provider itself owns adding markers to the map.
       const marker = new google.maps.Marker({
         position: { lat: markerData.lat, lng: markerData.lng },
-        map: this.map,
       });
       if (markerData.title || markerData.id) {
         marker.addListener('click', () => {
@@ -46,6 +51,15 @@ export class GoogleMapsMapProvider implements MapProvider {
         this.markersById.set(markerData.id, { marker, title: markerData.title });
       }
     }
+    this.applyClustering();
+  }
+
+  setClusteringEnabled(enabled: boolean): void {
+    if (this.clusteringEnabled === enabled) {
+      return;
+    }
+    this.clusteringEnabled = enabled;
+    this.applyClustering();
   }
 
   openMarkerPopup(id: string): void {
@@ -107,13 +121,36 @@ export class GoogleMapsMapProvider implements MapProvider {
   }
 
   destroy(): void {
-    this.clearMarkers();
+    this.teardownMarkers();
     this.infoWindow?.close();
     this.map = undefined;
   }
 
-  private clearMarkers(): void {
-    this.markers.forEach((marker) => marker.setMap(null));
+  /** Applies the current clusteringEnabled mode to whatever's in this.markers, tearing down the other mode first. */
+  private applyClustering(): void {
+    if (!this.map) {
+      return;
+    }
+    if (this.clusterer) {
+      this.clusterer.clearMarkers();
+      this.clusterer = undefined;
+    } else {
+      this.markers.forEach((marker) => marker.setMap(null));
+    }
+    if (this.clusteringEnabled) {
+      this.clusterer = new MarkerClusterer({ map: this.map, markers: this.markers });
+    } else {
+      this.markers.forEach((marker) => marker.setMap(this.map!));
+    }
+  }
+
+  private teardownMarkers(): void {
+    if (this.clusterer) {
+      this.clusterer.clearMarkers();
+      this.clusterer = undefined;
+    } else {
+      this.markers.forEach((marker) => marker.setMap(null));
+    }
     this.markers = [];
     this.markersById.clear();
   }
