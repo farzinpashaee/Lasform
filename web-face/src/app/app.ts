@@ -13,10 +13,14 @@ import { FormsModule } from '@angular/forms';
 
 import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider } from './core/maps';
 import { Device } from './core/models/device.model';
+import { DeviceStatus } from './core/models/enums';
 import { Location } from './core/models/location.model';
 import { SearchHit } from './core/models/search.model';
+import { DeviceService } from './core/services/device.service';
 import { LocationService } from './core/services/location.service';
 import { SearchService } from './core/services/search.service';
+
+const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
 
 interface MapContextMenuState {
   lat: number;
@@ -35,6 +39,7 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly title = signal('LasformWebFace');
 
   private readonly locationService = inject(LocationService);
+  private readonly deviceService = inject(DeviceService);
   private readonly searchService = inject(SearchService);
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
 
@@ -59,6 +64,18 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly addingLocation = signal(false);
   protected readonly addLocationError = signal<string | null>(null);
 
+  protected readonly deviceStatuses = DEVICE_STATUSES;
+  protected readonly editingTarget = signal<SearchHit | null>(null);
+  protected readonly editName = signal('');
+  protected readonly editDescription = signal('');
+  protected readonly editStatus = signal<DeviceStatus | ''>('');
+  protected readonly savingEdit = signal(false);
+  protected readonly editError = signal<string | null>(null);
+
+  protected readonly deleteTarget = signal<SearchHit | null>(null);
+  protected readonly deletingEntity = signal(false);
+  protected readonly deleteError = signal<string | null>(null);
+
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
       center: { lat: 43.8628, lng: -79.4308 },
@@ -73,6 +90,8 @@ export class App implements AfterViewInit, OnDestroy {
   protected closeOverlays(): void {
     this.mapContextMenu.set(null);
     this.closeAddLocationModal();
+    this.closeEditModal();
+    this.closeDeleteConfirm();
   }
 
   ngOnDestroy(): void {
@@ -243,6 +262,105 @@ export class App implements AfterViewInit, OnDestroy {
     this.selectedResult.set(null);
   }
 
+  protected openEditModal(hit: SearchHit): void {
+    this.editingTarget.set(hit);
+    this.editName.set(hit.data.name ?? '');
+    this.editDescription.set(hit.type === 'LOCATION' ? ((hit.data as Location).description ?? '') : '');
+    this.editStatus.set(hit.type === 'DEVICE' ? ((hit.data as Device).status ?? '') : '');
+    this.editError.set(null);
+  }
+
+  protected closeEditModal(): void {
+    this.editingTarget.set(null);
+    this.savingEdit.set(false);
+  }
+
+  protected submitEdit(): void {
+    const hit = this.editingTarget();
+    const name = this.editName().trim();
+    if (!hit || !hit.data.id || !name || this.savingEdit()) {
+      return;
+    }
+    this.savingEdit.set(true);
+    this.editError.set(null);
+    const id = hit.data.id;
+
+    if (hit.type === 'LOCATION') {
+      // Send the full current object back, not just the edited fields — the backend's
+      // update() replaces whatever fields are present in the body, so a sparse partial
+      // would wipe categoryIds/tags/images/etc. that aren't part of this form.
+      const updated: Location = { ...(hit.data as Location), name, description: this.editDescription().trim() || undefined };
+      this.locationService.update(id, updated).subscribe({
+        next: (saved) => this.applyHitUpdate({ type: 'LOCATION', data: saved }),
+        error: () => this.handleEditError(),
+      });
+    } else {
+      const updated: Device = { ...(hit.data as Device), name, status: this.editStatus() || undefined };
+      this.deviceService.update(id, updated).subscribe({
+        next: (saved) => this.applyHitUpdate({ type: 'DEVICE', data: saved }),
+        error: () => this.handleEditError(),
+      });
+    }
+  }
+
+  private applyHitUpdate(hit: SearchHit): void {
+    this.savingEdit.set(false);
+    this.closeEditModal();
+    this.selectedResult.set(hit);
+    this.searchResults.update((results) => results.map((r) => (r.data.id === hit.data.id ? hit : r)));
+    this.refreshMapMarkers();
+  }
+
+  private handleEditError(): void {
+    this.savingEdit.set(false);
+    this.editError.set('Failed to save changes. Please try again.');
+  }
+
+  protected openDeleteConfirm(hit: SearchHit): void {
+    this.deleteTarget.set(hit);
+    this.deleteError.set(null);
+  }
+
+  protected closeDeleteConfirm(): void {
+    this.deleteTarget.set(null);
+    this.deletingEntity.set(false);
+  }
+
+  protected confirmDelete(): void {
+    const hit = this.deleteTarget();
+    if (!hit || !hit.data.id || this.deletingEntity()) {
+      return;
+    }
+    this.deletingEntity.set(true);
+    this.deleteError.set(null);
+    const id = hit.data.id;
+
+    const request = hit.type === 'LOCATION' ? this.locationService.deleteById(id) : this.deviceService.deleteById(id);
+    request.subscribe({
+      next: () => {
+        this.deletingEntity.set(false);
+        this.closeDeleteConfirm();
+        this.closeDetails();
+        this.searchResults.update((results) => results.filter((r) => r.data.id !== id));
+        this.allLocationHits = this.allLocationHits.filter((h) => h.data.id !== id);
+        this.refreshMapMarkers();
+      },
+      error: () => {
+        this.deletingEntity.set(false);
+        this.deleteError.set('Failed to delete. Please try again.');
+      },
+    });
+  }
+
+  /** Re-renders whichever marker set is currently shown (search results, or all locations) after an edit/delete. */
+  private refreshMapMarkers(): void {
+    if (this.hasSearched()) {
+      this.renderSearchMarkers(this.searchResults());
+    } else {
+      this.loadLocationMarkers();
+    }
+  }
+
   private onMarkerClicked(id: string): void {
     const source = this.hasSearched() ? this.searchResults() : this.allLocationHits;
     const hit = source.find((candidate) => candidate.data.id === id);
@@ -318,6 +436,14 @@ export class App implements AfterViewInit, OnDestroy {
   }
 
   private showResultsOnMap(hits: SearchHit[]): void {
+    const markers = this.renderSearchMarkers(hits);
+    if (markers.length > 0) {
+      this.mapProvider.panTo(markers[0].lat, markers[0].lng);
+    }
+  }
+
+  /** Rebuilds the map markers for the given hits, without recentering — used after search and after edit/delete. */
+  private renderSearchMarkers(hits: SearchHit[]): MapMarkerData[] {
     const markers: MapMarkerData[] = [];
     for (const hit of hits) {
       const point = this.hitPoint(hit);
@@ -328,9 +454,7 @@ export class App implements AfterViewInit, OnDestroy {
       markers.push({ id: hit.data.id, lat, lng, title: this.resultTitle(hit) });
     }
     this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
-    if (markers.length > 0) {
-      this.mapProvider.panTo(markers[0].lat, markers[0].lng);
-    }
+    return markers;
   }
 
   private hitPoint(hit: SearchHit) {

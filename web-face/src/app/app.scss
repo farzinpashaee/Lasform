@@ -146,9 +146,9 @@ $radius: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   border: none;
-  border-bottom: 1px solid #e8eaed;
   background: transparent;
   padding: 12px 16px;
   cursor: pointer;
@@ -162,23 +162,41 @@ $radius: 8px;
   }
 }
 
+.details-slide-header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e8eaed;
+}
+
 .details-standalone {
   position: relative;
 
   .details-header {
-    padding-right: 48px;
+    padding-right: 104px;
   }
 }
 
-.close-button {
+.details-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  padding-right: 8px;
+}
+
+.details-actions-standalone {
   position: absolute;
   top: 8px;
   right: 8px;
+  padding-right: 0;
+}
+
+.icon-action-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: 50%;
   background: transparent;
@@ -188,6 +206,10 @@ $radius: 8px;
   &:hover {
     background: #f1f3f4;
   }
+}
+
+.icon-action-danger {
+  color: #d93025;
 }
 
 .details-header {
@@ -356,7 +378,7 @@ $radius: 8px;
 .top-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex: 0 0 auto;
   pointer-events: auto;
 }
@@ -477,7 +499,8 @@ $radius: 8px;
   color: #5f6368;
 
   input,
-  textarea {
+  textarea,
+  select {
     font: inherit;
     font-size: 14px;
     color: #202124;
@@ -485,6 +508,7 @@ $radius: 8px;
     border-radius: 4px;
     padding: 8px 10px;
     resize: vertical;
+    background: #fff;
 
     &:focus {
       outline: none;
@@ -529,6 +553,21 @@ $radius: 8px;
 
   &:hover {
     background: #1765cc;
+  }
+
+  &:disabled {
+    background: #dadce0;
+    color: #80868b;
+    cursor: default;
+  }
+}
+
+.modal-button-danger {
+  background: #d93025;
+  color: #fff;
+
+  &:hover {
+    background: #b3261e;
   }
 
   &:disabled {
