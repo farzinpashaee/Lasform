@@ -281,6 +281,66 @@
           <span>Description</span>
           <textarea [(ngModel)]="newLocationDescription" name="description" rows="3"></textarea>
         </label>
+        <label class="modal-field">
+          <span>Category</span>
+          <div class="modal-field-row">
+            <select [(ngModel)]="newLocationCategoryId" name="category">
+              <option value="">No category</option>
+              @for (category of categories(); track category.id) {
+                <option [value]="category.id">
+                  {{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}
+                </option>
+              }
+            </select>
+            <button
+              type="button"
+              class="icon-action-button modal-add-category-button"
+              aria-label="Add new category"
+              (click)="openAddCategoryModal()"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" />
+              </svg>
+            </button>
+          </div>
+        </label>
+        <label class="modal-field">
+          <span>Tags</span>
+          <div class="tag-input-wrapper">
+            @if (newLocationTags().length > 0) {
+              <div class="tag-chip-list">
+                @for (tag of newLocationTags(); track tag) {
+                  <span class="tag-chip">
+                    {{ tag }}
+                    <button type="button" class="tag-chip-remove" aria-label="Remove tag {{ tag }}" (click)="removeTag(tag)">
+                      ×
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+            <input
+              type="text"
+              [ngModel]="newLocationTagInput()"
+              (ngModelChange)="onTagInputChange($event)"
+              (keydown)="onTagInputKeydown($event)"
+              name="tagInput"
+              placeholder="Type to add tags…"
+              autocomplete="off"
+            />
+            @if (tagSuggestions().length > 0) {
+              <ul class="tag-suggestions">
+                @for (suggestion of tagSuggestions(); track suggestion) {
+                  <li>
+                    <button type="button" class="tag-suggestion-item" (click)="addTag(suggestion)">
+                      {{ suggestion }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </label>
         @if (addLocationError()) {
           <p class="modal-error">{{ addLocationError() }}</p>
         }
@@ -294,6 +354,49 @@
             [disabled]="addingLocation() || !newLocationName().trim()"
           >
             {{ addingLocation() ? 'Adding…' : 'Add location' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (addCategoryModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddCategoryModal()"></div>
+    <div class="modal">
+      <h2 class="modal-title">Add new category</h2>
+      <form (ngSubmit)="submitAddCategory()">
+        <label class="modal-field">
+          <span>Name</span>
+          <input type="text" [(ngModel)]="newCategoryName" name="categoryName" required autocomplete="off" />
+        </label>
+        <label class="modal-field">
+          <span>Description</span>
+          <textarea [(ngModel)]="newCategoryDescription" name="categoryDescription" rows="2"></textarea>
+        </label>
+        <label class="modal-field">
+          <span>Marker (emoji)</span>
+          <input
+            type="text"
+            [(ngModel)]="newCategoryMarker"
+            name="categoryMarker"
+            maxlength="4"
+            placeholder="e.g. 🏥"
+            autocomplete="off"
+          />
+        </label>
+        @if (addCategoryError()) {
+          <p class="modal-error">{{ addCategoryError() }}</p>
+        }
+        <div class="modal-actions">
+          <button type="button" class="modal-button modal-button-secondary" (click)="closeAddCategoryModal()">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="modal-button modal-button-primary"
+            [disabled]="addingCategory() || !newCategoryName().trim()"
+          >
+            {{ addingCategory() ? 'Adding…' : 'Add category' }}
           </button>
         </div>
       </form>

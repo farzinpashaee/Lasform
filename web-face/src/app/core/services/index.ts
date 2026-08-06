@@ -6,4 +6,5 @@ export * from './event.service';
 export * from './geofence.service';
 export * from './location.service';
 export * from './search.service';
+export * from './tag.service';
 export * from './user.service';

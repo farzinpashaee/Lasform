@@ -38,6 +38,7 @@ public class CategoryServiceImpl extends AbstractCrudService<Category, String> i
     protected void applyUpdate(Category existing, Category incoming) {
         existing.setName(incoming.getName());
         existing.setDescription(incoming.getDescription());
+        existing.setMarker(incoming.getMarker());
     }
 
     @Override

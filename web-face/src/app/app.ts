@@ -12,13 +12,16 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider } from './core/maps';
+import { Category } from './core/models/category.model';
 import { Device } from './core/models/device.model';
 import { DeviceStatus } from './core/models/enums';
 import { Location } from './core/models/location.model';
 import { SearchHit } from './core/models/search.model';
+import { CategoryService } from './core/services/category.service';
 import { DeviceService } from './core/services/device.service';
 import { LocationService } from './core/services/location.service';
 import { SearchService } from './core/services/search.service';
+import { TagService } from './core/services/tag.service';
 
 const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
 
@@ -42,6 +45,8 @@ export class App implements AfterViewInit, OnDestroy {
 
   private readonly locationService = inject(LocationService);
   private readonly deviceService = inject(DeviceService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly tagService = inject(TagService);
   private readonly searchService = inject(SearchService);
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
 
@@ -49,6 +54,9 @@ export class App implements AfterViewInit, OnDestroy {
 
   /** All locations shown as markers before any search; looked up on marker click when hasSearched() is false. */
   private allLocationHits: SearchHit[] = [];
+  private tagSuggestionTimer?: ReturnType<typeof setTimeout>;
+
+  protected readonly categories = signal<Category[]>([]);
 
   protected readonly searchQuery = signal('');
   protected readonly searchResults = signal<SearchHit[]>([]);
@@ -64,8 +72,19 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly newLocationTarget = signal<{ lat: number; lng: number } | null>(null);
   protected readonly newLocationName = signal('');
   protected readonly newLocationDescription = signal('');
+  protected readonly newLocationCategoryId = signal('');
+  protected readonly newLocationTagInput = signal('');
+  protected readonly newLocationTags = signal<string[]>([]);
+  protected readonly tagSuggestions = signal<string[]>([]);
   protected readonly addingLocation = signal(false);
   protected readonly addLocationError = signal<string | null>(null);
+
+  protected readonly addCategoryModalOpen = signal(false);
+  protected readonly newCategoryName = signal('');
+  protected readonly newCategoryDescription = signal('');
+  protected readonly newCategoryMarker = signal('');
+  protected readonly addingCategory = signal(false);
+  protected readonly addCategoryError = signal<string | null>(null);
 
   protected readonly deviceStatuses = DEVICE_STATUSES;
   protected readonly editingTarget = signal<SearchHit | null>(null);
@@ -86,12 +105,14 @@ export class App implements AfterViewInit, OnDestroy {
     });
 
     this.loadLocationMarkers();
+    this.loadCategories();
     this.mapProvider.onContextMenu((event) => this.openMapContextMenu(event));
   }
 
   @HostListener('document:keydown.escape')
   protected closeOverlays(): void {
     this.mapContextMenu.set(null);
+    this.closeAddCategoryModal();
     this.closeAddLocationModal();
     this.closeEditModal();
     this.closeDeleteConfirm();
@@ -109,6 +130,12 @@ export class App implements AfterViewInit, OnDestroy {
         return { id: location.id, lat, lng, title: location.name };
       });
       this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
+    });
+  }
+
+  private loadCategories(): void {
+    this.categoryService.findAll({ size: 100, sort: 'name,asc' }).subscribe((page) => {
+      this.categories.set(page.content);
     });
   }
 
@@ -190,6 +217,10 @@ export class App implements AfterViewInit, OnDestroy {
     this.newLocationTarget.set({ lat: menu.lat, lng: menu.lng });
     this.newLocationName.set('');
     this.newLocationDescription.set('');
+    this.newLocationCategoryId.set('');
+    this.newLocationTagInput.set('');
+    this.newLocationTags.set([]);
+    this.tagSuggestions.set([]);
     this.addLocationError.set(null);
     this.closeMapContextMenu();
   }
@@ -197,6 +228,8 @@ export class App implements AfterViewInit, OnDestroy {
   protected closeAddLocationModal(): void {
     this.newLocationTarget.set(null);
     this.addingLocation.set(false);
+    this.tagSuggestions.set([]);
+    clearTimeout(this.tagSuggestionTimer);
   }
 
   protected submitAddLocation(): void {
@@ -208,10 +241,13 @@ export class App implements AfterViewInit, OnDestroy {
     this.addingLocation.set(true);
     this.addLocationError.set(null);
 
+    const categoryId = this.newLocationCategoryId();
     const location: Location = {
       point: { type: 'Point', coordinates: [target.lng, target.lat] },
       name,
       description: this.newLocationDescription().trim() || undefined,
+      categoryIds: categoryId ? [categoryId] : undefined,
+      tags: this.newLocationTags().length > 0 ? this.newLocationTags() : undefined,
       recordedAt: new Date().toISOString(),
     };
 
@@ -226,6 +262,92 @@ export class App implements AfterViewInit, OnDestroy {
         this.addLocationError.set('Failed to add location. Please try again.');
       },
     });
+  }
+
+  protected openAddCategoryModal(): void {
+    this.newCategoryName.set('');
+    this.newCategoryDescription.set('');
+    this.newCategoryMarker.set('');
+    this.addCategoryError.set(null);
+    this.addCategoryModalOpen.set(true);
+  }
+
+  protected closeAddCategoryModal(): void {
+    this.addCategoryModalOpen.set(false);
+    this.addingCategory.set(false);
+  }
+
+  protected submitAddCategory(): void {
+    const name = this.newCategoryName().trim();
+    if (!name || this.addingCategory()) {
+      return;
+    }
+    this.addingCategory.set(true);
+    this.addCategoryError.set(null);
+
+    const category: Category = {
+      name,
+      description: this.newCategoryDescription().trim() || undefined,
+      marker: this.newCategoryMarker().trim() || undefined,
+    };
+
+    this.categoryService.create(category).subscribe({
+      next: (created) => {
+        this.addingCategory.set(false);
+        this.categories.update((current) => [...current, created].sort((a, b) => a.name.localeCompare(b.name)));
+        this.newLocationCategoryId.set(created.id ?? '');
+        this.closeAddCategoryModal();
+      },
+      error: () => {
+        this.addingCategory.set(false);
+        this.addCategoryError.set('Failed to add category. Please try again.');
+      },
+    });
+  }
+
+  /** Debounces tag suggestion lookups so we don't fire a request per keystroke. */
+  protected onTagInputChange(value: string): void {
+    this.newLocationTagInput.set(value);
+    clearTimeout(this.tagSuggestionTimer);
+
+    const prefix = value.trim();
+    if (prefix.length < 2) {
+      this.tagSuggestions.set([]);
+      return;
+    }
+    this.tagSuggestionTimer = setTimeout(() => {
+      this.tagService.suggest(prefix).subscribe({
+        next: (suggestions) => {
+          const alreadyAdded = new Set(this.newLocationTags());
+          this.tagSuggestions.set(suggestions.filter((tag) => !alreadyAdded.has(tag)));
+        },
+        error: () => this.tagSuggestions.set([]),
+      });
+    }, 250);
+  }
+
+  protected onTagInputKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' && event.key !== ',') {
+      return;
+    }
+    event.preventDefault();
+    this.addTag(this.newLocationTagInput());
+  }
+
+  protected addTag(rawTag: string): void {
+    const tag = rawTag.trim();
+    if (!tag) {
+      return;
+    }
+    if (!this.newLocationTags().includes(tag)) {
+      this.newLocationTags.update((tags) => [...tags, tag]);
+    }
+    this.newLocationTagInput.set('');
+    this.tagSuggestions.set([]);
+  }
+
+  protected removeTag(tag: string): void {
+    this.newLocationTags.update((tags) => tags.filter((t) => t !== tag));
   }
 
   protected onSearchSubmit(): void {

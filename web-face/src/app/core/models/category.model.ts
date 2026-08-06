@@ -5,4 +5,6 @@ export interface Category extends Auditable {
   id?: string;
   name: string;
   description?: string;
+  /** A short emoji/symbol representing this category on the map (e.g. "🏥", "🌳"). */
+  marker?: string;
 }

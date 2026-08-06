@@ -32,4 +32,7 @@ public class Category extends Auditable implements Identifiable {
     private String name;
 
     private String description;
+
+    /** A short emoji/symbol representing this category on the map (e.g. "🏥", "🌳"). */
+    private String marker;
 }
