@@ -1,4 +1,4 @@
-<div class="map-page">
+<div class="map-page" [class.dark-theme]="darkMode()">
   <div #mapContainer class="map-container"></div>
 
   <div class="top-bar">
@@ -153,17 +153,33 @@
       <button
         class="icon-button round"
         type="button"
-        aria-label="Toggle marker clustering"
-        [class.active]="clusteringEnabled()"
-        [attr.aria-pressed]="clusteringEnabled()"
-        (click)="toggleClustering()"
+        aria-label="Toggle dark mode"
+        [class.active]="darkMode()"
+        [attr.aria-pressed]="darkMode()"
+        (click)="toggleDarkMode()"
       >
-        <svg viewBox="0 0 24 24" width="20" height="20">
-          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6" />
-          <circle cx="9" cy="10" r="1.7" fill="currentColor" />
-          <circle cx="15" cy="10" r="1.7" fill="currentColor" />
-          <circle cx="12" cy="15" r="1.7" fill="currentColor" />
-        </svg>
+        @if (darkMode()) {
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path
+              fill="currentColor"
+              d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.4 5.4 0 0 1-4.4 2.26 5.4 5.4 0 0 1-5.4-5.4c0-1.81.89-3.42 2.26-4.4A9.06 9.06 0 0 0 12 3z"
+            />
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <circle cx="12" cy="12" r="4" fill="currentColor" />
+            <g stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </g>
+          </svg>
+        }
       </button>
       <button class="avatar" type="button" aria-label="Account">F</button>
     </div>
@@ -189,6 +205,21 @@
             />
         </svg>
       }
+    </button>
+    <button
+      class="icon-button round"
+      type="button"
+      aria-label="Toggle marker clustering"
+      [class.active]="clusteringEnabled()"
+      [attr.aria-pressed]="clusteringEnabled()"
+      (click)="toggleClustering()"
+    >
+      <svg viewBox="0 0 24 24" width="20" height="20">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6" />
+        <circle cx="9" cy="10" r="1.7" fill="currentColor" />
+        <circle cx="15" cy="10" r="1.7" fill="currentColor" />
+        <circle cx="12" cy="15" r="1.7" fill="currentColor" />
+      </svg>
     </button>
     <div class="zoom-stack">
       <button class="icon-button square" type="button" aria-label="Zoom in" (click)="zoomIn()">+</button>

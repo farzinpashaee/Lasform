@@ -1,17 +1,58 @@
-$shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 $radius: 8px;
 
 .map-page {
+  --surface: #fff;
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --border: #e8eaed;
+  --hover: #f1f3f4;
+  --accent: #1a73e8;
+  --accent-bg: #e8f0fe;
+  --accent-bg-hover: #d2e3fc;
+  --danger: #d93025;
+  --disabled-bg: #dadce0;
+  --disabled-text: #80868b;
+  --scrollbar-thumb: #dadce0;
+  --device-icon-bg: #e6f4ea;
+  --device-icon-color: #188038;
+  --backdrop: rgba(0, 0, 0, 0.35);
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
 }
 
+.map-page.dark-theme {
+  --surface: #2d2e30;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --border: #3c4043;
+  --hover: #3c4043;
+  --accent: #8ab4f8;
+  --accent-bg: #2d3a4f;
+  --accent-bg-hover: #37475e;
+  --danger: #f28b82;
+  --disabled-bg: #3c4043;
+  --disabled-text: #6b6f73;
+  --scrollbar-thumb: #5f6368;
+  --device-icon-bg: #1e3a2a;
+  --device-icon-color: #81c995;
+  --backdrop: rgba(0, 0, 0, 0.6);
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
 .map-container {
   position: absolute;
   inset: 0;
   z-index: 0;
+}
+
+.map-page.dark-theme .map-container {
+  /* Standard "poor man's dark map" trick — invert the OSM tiles' luminance rather than
+     switching tile providers. Markers get inverted too; accepted trade-off for now. */
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
 .top-bar {
@@ -46,16 +87,16 @@ $radius: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fff;
+  background: var(--surface);
   border-radius: $radius;
-  box-shadow: $shadow;
+  box-shadow: var(--shadow);
   padding: 0 8px 0 16px;
   height: 48px;
   width: 100%;
 }
 
 .search-icon {
-  color: #5f6368;
+  color: var(--text-secondary);
   display: flex;
 }
 
@@ -64,12 +105,12 @@ $radius: 8px;
   border: none;
   outline: none;
   font-size: 15px;
-  color: #202124;
+  color: var(--text-primary);
   background: transparent;
   min-width: 160px;
 
   &::placeholder {
-    color: #5f6368;
+    color: var(--text-secondary);
   }
 }
 
@@ -78,20 +119,20 @@ $radius: 8px;
      itself should narrow to avoid the top-right buttons; the card stays full size. */
   width: 384px;
   max-width: calc(100vw - 24px);
-  background: #fff;
+  background: var(--surface);
   border-radius: $radius;
-  box-shadow: $shadow;
+  box-shadow: var(--shadow);
   overflow: hidden;
 }
 
 .results-status {
   padding: 16px;
   font-size: 14px;
-  color: #5f6368;
+  color: var(--text-secondary);
 }
 
 .results-error {
-  color: #d93025;
+  color: var(--danger);
 }
 
 .results-slider {
@@ -128,7 +169,7 @@ $radius: 8px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #dadce0;
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
   }
 }
@@ -152,20 +193,20 @@ $radius: 8px;
   background: transparent;
   padding: 12px 16px;
   cursor: pointer;
-  color: #1a73e8;
+  color: var(--accent);
   font-size: 14px;
   font-weight: 500;
   text-align: left;
 
   &:hover {
-    background: #f1f3f4;
+    background: var(--hover);
   }
 }
 
 .details-slide-header {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #e8eaed;
+  border-bottom: 1px solid var(--border);
 }
 
 .details-standalone {
@@ -200,16 +241,16 @@ $radius: 8px;
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: #5f6368;
+  color: var(--text-secondary);
   cursor: pointer;
 
   &:hover {
-    background: #f1f3f4;
+    background: var(--hover);
   }
 }
 
 .icon-action-danger {
-  color: #d93025;
+  color: var(--danger);
 }
 
 .details-header {
@@ -234,7 +275,7 @@ $radius: 8px;
 
 .details-field {
   padding: 8px 0;
-  border-top: 1px solid #e8eaed;
+  border-top: 1px solid var(--border);
 
   &:first-child {
     border-top: none;
@@ -244,13 +285,13 @@ $radius: 8px;
 .details-field dt {
   margin: 0 0 2px;
   font-size: 12px;
-  color: #5f6368;
+  color: var(--text-secondary);
 }
 
 .details-field dd {
   margin: 0;
   font-size: 14px;
-  color: #202124;
+  color: var(--text-primary);
   word-break: break-word;
 }
 
@@ -266,7 +307,7 @@ $radius: 8px;
   text-align: left;
 
   &:hover {
-    background: #f1f3f4;
+    background: var(--hover);
   }
 }
 
@@ -278,13 +319,13 @@ $radius: 8px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #e8f0fe;
-  color: #1a73e8;
+  background: var(--accent-bg);
+  color: var(--accent);
 }
 
 .result-icon-device {
-  background: #e6f4ea;
-  color: #188038;
+  background: var(--device-icon-bg);
+  color: var(--device-icon-color);
 }
 
 .result-text {
@@ -296,7 +337,7 @@ $radius: 8px;
 .result-title {
   font-size: 14px;
   font-weight: 500;
-  color: #202124;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -304,7 +345,7 @@ $radius: 8px;
 
 .result-subtitle {
   font-size: 12px;
-  color: #5f6368;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -316,28 +357,28 @@ $radius: 8px;
   justify-content: center;
   border: none;
   cursor: pointer;
-  color: #5f6368;
-  background: #fff;
+  color: var(--text-secondary);
+  background: var(--surface);
 
   &:hover {
-    background: #f1f3f4;
+    background: var(--hover);
   }
 
   &:disabled {
     cursor: default;
-    color: #1a73e8;
+    color: var(--accent);
 
     &:hover {
-      background: #fff;
+      background: var(--surface);
     }
   }
 
   &.active {
-    background: #e8f0fe;
-    color: #1a73e8;
+    background: var(--accent-bg);
+    color: var(--accent);
 
     &:hover {
-      background: #d2e3fc;
+      background: var(--accent-bg-hover);
     }
   }
 }
@@ -356,7 +397,7 @@ $radius: 8px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  box-shadow: $shadow;
+  box-shadow: var(--shadow);
 }
 
 .icon-button.square {
@@ -371,7 +412,7 @@ $radius: 8px;
 
   &:last-child {
     border-radius: 0 0 $radius $radius;
-    border-top: 1px solid #e8eaed;
+    border-top: 1px solid var(--border);
   }
 }
 
@@ -393,7 +434,7 @@ $radius: 8px;
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
-  box-shadow: $shadow;
+  box-shadow: var(--shadow);
 }
 
 .bottom-right {
@@ -410,7 +451,7 @@ $radius: 8px;
 .zoom-stack {
   display: flex;
   flex-direction: column;
-  box-shadow: $shadow;
+  box-shadow: var(--shadow);
   border-radius: $radius;
   overflow: hidden;
 }
@@ -428,9 +469,9 @@ $radius: 8px;
   margin: 0;
   padding: 4px 0;
   list-style: none;
-  background: #fff;
+  background: var(--surface);
   border-radius: $radius;
-  box-shadow: $shadow;
+  box-shadow: var(--shadow);
 }
 
 .context-menu-item {
@@ -442,17 +483,17 @@ $radius: 8px;
   background: transparent;
   padding: 10px 16px;
   cursor: pointer;
-  color: #202124;
+  color: var(--text-primary);
   font-size: 14px;
   text-align: left;
 
   svg {
     flex: 0 0 auto;
-    color: #5f6368;
+    color: var(--text-secondary);
   }
 
   &:hover {
-    background: #f1f3f4;
+    background: var(--hover);
   }
 }
 
@@ -460,7 +501,7 @@ $radius: 8px;
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--backdrop);
 }
 
 .modal {
@@ -471,9 +512,9 @@ $radius: 8px;
   z-index: 1001;
   width: 360px;
   max-width: calc(100vw - 32px);
-  background: #fff;
+  background: var(--surface);
   border-radius: $radius;
-  box-shadow: $shadow;
+  box-shadow: var(--shadow);
   padding: 20px;
 }
 
@@ -481,13 +522,13 @@ $radius: 8px;
   margin: 0 0 4px;
   font-size: 18px;
   font-weight: 500;
-  color: #202124;
+  color: var(--text-primary);
 }
 
 .modal-subtitle {
   margin: 0 0 16px;
   font-size: 13px;
-  color: #5f6368;
+  color: var(--text-secondary);
 }
 
 .modal-field {
@@ -496,23 +537,23 @@ $radius: 8px;
   gap: 4px;
   margin-bottom: 14px;
   font-size: 13px;
-  color: #5f6368;
+  color: var(--text-secondary);
 
   input,
   textarea,
   select {
     font: inherit;
     font-size: 14px;
-    color: #202124;
-    border: 1px solid #dadce0;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 8px 10px;
     resize: vertical;
-    background: #fff;
+    background: var(--surface);
 
     &:focus {
       outline: none;
-      border-color: #1a73e8;
+      border-color: var(--accent);
     }
   }
 }
@@ -520,7 +561,7 @@ $radius: 8px;
 .modal-error {
   margin: 0 0 14px;
   font-size: 13px;
-  color: #d93025;
+  color: var(--danger);
 }
 
 .modal-actions {
@@ -540,10 +581,10 @@ $radius: 8px;
 
 .modal-button-secondary {
   background: transparent;
-  color: #5f6368;
+  color: var(--text-secondary);
 
   &:hover {
-    background: #f1f3f4;
+    background: var(--hover);
   }
 }
 
@@ -556,8 +597,8 @@ $radius: 8px;
   }
 
   &:disabled {
-    background: #dadce0;
-    color: #80868b;
+    background: var(--disabled-bg);
+    color: var(--disabled-text);
     cursor: default;
   }
 }
@@ -571,8 +612,8 @@ $radius: 8px;
   }
 
   &:disabled {
-    background: #dadce0;
-    color: #80868b;
+    background: var(--disabled-bg);
+    color: var(--disabled-text);
     cursor: default;
   }
 }

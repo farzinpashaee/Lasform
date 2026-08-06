@@ -22,6 +22,8 @@ import { SearchService } from './core/services/search.service';
 
 const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
 
+const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
+
 interface MapContextMenuState {
   lat: number;
   lng: number;
@@ -56,6 +58,7 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly selectedResult = signal<SearchHit | null>(null);
   protected readonly locating = signal(false);
   protected readonly clusteringEnabled = signal(false);
+  protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
 
   protected readonly mapContextMenu = signal<MapContextMenuState | null>(null);
   protected readonly newLocationTarget = signal<{ lat: number; lng: number } | null>(null);
@@ -112,6 +115,11 @@ export class App implements AfterViewInit, OnDestroy {
   protected toggleClustering(): void {
     this.clusteringEnabled.update((enabled) => !enabled);
     this.mapProvider.setClusteringEnabled(this.clusteringEnabled());
+  }
+
+  protected toggleDarkMode(): void {
+    this.darkMode.update((enabled) => !enabled);
+    localStorage.setItem(DARK_MODE_STORAGE_KEY, String(this.darkMode()));
   }
 
   protected zoomIn(): void {
