@@ -8,9 +8,9 @@ import { MapContextMenuEvent, MapMarkerData, MapProvider, MapViewOptions } from 
 // icon unless the URLs are pointed at the assets explicitly, once, up front.
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconUrl: 'leaflet/images/marker-icon.png',
-  iconRetinaUrl: 'leaflet/images/marker-icon-2x.png',
-  shadowUrl: 'leaflet/images/marker-shadow.png',
+  iconUrl: 'lasform/assets/images/markers/marker-icon.png',
+  iconRetinaUrl: 'lasform/assets/images/markers/marker-icon-2x.png',
+  shadowUrl: 'lasform/assets/images/markers/marker-shadow.png',
 });
 
 export class LeafletMapProvider implements MapProvider {
