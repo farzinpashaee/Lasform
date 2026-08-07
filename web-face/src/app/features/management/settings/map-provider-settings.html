@@ -1,0 +1,32 @@
+<h1 class="page-title">Map Providers Settings</h1>
+
+<form class="settings-form" (ngSubmit)="save()">
+  <label class="form-field">
+    <span>Provider</span>
+    <select [(ngModel)]="provider" (ngModelChange)="onFieldChange()" name="provider">
+      <option value="leaflet">leaflet</option>
+      <option value="google">google</option>
+    </select>
+  </label>
+
+  <label class="form-field">
+    <span>API Key: (if required)</span>
+    <input
+      type="text"
+      [(ngModel)]="apiKey"
+      (ngModelChange)="onFieldChange()"
+      name="apiKey"
+      autocomplete="off"
+      placeholder="Only needed for the Google provider"
+    />
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="save-button">Save</button>
+    @if (saved()) {
+      <span class="saved-note">
+        Saved. <button type="button" class="reload-link" (click)="reload()">Reload to apply</button>
+      </span>
+    }
+  </div>
+</form>
