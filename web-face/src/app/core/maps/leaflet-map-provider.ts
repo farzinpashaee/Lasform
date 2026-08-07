@@ -14,7 +14,7 @@ L.Icon.Default.mergeOptions({
 });
 
 export class LeafletMapProvider implements MapProvider {
-  private map?: L.Map;
+private map?: L.Map;
   private markersLayer?: L.LayerGroup;
   private markersById = new Map<string, L.Marker>();
   private allMarkers: L.Marker[] = [];
