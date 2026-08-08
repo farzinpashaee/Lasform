@@ -3,6 +3,8 @@ package com.csl.lasform.controller;
 import java.util.List;
 
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
@@ -55,21 +57,14 @@ public class LocationController extends AbstractCrudController<Location> {
         return locationService.findNear(new Point(lng, lat), new Distance(radiusMeters));
     }
 
+    /** Paginated/sortable listing for the management table: optional free-text {@code q}, category and/or tag filters. */
     @GetMapping("/search")
-    public List<Location> search(
+    public Page<Location> search(
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) String categoryId,
-            @RequestParam(required = false) String tag,
-            @RequestParam(required = false) List<String> tags) {
-        if (categoryId != null) {
-            return locationService.findByCategoryId(categoryId);
-        }
-        if (tag != null) {
-            return locationService.findByTag(tag);
-        }
-        if (tags != null && !tags.isEmpty()) {
-            return locationService.findByTagsIn(tags);
-        }
-        throw new IllegalArgumentException("At least one of 'categoryId', 'tag' or 'tags' must be provided");
+            @RequestParam(required = false) List<String> tags,
+            Pageable pageable) {
+        return locationService.search(q, categoryId, tags, pageable);
     }
 
     @PostMapping("/{id}/images")
