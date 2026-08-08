@@ -75,6 +75,10 @@ export class LocationsPage implements OnInit, OnDestroy {
   protected readonly formTags = signal<string[]>([]);
   protected readonly formTagSuggestions = signal<string[]>([]);
 
+  protected readonly deleteTarget = signal<Location | null>(null);
+  protected readonly deletingLocation = signal(false);
+  protected readonly deleteError = signal<string | null>(null);
+
   private editingLocation: Location | null = null;
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
   private tagFilterDebounceTimer?: ReturnType<typeof setTimeout>;
@@ -211,11 +215,6 @@ export class LocationsPage implements OnInit, OnDestroy {
     return category.marker ? `${category.marker} ${category.name}` : category.name;
   }
 
-  protected coordinatesLabel(location: Location): string {
-    const [lng, lat] = location.point.coordinates;
-    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  }
-
   protected openAddModal(): void {
     this.editingLocation = null;
     this.formMode.set('add');
@@ -346,5 +345,36 @@ export class LocationsPage implements OnInit, OnDestroy {
 
   protected removeFormTag(tag: string): void {
     this.formTags.update((tags) => tags.filter((t) => t !== tag));
+  }
+
+  protected openDeleteConfirm(location: Location): void {
+    this.deleteTarget.set(location);
+    this.deleteError.set(null);
+  }
+
+  protected closeDeleteConfirm(): void {
+    this.deleteTarget.set(null);
+    this.deletingLocation.set(false);
+  }
+
+  protected confirmDelete(): void {
+    const location = this.deleteTarget();
+    if (!location?.id || this.deletingLocation()) {
+      return;
+    }
+    this.deletingLocation.set(true);
+    this.deleteError.set(null);
+
+    this.locationService.deleteById(location.id).subscribe({
+      next: () => {
+        this.deletingLocation.set(false);
+        this.closeDeleteConfirm();
+        this.loadLocations();
+      },
+      error: () => {
+        this.deletingLocation.set(false);
+        this.deleteError.set('Failed to delete location. Please try again.');
+      },
+    });
   }
 }

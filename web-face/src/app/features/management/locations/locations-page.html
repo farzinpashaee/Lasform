@@ -85,22 +85,21 @@
         }
         <th>Category</th>
         <th>Tags</th>
-        <th>Coordinates</th>
         <th class="actions-column">Actions</th>
       </tr>
     </thead>
     <tbody>
       @if (loading()) {
         <tr>
-          <td [attr.colspan]="sortableColumns.length + 4" class="state-cell">Loading locations…</td>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">Loading locations…</td>
         </tr>
       } @else if (loadError()) {
         <tr>
-          <td [attr.colspan]="sortableColumns.length + 4" class="state-cell error">{{ loadError() }}</td>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell error">{{ loadError() }}</td>
         </tr>
       } @else if (locations().length === 0) {
         <tr>
-          <td [attr.colspan]="sortableColumns.length + 4" class="state-cell">No locations found.</td>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">No locations found.</td>
         </tr>
       } @else {
         @for (location of locations(); track location.id) {
@@ -132,9 +131,28 @@
                 <span class="muted">—</span>
               }
             </td>
-            <td class="coordinates-cell">{{ coordinatesLabel(location) }}</td>
             <td class="actions-column">
-              <button type="button" class="edit-button" (click)="openEditModal(location)">Edit</button>
+              <button type="button" class="icon-action-button" aria-label="Edit location" (click)="openEditModal(location)">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path
+                    fill="currentColor"
+                    d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button icon-action-button-danger"
+                aria-label="Delete location"
+                (click)="openDeleteConfirm(location)"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path
+                    fill="currentColor"
+                    d="M6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm3-3h6l1 1h4v2H4V5h4l1-1z"
+                  />
+                </svg>
+              </button>
             </td>
           </tr>
         }
@@ -240,5 +258,27 @@
         </button>
       </div>
     </form>
+  </div>
+}
+
+@if (deleteTarget(); as location) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">Delete location?</h2>
+    <p class="modal-subtitle">"{{ location.name || 'Unnamed location' }}" will be permanently deleted. This can't be undone.</p>
+    @if (deleteError()) {
+      <p class="modal-error">{{ deleteError() }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">Cancel</button>
+      <button
+        type="button"
+        class="modal-button modal-button-danger"
+        [disabled]="deletingLocation()"
+        (click)="confirmDelete()"
+      >
+        {{ deletingLocation() ? 'Deleting…' : 'Delete' }}
+      </button>
+    </div>
   </div>
 }
