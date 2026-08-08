@@ -1,11 +1,19 @@
 package com.csl.lasform.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,12 +31,15 @@ public class LocationServiceImpl extends AbstractCrudService<Location, String> i
     private final LocationRepository locationRepository;
     private final ImageStorageService imageStorageService;
     private final EntityImageService<Location> imageService;
+    private final MongoTemplate mongoTemplate;
 
-    public LocationServiceImpl(LocationRepository locationRepository, ImageStorageService imageStorageService) {
+    public LocationServiceImpl(
+            LocationRepository locationRepository, ImageStorageService imageStorageService, MongoTemplate mongoTemplate) {
         super(locationRepository);
         this.locationRepository = locationRepository;
         this.imageStorageService = imageStorageService;
         this.imageService = new EntityImageService<>(locationRepository, imageStorageService, "Location");
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -37,18 +48,34 @@ public class LocationServiceImpl extends AbstractCrudService<Location, String> i
     }
 
     @Override
-    public List<Location> findByCategoryId(String categoryId) {
-        return locationRepository.findByCategoryIdsContaining(categoryId);
+    public Page<Location> search(String q, String categoryId, List<String> tags, Pageable pageable) {
+        Query filter = filterQuery(q, categoryId, tags);
+        long total = mongoTemplate.count(filter, Location.class);
+        List<Location> content = mongoTemplate.find(filter.with(pageable), Location.class);
+        return new PageImpl<>(content, pageable, total);
     }
 
-    @Override
-    public List<Location> findByTag(String tag) {
-        return locationRepository.findByTagsContaining(tag);
-    }
-
-    @Override
-    public List<Location> findByTagsIn(List<String> tags) {
-        return locationRepository.findByTagsIn(tags);
+    /** {@code categoryIds}/{@code tags} are arrays; equality/`in` on an array field means "contains any". */
+    private Query filterQuery(String q, String categoryId, List<String> tags) {
+        List<Criteria> criteria = new ArrayList<>();
+        if (categoryId != null && !categoryId.isBlank()) {
+            criteria.add(Criteria.where("categoryIds").is(categoryId));
+        }
+        if (tags != null && !tags.isEmpty()) {
+            criteria.add(Criteria.where("tags").in(tags));
+        }
+        if (q != null && !q.isBlank()) {
+            // Pattern.quote guards against regex metacharacters/ReDoS in user-supplied text.
+            String pattern = Pattern.quote(q.trim());
+            criteria.add(new Criteria().orOperator(
+                    Criteria.where("name").regex(pattern, "i"),
+                    Criteria.where("description").regex(pattern, "i"),
+                    Criteria.where("tags").regex(pattern, "i")));
+        }
+        if (criteria.isEmpty()) {
+            return new Query();
+        }
+        return new Query(new Criteria().andOperator(criteria.toArray(new Criteria[0])));
     }
 
     @Override

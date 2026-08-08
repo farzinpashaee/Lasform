@@ -3,8 +3,15 @@ import { Observable } from 'rxjs';
 
 import { GeoResults } from '../models/geo.model';
 import { Location } from '../models/location.model';
+import { Page, Pageable } from '../models/page.model';
 import { CrudService } from './crud.service';
 import { buildHttpParams } from './http-params.util';
+
+export interface LocationSearchParams extends Pageable {
+  q?: string;
+  categoryId?: string;
+  tags?: string[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class LocationService extends CrudService<Location> {
@@ -18,22 +25,10 @@ export class LocationService extends CrudService<Location> {
     });
   }
 
-  findByCategoryId(categoryId: string): Observable<Location[]> {
-    return this.http.get<Location[]>(`${this.resourceUrl}/search`, {
-      params: buildHttpParams({ categoryId }),
-    });
-  }
-
-  findByTag(tag: string): Observable<Location[]> {
-    return this.http.get<Location[]>(`${this.resourceUrl}/search`, {
-      params: buildHttpParams({ tag }),
-    });
-  }
-
-  /** Locations having at least one of the given tags. */
-  findByTagsIn(tags: string[]): Observable<Location[]> {
-    return this.http.get<Location[]>(`${this.resourceUrl}/search`, {
-      params: buildHttpParams({ tags }),
+  /** Paginated/sortable listing, optionally filtered by free-text query, category, and/or tags. */
+  search(params: LocationSearchParams = {}): Observable<Page<Location>> {
+    return this.http.get<Page<Location>>(`${this.resourceUrl}/search`, {
+      params: buildHttpParams(params),
     });
   }
 }

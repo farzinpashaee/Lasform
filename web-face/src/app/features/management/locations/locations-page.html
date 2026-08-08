@@ -1,0 +1,284 @@
+<h1 class="page-title">Locations</h1>
+
+<div class="toolbar">
+  <div class="toolbar-filters">
+    <input
+      type="search"
+      class="search-input"
+      placeholder="Search by name, description or tag…"
+      [ngModel]="searchTerm()"
+      (ngModelChange)="onSearchInputChange($event)"
+      name="search"
+      autocomplete="off"
+    />
+
+    <select
+      class="filter-select"
+      [ngModel]="selectedCategoryId()"
+      (ngModelChange)="selectedCategoryId.set($event); onCategoryFilterChange()"
+      name="categoryFilter"
+    >
+      <option value="">All categories</option>
+      @for (category of categories(); track category.id) {
+        <option [value]="category.id">{{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}</option>
+      }
+    </select>
+
+    <div class="tag-filter">
+      <div class="tag-input-wrapper">
+        @if (selectedTags().length > 0) {
+          <div class="tag-chip-list">
+            @for (tag of selectedTags(); track tag) {
+              <span class="tag-chip">
+                {{ tag }}
+                <button type="button" class="tag-chip-remove" aria-label="Remove tag filter {{ tag }}" (click)="removeTagFilter(tag)">
+                  ×
+                </button>
+              </span>
+            }
+          </div>
+        }
+        <input
+          type="text"
+          class="tag-filter-input"
+          [ngModel]="tagFilterInput()"
+          (ngModelChange)="onTagFilterInputChange($event)"
+          (keydown)="onTagFilterInputKeydown($event)"
+          name="tagFilterInput"
+          placeholder="Filter by tag…"
+          autocomplete="off"
+        />
+        @if (tagFilterSuggestions().length > 0) {
+          <ul class="tag-suggestions">
+            @for (suggestion of tagFilterSuggestions(); track suggestion) {
+              <li>
+                <button type="button" class="tag-suggestion-item" (click)="addTagFilter(suggestion)">{{ suggestion }}</button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="add-button" (click)="openAddModal()">
+    <svg viewBox="0 0 24 24" width="18" height="18">
+      <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" />
+    </svg>
+    <span>Add new location</span>
+  </button>
+</div>
+
+<div class="locations-table-wrapper">
+  <table class="locations-table">
+    <thead>
+      <tr>
+        @for (column of sortableColumns; track column.field) {
+          <th class="sortable" (click)="sortBy(column.field)">
+            <button type="button" class="sort-header">
+              {{ column.label }}
+              @if (sortField() === column.field) {
+                <span class="sort-arrow">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </button>
+          </th>
+        }
+        <th>Category</th>
+        <th>Tags</th>
+        <th class="actions-column">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">Loading locations…</td>
+        </tr>
+      } @else if (loadError()) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell error">{{ loadError() }}</td>
+        </tr>
+      } @else if (locations().length === 0) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">No locations found.</td>
+        </tr>
+      } @else {
+        @for (location of locations(); track location.id) {
+          <tr>
+            <td>
+              <div class="name-cell">{{ location.name || 'Unnamed location' }}</div>
+              @if (location.description) {
+                <div class="description-cell">{{ location.description }}</div>
+              }
+            </td>
+            <td>{{ location.recordedAt ? (location.recordedAt | date: 'short') : '—' }}</td>
+            <td>{{ location.createdAt ? (location.createdAt | date: 'short') : '—' }}</td>
+            <td>{{ location.updatedAt ? (location.updatedAt | date: 'short') : '—' }}</td>
+            <td>
+              @if (location.categoryIds && location.categoryIds.length > 0) {
+                <span class="category-chip">{{ categoryLabel(location.categoryIds[0]) }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td>
+              @if (location.tags && location.tags.length > 0) {
+                <div class="tag-chip-list inline">
+                  @for (tag of location.tags; track tag) {
+                    <span class="tag-chip static">{{ tag }}</span>
+                  }
+                </div>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td class="actions-column">
+              <button type="button" class="icon-action-button" aria-label="Edit location" (click)="openEditModal(location)">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path
+                    fill="currentColor"
+                    d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button icon-action-button-danger"
+                aria-label="Delete location"
+                (click)="openDeleteConfirm(location)"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path
+                    fill="currentColor"
+                    d="M6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm3-3h6l1 1h4v2H4V5h4l1-1z"
+                  />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (!loading() && !loadError() && totalElements() > 0) {
+  <div class="pagination-bar">
+    <span class="pagination-summary">
+      Page {{ page() + 1 }} of {{ totalPages() }} ({{ totalElements() }} total)
+    </span>
+    <div class="pagination-controls">
+      <button type="button" class="pagination-button" [disabled]="page() === 0" (click)="goToPage(page() - 1)">
+        Previous
+      </button>
+      <button type="button" class="pagination-button" [disabled]="page() >= totalPages() - 1" (click)="goToPage(page() + 1)">
+        Next
+      </button>
+    </div>
+  </div>
+}
+
+@if (formOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ formMode() === 'add' ? 'Add new location' : 'Edit location' }}</h2>
+    <form (ngSubmit)="submitForm()">
+      <label class="modal-field">
+        <span>Name</span>
+        <input type="text" [(ngModel)]="formName" name="name" required autocomplete="off" />
+      </label>
+      <label class="modal-field">
+        <span>Description</span>
+        <textarea [(ngModel)]="formDescription" name="description" rows="3"></textarea>
+      </label>
+      <div class="modal-field-row">
+        <label class="modal-field">
+          <span>Latitude</span>
+          <input type="number" [(ngModel)]="formLatitude" name="latitude" step="any" required />
+        </label>
+        <label class="modal-field">
+          <span>Longitude</span>
+          <input type="number" [(ngModel)]="formLongitude" name="longitude" step="any" required />
+        </label>
+      </div>
+      <label class="modal-field">
+        <span>Category</span>
+        <select [(ngModel)]="formCategoryId" name="category">
+          <option value="">No category</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.id">{{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="modal-field">
+        <span>Tags</span>
+        <div class="tag-input-wrapper">
+          @if (formTags().length > 0) {
+            <div class="tag-chip-list">
+              @for (tag of formTags(); track tag) {
+                <span class="tag-chip">
+                  {{ tag }}
+                  <button type="button" class="tag-chip-remove" aria-label="Remove tag {{ tag }}" (click)="removeFormTag(tag)">
+                    ×
+                  </button>
+                </span>
+              }
+            </div>
+          }
+          <input
+            type="text"
+            [ngModel]="formTagInput()"
+            (ngModelChange)="onFormTagInputChange($event)"
+            (keydown)="onFormTagInputKeydown($event)"
+            name="tagInput"
+            placeholder="Type to add tags…"
+            autocomplete="off"
+          />
+          @if (formTagSuggestions().length > 0) {
+            <ul class="tag-suggestions">
+              @for (suggestion of formTagSuggestions(); track suggestion) {
+                <li>
+                  <button type="button" class="tag-suggestion-item" (click)="addFormTag(suggestion)">{{ suggestion }}</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </label>
+      @if (formError()) {
+        <p class="modal-error">{{ formError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeForm()">Cancel</button>
+        <button
+          type="submit"
+          class="modal-button modal-button-primary"
+          [disabled]="formSaving() || !formName().trim() || formLatitude() == null || formLongitude() == null"
+        >
+          {{ formSaving() ? 'Saving…' : formMode() === 'add' ? 'Add location' : 'Save changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (deleteTarget(); as location) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">Delete location?</h2>
+    <p class="modal-subtitle">"{{ location.name || 'Unnamed location' }}" will be permanently deleted. This can't be undone.</p>
+    @if (deleteError()) {
+      <p class="modal-error">{{ deleteError() }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">Cancel</button>
+      <button
+        type="button"
+        class="modal-button modal-button-danger"
+        [disabled]="deletingLocation()"
+        (click)="confirmDelete()"
+      >
+        {{ deletingLocation() ? 'Deleting…' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+}
