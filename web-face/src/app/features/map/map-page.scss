@@ -244,6 +244,10 @@ $radius: 8px;
   color: var(--text-secondary);
   cursor: pointer;
 
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
   &:hover {
     background: var(--hover);
   }
@@ -321,6 +325,10 @@ $radius: 8px;
   border-radius: 50%;
   background: var(--accent-bg);
   color: var(--accent);
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
 }
 
 .result-icon-device {
@@ -487,8 +495,9 @@ $radius: 8px;
   font-size: 14px;
   text-align: left;
 
-  svg {
+  .material-symbols-outlined {
     flex: 0 0 auto;
+    font-size: 18px;
     color: var(--text-secondary);
   }
 
@@ -573,6 +582,10 @@ $radius: 8px;
   flex: 0 0 auto;
   border: 1px solid var(--border);
   color: var(--accent);
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
 }
 
 .tag-input-wrapper {
@@ -615,6 +628,10 @@ $radius: 8px;
   font-size: 14px;
   line-height: 1;
   padding: 0;
+
+  .material-symbols-outlined {
+    font-size: 14px;
+  }
 
   &:hover {
     background: var(--accent-bg-hover);

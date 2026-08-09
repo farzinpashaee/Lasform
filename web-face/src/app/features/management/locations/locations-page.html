@@ -32,7 +32,7 @@
               <span class="tag-chip">
                 {{ tag }}
                 <button type="button" class="tag-chip-remove" aria-label="Remove tag filter {{ tag }}" (click)="removeTagFilter(tag)">
-                  ×
+                  <span class="material-symbols-outlined" aria-hidden="true">close</span>
                 </button>
               </span>
             }
@@ -62,9 +62,7 @@
   </div>
 
   <button type="button" class="add-button" (click)="openAddModal()">
-    <svg viewBox="0 0 24 24" width="18" height="18">
-      <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" />
-    </svg>
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
     <span>Add new location</span>
   </button>
 </div>
@@ -78,7 +76,9 @@
             <button type="button" class="sort-header">
               {{ column.label }}
               @if (sortField() === column.field) {
-                <span class="sort-arrow">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                <span class="sort-arrow material-symbols-outlined" aria-hidden="true">
+                  {{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
               }
             </button>
           </th>
@@ -133,12 +133,7 @@
             </td>
             <td class="actions-column">
               <button type="button" class="icon-action-button" aria-label="Edit location" (click)="openEditModal(location)">
-                <svg viewBox="0 0 24 24" width="16" height="16">
-                  <path
-                    fill="currentColor"
-                    d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                  />
-                </svg>
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
               </button>
               <button
                 type="button"
@@ -146,12 +141,7 @@
                 aria-label="Delete location"
                 (click)="openDeleteConfirm(location)"
               >
-                <svg viewBox="0 0 24 24" width="16" height="16">
-                  <path
-                    fill="currentColor"
-                    d="M6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm3-3h6l1 1h4v2H4V5h4l1-1z"
-                  />
-                </svg>
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
               </button>
             </td>
           </tr>
@@ -218,7 +208,7 @@
                 <span class="tag-chip">
                   {{ tag }}
                   <button type="button" class="tag-chip-remove" aria-label="Remove tag {{ tag }}" (click)="removeFormTag(tag)">
-                    ×
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
                   </button>
                 </span>
               }
