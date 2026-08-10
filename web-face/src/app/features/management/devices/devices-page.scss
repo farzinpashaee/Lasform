@@ -99,6 +99,10 @@ $radius: 8px;
     white-space: nowrap;
   }
 
+  td {
+    color: var(--text-primary, #202124);
+  }
+
   th {
     font-weight: 600;
     color: var(--text-secondary, #5f6368);
@@ -165,18 +169,18 @@ th.sortable {
   color: var(--text-secondary, #5f6368);
 
   &.status-active {
-    background: #e6f4ea;
-    color: #188038;
+    background: var(--status-active-bg, #e6f4ea);
+    color: var(--status-active-text, #188038);
   }
 
   &.status-offline {
-    background: #fce8e6;
-    color: #d93025;
+    background: var(--status-offline-bg, #fce8e6);
+    color: var(--status-offline-text, #d93025);
   }
 
   &.status-maintenance {
-    background: #fef7e0;
-    color: #b06000;
+    background: var(--status-maintenance-bg, #fef7e0);
+    color: var(--status-maintenance-text, #b06000);
   }
 
   &.status-decommissioned {
@@ -470,7 +474,7 @@ th.sortable {
   border: 1px solid var(--border, #e8eaed);
   border-radius: 4px;
   background: var(--surface, #fff);
-  color: #000;
+  color: var(--text-primary, #202124);
   cursor: pointer;
 
   .material-symbols-outlined {

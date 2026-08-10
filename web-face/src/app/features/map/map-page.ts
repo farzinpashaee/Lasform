@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider } from '../../core/maps';
 import { Category } from '../../core/models/category.model';
@@ -45,6 +45,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly title = signal('LasformWebFace');
 
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly locationService = inject(LocationService);
   private readonly deviceService = inject(DeviceService);
   private readonly categoryService = inject(CategoryService);
@@ -109,6 +110,19 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.loadLocationMarkers();
     this.loadCategories();
     this.mapProvider.onContextMenu((event) => this.openMapContextMenu(event));
+    this.jumpToQueryLocation();
+  }
+
+  /** Handles ?locationId=... deep links (e.g. the "View on map" action from the Locations table). */
+  private jumpToQueryLocation(): void {
+    const locationId = this.route.snapshot.queryParamMap.get('locationId');
+    if (!locationId) {
+      return;
+    }
+    this.locationService.getById(locationId).subscribe({
+      next: (location) => this.selectResult({ type: 'LOCATION', data: location }),
+    });
+    this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
   }
 
   @HostListener('document:keydown.escape')

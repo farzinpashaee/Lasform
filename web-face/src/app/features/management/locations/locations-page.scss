@@ -99,6 +99,10 @@ $radius: 8px;
     white-space: nowrap;
   }
 
+  td {
+    color: var(--text-primary, #202124);
+  }
+
   th {
     font-weight: 600;
     color: var(--text-secondary, #5f6368);
@@ -447,7 +451,7 @@ th.sortable {
   border: 1px solid var(--border, #e8eaed);
   border-radius: 4px;
   background: var(--surface, #fff);
-  color: #000;
+  color: var(--text-primary, #202124);
   cursor: pointer;
 
   .material-symbols-outlined {

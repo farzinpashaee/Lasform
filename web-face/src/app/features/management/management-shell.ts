@@ -39,7 +39,6 @@ export class ManagementShell {
     { label: 'Locations', path: 'locations' },
     { label: 'Devices', path: 'devices' },
     { label: 'Categories', path: 'categories' },
-    { label: 'Tags', path: 'tags' },
     { label: 'Geofences', path: 'geofences' },
   ];
 

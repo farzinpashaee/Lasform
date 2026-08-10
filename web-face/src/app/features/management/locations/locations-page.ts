@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { Category } from '../../../core/models/category.model';
 import { Location } from '../../../core/models/location.model';
@@ -13,7 +14,7 @@ interface SortableColumn {
   label: string;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const SORTABLE_COLUMNS: SortableColumn[] = [
   { field: 'name', label: 'Name' },
@@ -32,6 +33,7 @@ export class LocationsPage implements OnInit, OnDestroy {
   private readonly locationService = inject(LocationService);
   private readonly categoryService = inject(CategoryService);
   private readonly tagService = inject(TagService);
+  private readonly router = inject(Router);
 
   protected readonly sortableColumns = SORTABLE_COLUMNS;
 
@@ -205,6 +207,13 @@ export class LocationsPage implements OnInit, OnDestroy {
     }
     this.page.set(page);
     this.loadLocations();
+  }
+
+  protected viewOnMap(location: Location): void {
+    if (!location.id) {
+      return;
+    }
+    this.router.navigate(['/'], { queryParams: { locationId: location.id } });
   }
 
   protected categoryLabel(categoryId: string): string {
