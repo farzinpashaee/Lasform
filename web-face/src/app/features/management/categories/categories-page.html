@@ -1,0 +1,174 @@
+<h1 class="page-title">Categories</h1>
+
+<div class="toolbar">
+  <div class="toolbar-filters">
+    <input
+      type="search"
+      class="search-input"
+      placeholder="Search by name or description…"
+      [ngModel]="searchTerm()"
+      (ngModelChange)="onSearchInputChange($event)"
+      name="search"
+      autocomplete="off"
+    />
+  </div>
+
+  <button type="button" class="add-button" (click)="openAddModal()">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    <span>Add new category</span>
+  </button>
+</div>
+
+<div class="categories-table-wrapper">
+  <table class="categories-table">
+    <thead>
+      <tr>
+        <th class="marker-column">Marker</th>
+        @for (column of sortableColumns; track column.field) {
+          <th class="sortable" (click)="sortBy(column.field)">
+            <button type="button" class="sort-header">
+              {{ column.label }}
+              @if (sortField() === column.field) {
+                <span class="sort-arrow material-symbols-outlined" aria-hidden="true">
+                  {{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+              }
+            </button>
+          </th>
+        }
+        <th>Description</th>
+        <th class="actions-column">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">Loading categories…</td>
+        </tr>
+      } @else if (loadError()) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell error">{{ loadError() }}</td>
+        </tr>
+      } @else if (categories().length === 0) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">No categories found.</td>
+        </tr>
+      } @else {
+        @for (category of categories(); track category.id) {
+          <tr>
+            <td class="marker-column">
+              @if (category.marker) {
+                <span class="marker-cell">{{ category.marker }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td>
+              <div class="name-cell">{{ category.name }}</div>
+            </td>
+            <td>{{ category.createdAt ? (category.createdAt | date: 'short') : '—' }}</td>
+            <td>{{ category.updatedAt ? (category.updatedAt | date: 'short') : '—' }}</td>
+            <td>
+              @if (category.description) {
+                <span class="description-cell">{{ category.description }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td class="actions-column">
+              <button type="button" class="icon-action-button" aria-label="Edit category" (click)="openEditModal(category)">
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button icon-action-button-danger"
+                aria-label="Delete category"
+                (click)="openDeleteConfirm(category)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (!loading() && !loadError() && totalElements() > 0) {
+  <div class="pagination-bar">
+    <span class="pagination-summary">
+      Page {{ page() + 1 }} of {{ totalPages() }} ({{ totalElements() }} total)
+    </span>
+    <div class="pagination-controls">
+      <button type="button" class="pagination-button" [disabled]="page() === 0" (click)="goToPage(page() - 1)">
+        Previous
+      </button>
+      <button type="button" class="pagination-button" [disabled]="page() >= totalPages() - 1" (click)="goToPage(page() + 1)">
+        Next
+      </button>
+    </div>
+  </div>
+}
+
+@if (formOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ formMode() === 'add' ? 'Add new category' : 'Edit category' }}</h2>
+    <form (ngSubmit)="submitForm()">
+      <label class="modal-field">
+        <span>Name</span>
+        <input type="text" [(ngModel)]="formName" name="name" required autocomplete="off" />
+      </label>
+      <label class="modal-field">
+        <span>Description</span>
+        <textarea [(ngModel)]="formDescription" name="description" rows="3"></textarea>
+      </label>
+      <label class="modal-field">
+        <span>Marker</span>
+        <input
+          type="text"
+          [(ngModel)]="formMarker"
+          name="marker"
+          autocomplete="off"
+          placeholder="A short emoji or symbol, e.g. 🏥"
+        />
+      </label>
+      @if (formError()) {
+        <p class="modal-error">{{ formError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeForm()">Cancel</button>
+        <button
+          type="submit"
+          class="modal-button modal-button-primary"
+          [disabled]="formSaving() || !formName().trim()"
+        >
+          {{ formSaving() ? 'Saving…' : formMode() === 'add' ? 'Add category' : 'Save changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (deleteTarget(); as category) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">Delete category?</h2>
+    <p class="modal-subtitle">"{{ category.name }}" will be permanently deleted. This can't be undone.</p>
+    @if (deleteError()) {
+      <p class="modal-error">{{ deleteError() }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">Cancel</button>
+      <button
+        type="button"
+        class="modal-button modal-button-danger"
+        [disabled]="deletingCategory()"
+        (click)="confirmDelete()"
+      >
+        {{ deletingCategory() ? 'Deleting…' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+}

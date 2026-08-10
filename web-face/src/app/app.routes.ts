@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { CategoriesPage } from './features/management/categories/categories-page';
 import { ComingSoon } from './features/management/coming-soon/coming-soon';
 import { DevicesPage } from './features/management/devices/devices-page';
 import { LocationsPage } from './features/management/locations/locations-page';
@@ -19,7 +20,7 @@ export const routes: Routes = [
       { path: 'users', component: ComingSoon, data: { title: 'Users' } },
       { path: 'locations', component: LocationsPage },
       { path: 'devices', component: DevicesPage },
-      { path: 'categories', component: ComingSoon, data: { title: 'Categories' } },
+      { path: 'categories', component: CategoriesPage },
       { path: 'tags', component: ComingSoon, data: { title: 'Tags' } },
       { path: 'geofences', component: ComingSoon, data: { title: 'Geofences' } },
     ],
