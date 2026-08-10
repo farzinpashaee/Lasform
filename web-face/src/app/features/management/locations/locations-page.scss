@@ -224,10 +224,11 @@ th.sortable {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1001;
-  width: 400px;
+  width: 520px;
   max-width: calc(100vw - 32px);
   max-height: calc(100vh - 32px);
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--surface, #fff);
   border-radius: $radius;
   box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.3));
@@ -255,10 +256,13 @@ th.sortable {
   font-size: 13px;
   color: var(--text-secondary, #5f6368);
   flex: 1;
+  min-width: 0;
 
   input,
   textarea,
   select {
+    width: 100%;
+    box-sizing: border-box;
     font: inherit;
     font-size: 14px;
     color: var(--text-primary, #202124);
