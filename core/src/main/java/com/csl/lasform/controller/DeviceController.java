@@ -3,6 +3,8 @@ package com.csl.lasform.controller;
 import java.util.List;
 
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
@@ -50,26 +52,15 @@ public class DeviceController extends AbstractCrudController<Device> {
         return deviceService.findByDeviceIdentifier(deviceIdentifier);
     }
 
+    /** Paginated/sortable listing for the management table: optional free-text {@code q}, category, tag and/or status filters. */
     @GetMapping("/search")
-    public List<Device> search(
-            @RequestParam(required = false) String ownerId,
+    public Page<Device> search(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) List<String> tags,
             @RequestParam(required = false) DeviceStatus status,
-            @RequestParam(required = false) String tag,
-            @RequestParam(required = false) List<String> tags) {
-        if (ownerId != null) {
-            return deviceService.findByOwnerId(ownerId);
-        }
-        if (status != null) {
-            return deviceService.findByStatus(status);
-        }
-        if (tag != null) {
-            return deviceService.findByTag(tag);
-        }
-        if (tags != null && !tags.isEmpty()) {
-            return deviceService.findByTagsIn(tags);
-        }
-        throw new IllegalArgumentException(
-                "At least one of 'ownerId', 'status', 'tag' or 'tags' must be provided");
+            Pageable pageable) {
+        return deviceService.search(q, categoryId, tags, status, pageable);
     }
 
     @PostMapping("/{id}/images")

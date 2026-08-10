@@ -1,0 +1,307 @@
+<h1 class="page-title">Devices</h1>
+
+<div class="toolbar">
+  <div class="toolbar-filters">
+    <input
+      type="search"
+      class="search-input"
+      placeholder="Search by name, identifier or tag…"
+      [ngModel]="searchTerm()"
+      (ngModelChange)="onSearchInputChange($event)"
+      name="search"
+      autocomplete="off"
+    />
+
+    <select
+      class="filter-select"
+      [ngModel]="selectedCategoryId()"
+      (ngModelChange)="selectedCategoryId.set($event); onCategoryFilterChange()"
+      name="categoryFilter"
+    >
+      <option value="">All categories</option>
+      @for (category of categories(); track category.id) {
+        <option [value]="category.id">{{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}</option>
+      }
+    </select>
+
+    <select
+      class="filter-select"
+      [ngModel]="selectedStatus()"
+      (ngModelChange)="selectedStatus.set($event); onStatusFilterChange()"
+      name="statusFilter"
+    >
+      <option value="">All statuses</option>
+      @for (status of deviceStatuses; track status) {
+        <option [value]="status">{{ status }}</option>
+      }
+    </select>
+
+    <div class="tag-filter">
+      <div class="tag-input-wrapper">
+        @if (selectedTags().length > 0) {
+          <div class="tag-chip-list">
+            @for (tag of selectedTags(); track tag) {
+              <span class="tag-chip">
+                {{ tag }}
+                <button type="button" class="tag-chip-remove" aria-label="Remove tag filter {{ tag }}" (click)="removeTagFilter(tag)">
+                  <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                </button>
+              </span>
+            }
+          </div>
+        }
+        <input
+          type="text"
+          class="tag-filter-input"
+          [ngModel]="tagFilterInput()"
+          (ngModelChange)="onTagFilterInputChange($event)"
+          (keydown)="onTagFilterInputKeydown($event)"
+          name="tagFilterInput"
+          placeholder="Filter by tag…"
+          autocomplete="off"
+        />
+        @if (tagFilterSuggestions().length > 0) {
+          <ul class="tag-suggestions">
+            @for (suggestion of tagFilterSuggestions(); track suggestion) {
+              <li>
+                <button type="button" class="tag-suggestion-item" (click)="addTagFilter(suggestion)">{{ suggestion }}</button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="add-button" (click)="openAddModal()">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    <span>Add new device</span>
+  </button>
+</div>
+
+<div class="devices-table-wrapper">
+  <table class="devices-table">
+    <thead>
+      <tr>
+        @for (column of sortableColumns; track column.field) {
+          <th class="sortable" (click)="sortBy(column.field)">
+            <button type="button" class="sort-header">
+              {{ column.label }}
+              @if (sortField() === column.field) {
+                <span class="sort-arrow material-symbols-outlined" aria-hidden="true">
+                  {{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+              }
+            </button>
+          </th>
+        }
+        <th>Identifier</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Category</th>
+        <th>Tags</th>
+        <th class="actions-column">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell">Loading devices…</td>
+        </tr>
+      } @else if (loadError()) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell error">{{ loadError() }}</td>
+        </tr>
+      } @else if (devices().length === 0) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell">No devices found.</td>
+        </tr>
+      } @else {
+        @for (device of devices(); track device.id) {
+          <tr>
+            <td>
+              <div class="name-cell">{{ device.name || 'Unnamed device' }}</div>
+            </td>
+            <td>{{ device.lastSeenAt ? (device.lastSeenAt | date: 'short') : '—' }}</td>
+            <td>{{ device.createdAt ? (device.createdAt | date: 'short') : '—' }}</td>
+            <td>{{ device.updatedAt ? (device.updatedAt | date: 'short') : '—' }}</td>
+            <td>{{ device.deviceIdentifier }}</td>
+            <td>{{ device.type }}</td>
+            <td>
+              @if (device.status) {
+                <span class="status-chip" [class]="'status-' + device.status.toLowerCase()">{{ device.status }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td>
+              @if (device.categoryIds && device.categoryIds.length > 0) {
+                <span class="category-chip">{{ categoryLabel(device.categoryIds[0]) }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td>
+              @if (device.tags && device.tags.length > 0) {
+                <div class="tag-chip-list inline">
+                  @for (tag of device.tags; track tag) {
+                    <span class="tag-chip static">{{ tag }}</span>
+                  }
+                </div>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td class="actions-column">
+              <button type="button" class="icon-action-button" aria-label="Edit device" (click)="openEditModal(device)">
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button icon-action-button-danger"
+                aria-label="Delete device"
+                (click)="openDeleteConfirm(device)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (!loading() && !loadError() && totalElements() > 0) {
+  <div class="pagination-bar">
+    <span class="pagination-summary">
+      Page {{ page() + 1 }} of {{ totalPages() }} ({{ totalElements() }} total)
+    </span>
+    <div class="pagination-controls">
+      <button type="button" class="pagination-button" [disabled]="page() === 0" (click)="goToPage(page() - 1)">
+        Previous
+      </button>
+      <button type="button" class="pagination-button" [disabled]="page() >= totalPages() - 1" (click)="goToPage(page() + 1)">
+        Next
+      </button>
+    </div>
+  </div>
+}
+
+@if (formOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ formMode() === 'add' ? 'Add new device' : 'Edit device' }}</h2>
+    <form (ngSubmit)="submitForm()">
+      <label class="modal-field">
+        <span>Device identifier</span>
+        <input type="text" [(ngModel)]="formDeviceIdentifier" name="deviceIdentifier" required autocomplete="off" />
+      </label>
+      <label class="modal-field">
+        <span>Name</span>
+        <input type="text" [(ngModel)]="formName" name="name" required autocomplete="off" />
+      </label>
+      <label class="modal-field">
+        <span>Owner ID</span>
+        <input type="text" [(ngModel)]="formOwnerId" name="ownerId" required autocomplete="off" />
+      </label>
+      <div class="modal-field-row">
+        <label class="modal-field">
+          <span>Type</span>
+          <select [(ngModel)]="formType" name="type" required>
+            @for (type of deviceTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </label>
+        <label class="modal-field">
+          <span>Status</span>
+          <select [(ngModel)]="formStatus" name="status">
+            @for (status of deviceStatuses; track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <label class="modal-field">
+        <span>Category</span>
+        <select [(ngModel)]="formCategoryId" name="category">
+          <option value="">No category</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.id">{{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="modal-field">
+        <span>Tags</span>
+        <div class="tag-input-wrapper">
+          @if (formTags().length > 0) {
+            <div class="tag-chip-list">
+              @for (tag of formTags(); track tag) {
+                <span class="tag-chip">
+                  {{ tag }}
+                  <button type="button" class="tag-chip-remove" aria-label="Remove tag {{ tag }}" (click)="removeFormTag(tag)">
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                  </button>
+                </span>
+              }
+            </div>
+          }
+          <input
+            type="text"
+            [ngModel]="formTagInput()"
+            (ngModelChange)="onFormTagInputChange($event)"
+            (keydown)="onFormTagInputKeydown($event)"
+            name="tagInput"
+            placeholder="Type to add tags…"
+            autocomplete="off"
+          />
+          @if (formTagSuggestions().length > 0) {
+            <ul class="tag-suggestions">
+              @for (suggestion of formTagSuggestions(); track suggestion) {
+                <li>
+                  <button type="button" class="tag-suggestion-item" (click)="addFormTag(suggestion)">{{ suggestion }}</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </label>
+      @if (formError()) {
+        <p class="modal-error">{{ formError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeForm()">Cancel</button>
+        <button
+          type="submit"
+          class="modal-button modal-button-primary"
+          [disabled]="formSaving() || !formDeviceIdentifier().trim() || !formName().trim() || !formOwnerId().trim()"
+        >
+          {{ formSaving() ? 'Saving…' : formMode() === 'add' ? 'Add device' : 'Save changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (deleteTarget(); as device) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">Delete device?</h2>
+    <p class="modal-subtitle">"{{ device.name || 'Unnamed device' }}" will be permanently deleted. This can't be undone.</p>
+    @if (deleteError()) {
+      <p class="modal-error">{{ deleteError() }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">Cancel</button>
+      <button
+        type="button"
+        class="modal-button modal-button-danger"
+        [disabled]="deletingDevice()"
+        (click)="confirmDelete()"
+      >
+        {{ deletingDevice() ? 'Deleting…' : 'Delete' }}
+      </button>
+    </div>
+  </div>
+}

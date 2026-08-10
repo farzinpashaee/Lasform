@@ -12,6 +12,7 @@ export interface Device extends Auditable {
   lastKnownPoint?: GeoJsonPoint;
   lastSeenAt?: string;
   batteryLevel?: number;
+  categoryIds?: string[];
   tags?: string[];
   metadata?: Record<string, string>;
   version?: number;

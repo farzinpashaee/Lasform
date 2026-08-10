@@ -1,8 +1,16 @@
 package com.csl.lasform.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,12 +31,15 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
     private final DeviceRepository deviceRepository;
     private final ImageStorageService imageStorageService;
     private final EntityImageService<Device> imageService;
+    private final MongoTemplate mongoTemplate;
 
-    public DeviceServiceImpl(DeviceRepository deviceRepository, ImageStorageService imageStorageService) {
+    public DeviceServiceImpl(
+            DeviceRepository deviceRepository, ImageStorageService imageStorageService, MongoTemplate mongoTemplate) {
         super(deviceRepository);
         this.deviceRepository = deviceRepository;
         this.imageStorageService = imageStorageService;
         this.imageService = new EntityImageService<>(deviceRepository, imageStorageService, "Device");
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -48,23 +59,37 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
     }
 
     @Override
-    public List<Device> findByOwnerId(String ownerId) {
-        return deviceRepository.findByOwnerId(ownerId);
+    public Page<Device> search(String q, String categoryId, List<String> tags, DeviceStatus status, Pageable pageable) {
+        Query filter = filterQuery(q, categoryId, tags, status);
+        long total = mongoTemplate.count(filter, Device.class);
+        List<Device> content = mongoTemplate.find(filter.with(pageable), Device.class);
+        return new PageImpl<>(content, pageable, total);
     }
 
-    @Override
-    public List<Device> findByStatus(DeviceStatus status) {
-        return deviceRepository.findByStatus(status);
-    }
-
-    @Override
-    public List<Device> findByTag(String tag) {
-        return deviceRepository.findByTagsContaining(tag);
-    }
-
-    @Override
-    public List<Device> findByTagsIn(List<String> tags) {
-        return deviceRepository.findByTagsIn(tags);
+    /** {@code categoryIds}/{@code tags} are arrays; equality/`in` on an array field means "contains any". */
+    private Query filterQuery(String q, String categoryId, List<String> tags, DeviceStatus status) {
+        List<Criteria> criteria = new ArrayList<>();
+        if (categoryId != null && !categoryId.isBlank()) {
+            criteria.add(Criteria.where("categoryIds").is(categoryId));
+        }
+        if (tags != null && !tags.isEmpty()) {
+            criteria.add(Criteria.where("tags").in(tags));
+        }
+        if (status != null) {
+            criteria.add(Criteria.where("status").is(status));
+        }
+        if (q != null && !q.isBlank()) {
+            // Pattern.quote guards against regex metacharacters/ReDoS in user-supplied text.
+            String pattern = Pattern.quote(q.trim());
+            criteria.add(new Criteria().orOperator(
+                    Criteria.where("name").regex(pattern, "i"),
+                    Criteria.where("device_identifier").regex(pattern, "i"),
+                    Criteria.where("tags").regex(pattern, "i")));
+        }
+        if (criteria.isEmpty()) {
+            return new Query();
+        }
+        return new Query(new Criteria().andOperator(criteria.toArray(new Criteria[0])));
     }
 
     @Override

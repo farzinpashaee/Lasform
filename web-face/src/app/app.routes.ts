@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { ComingSoon } from './features/management/coming-soon/coming-soon';
+import { DevicesPage } from './features/management/devices/devices-page';
 import { LocationsPage } from './features/management/locations/locations-page';
 import { ManagementShell } from './features/management/management-shell';
 import { MapProviderSettings } from './features/management/settings/map-provider-settings';
@@ -17,7 +18,7 @@ export const routes: Routes = [
       { path: 'settings/web-face-styles', component: ComingSoon, data: { title: 'Web Face Styles' } },
       { path: 'users', component: ComingSoon, data: { title: 'Users' } },
       { path: 'locations', component: LocationsPage },
-      { path: 'devices', component: ComingSoon, data: { title: 'Devices' } },
+      { path: 'devices', component: DevicesPage },
       { path: 'categories', component: ComingSoon, data: { title: 'Categories' } },
       { path: 'tags', component: ComingSoon, data: { title: 'Tags' } },
       { path: 'geofences', component: ComingSoon, data: { title: 'Geofences' } },
