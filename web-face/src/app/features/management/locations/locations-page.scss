@@ -443,7 +443,7 @@ th.sortable {
   border: 1px solid var(--border, #e8eaed);
   border-radius: 4px;
   background: var(--surface, #fff);
-  color: var(--accent, #1a73e8);
+  color: #000;
   cursor: pointer;
 
   .material-symbols-outlined {
@@ -455,14 +455,14 @@ th.sortable {
   }
 
   &:hover {
+    color: var(--accent, #1a73e8);
     background: var(--accent-bg, #e8f0fe);
   }
 }
 
 .icon-action-button-danger {
-  color: var(--danger, #d93025);
-
   &:hover {
+    color: var(--danger, #d93025);
     background: rgba(217, 48, 37, 0.1);
   }
 }
