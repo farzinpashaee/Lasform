@@ -46,6 +46,12 @@ export interface MapProvider {
   /** Recenters the map, optionally changing zoom. onComplete fires once the move finishes. */
   panTo(lat: number, lng: number, zoom?: number, onComplete?: () => void): void;
 
+  /** Shows (or moves) a small "you are here" dot at the given position, replacing any previous one. */
+  setUserLocation(lat: number, lng: number): void;
+
+  /** Removes the "you are here" dot, if one is currently shown. */
+  clearUserLocation(): void;
+
   /** Registers the handler fired on right-click on the map surface. */
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void;
 

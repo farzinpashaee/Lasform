@@ -19,6 +19,7 @@ private map?: L.Map;
   private markersById = new Map<string, L.Marker>();
   private allMarkers: L.Marker[] = [];
   private clusteringEnabled = false;
+  private userLocationMarker?: L.CircleMarker;
 
   initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
     this.map = L.map(container, {
@@ -122,6 +123,28 @@ private map?: L.Map;
     }
   }
 
+  setUserLocation(lat: number, lng: number): void {
+    if (!this.map) {
+      return;
+    }
+    if (this.userLocationMarker) {
+      this.userLocationMarker.setLatLng([lat, lng]);
+      return;
+    }
+    this.userLocationMarker = L.circleMarker([lat, lng], {
+      radius: 8,
+      color: '#fff',
+      weight: 2,
+      fillColor: '#1a73e8',
+      fillOpacity: 1,
+    }).addTo(this.map);
+  }
+
+  clearUserLocation(): void {
+    this.userLocationMarker?.remove();
+    this.userLocationMarker = undefined;
+  }
+
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void {
     if (!this.map) {
       return;
@@ -144,5 +167,6 @@ private map?: L.Map;
     this.markersLayer = undefined;
     this.markersById.clear();
     this.allMarkers = [];
+    this.userLocationMarker = undefined;
   }
 }

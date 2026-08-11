@@ -10,6 +10,7 @@ export class GoogleMapsMapProvider implements MapProvider {
   private markersById = new Map<string, { marker: google.maps.Marker; title?: string }>();
   private clusterer?: MarkerClusterer;
   private clusteringEnabled = false;
+  private userLocationMarker?: google.maps.Marker;
 
   constructor(private readonly apiKey: string) {}
 
@@ -101,6 +102,36 @@ export class GoogleMapsMapProvider implements MapProvider {
     }
   }
 
+  setUserLocation(lat: number, lng: number): void {
+    if (!this.map) {
+      return;
+    }
+    const position = { lat, lng };
+    if (this.userLocationMarker) {
+      this.userLocationMarker.setPosition(position);
+      return;
+    }
+    this.userLocationMarker = new google.maps.Marker({
+      position,
+      map: this.map,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#1a73e8',
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 2,
+      },
+      zIndex: google.maps.Marker.MAX_ZINDEX + 1,
+      clickable: false,
+    });
+  }
+
+  clearUserLocation(): void {
+    this.userLocationMarker?.setMap(null);
+    this.userLocationMarker = undefined;
+  }
+
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void {
     if (!this.map) {
       return;
@@ -123,6 +154,8 @@ export class GoogleMapsMapProvider implements MapProvider {
   destroy(): void {
     this.teardownMarkers();
     this.infoWindow?.close();
+    this.userLocationMarker?.setMap(null);
+    this.userLocationMarker = undefined;
     this.map = undefined;
   }
 

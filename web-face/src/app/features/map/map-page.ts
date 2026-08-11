@@ -186,6 +186,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        this.mapProvider.setUserLocation(latitude, longitude);
         // Guards against the map already being centered there, where moveend/idle may never fire.
         const stopLoading = () => this.locating.set(false);
         const fallback = setTimeout(stopLoading, 3000);
