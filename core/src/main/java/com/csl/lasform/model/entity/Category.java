@@ -28,7 +28,7 @@ public class Category extends Auditable implements Identifiable {
     private String id;
 
     @Indexed(unique = true)
-    @NotBlank
+    @NotBlank(message = "{validation.category.name.required}")
     private String name;
 
     private String description;

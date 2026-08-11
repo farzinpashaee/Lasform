@@ -1,11 +1,11 @@
-<h1 class="page-title">Devices</h1>
+<h1 class="page-title">{{ 'devices.title' | transloco }}</h1>
 
 <div class="toolbar">
   <div class="toolbar-filters">
     <input
       type="search"
       class="search-input"
-      placeholder="Search by name, identifier or tag…"
+      [placeholder]="'devices.searchPlaceholder' | transloco"
       [ngModel]="searchTerm()"
       (ngModelChange)="onSearchInputChange($event)"
       name="search"
@@ -18,7 +18,7 @@
       (ngModelChange)="selectedCategoryId.set($event); onCategoryFilterChange()"
       name="categoryFilter"
     >
-      <option value="">All categories</option>
+      <option value="">{{ 'common.allCategories' | transloco }}</option>
       @for (category of categories(); track category.id) {
         <option [value]="category.id">{{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}</option>
       }
@@ -30,7 +30,7 @@
       (ngModelChange)="selectedStatus.set($event); onStatusFilterChange()"
       name="statusFilter"
     >
-      <option value="">All statuses</option>
+      <option value="">{{ 'devices.allStatuses' | transloco }}</option>
       @for (status of deviceStatuses; track status) {
         <option [value]="status">{{ status }}</option>
       }
@@ -43,7 +43,12 @@
             @for (tag of selectedTags(); track tag) {
               <span class="tag-chip">
                 {{ tag }}
-                <button type="button" class="tag-chip-remove" aria-label="Remove tag filter {{ tag }}" (click)="removeTagFilter(tag)">
+                <button
+                  type="button"
+                  class="tag-chip-remove"
+                  [attr.aria-label]="'common.removeTagFilter' | transloco: { tag: tag }"
+                  (click)="removeTagFilter(tag)"
+                >
                   <span class="material-symbols-outlined" aria-hidden="true">close</span>
                 </button>
               </span>
@@ -57,7 +62,7 @@
           (ngModelChange)="onTagFilterInputChange($event)"
           (keydown)="onTagFilterInputKeydown($event)"
           name="tagFilterInput"
-          placeholder="Filter by tag…"
+          [placeholder]="'devices.filterByTagPlaceholder' | transloco"
           autocomplete="off"
         />
         @if (tagFilterSuggestions().length > 0) {
@@ -75,7 +80,7 @@
 
   <button type="button" class="add-button" (click)="openAddModal()">
     <span class="material-symbols-outlined" aria-hidden="true">add</span>
-    <span>Add new device</span>
+    <span>{{ 'devices.addNew' | transloco }}</span>
   </button>
 </div>
 
@@ -86,7 +91,7 @@
         @for (column of sortableColumns; track column.field) {
           <th class="sortable" (click)="sortBy(column.field)">
             <button type="button" class="sort-header">
-              {{ column.label }}
+              {{ column.labelKey | transloco }}
               @if (sortField() === column.field) {
                 <span class="sort-arrow material-symbols-outlined" aria-hidden="true">
                   {{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
@@ -95,18 +100,18 @@
             </button>
           </th>
         }
-        <th>Identifier</th>
-        <th>Type</th>
-        <th>Status</th>
-        <th>Category</th>
-        <th>Tags</th>
-        <th class="actions-column">Actions</th>
+        <th>{{ 'devices.colIdentifier' | transloco }}</th>
+        <th>{{ 'devices.colType' | transloco }}</th>
+        <th>{{ 'devices.colStatus' | transloco }}</th>
+        <th>{{ 'devices.colCategory' | transloco }}</th>
+        <th>{{ 'devices.colTags' | transloco }}</th>
+        <th class="actions-column">{{ 'devices.colActions' | transloco }}</th>
       </tr>
     </thead>
     <tbody>
       @if (loading()) {
         <tr>
-          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell">Loading devices…</td>
+          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell">{{ 'devices.loading' | transloco }}</td>
         </tr>
       } @else if (loadError()) {
         <tr>
@@ -114,13 +119,13 @@
         </tr>
       } @else if (devices().length === 0) {
         <tr>
-          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell">No devices found.</td>
+          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell">{{ 'devices.empty' | transloco }}</td>
         </tr>
       } @else {
         @for (device of devices(); track device.id) {
           <tr>
             <td>
-              <div class="name-cell">{{ device.name || 'Unnamed device' }}</div>
+              <div class="name-cell">{{ device.name || ('devices.unnamed' | transloco) }}</div>
             </td>
             <td>{{ device.lastSeenAt ? (device.lastSeenAt | date: 'short') : '—' }}</td>
             <td>{{ device.createdAt ? (device.createdAt | date: 'short') : '—' }}</td>
@@ -153,13 +158,18 @@
               }
             </td>
             <td class="actions-column">
-              <button type="button" class="icon-action-button" aria-label="Edit device" (click)="openEditModal(device)">
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'common.edit' | transloco"
+                (click)="openEditModal(device)"
+              >
                 <span class="material-symbols-outlined" aria-hidden="true">edit</span>
               </button>
               <button
                 type="button"
                 class="icon-action-button icon-action-button-danger"
-                aria-label="Delete device"
+                [attr.aria-label]="'common.delete' | transloco"
                 (click)="openDeleteConfirm(device)"
               >
                 <span class="material-symbols-outlined" aria-hidden="true">delete</span>
@@ -175,14 +185,14 @@
 @if (!loading() && !loadError() && totalElements() > 0) {
   <div class="pagination-bar">
     <span class="pagination-summary">
-      Page {{ page() + 1 }} of {{ totalPages() }} ({{ totalElements() }} total)
+      {{ 'common.pageSummary' | transloco: { page: page() + 1, totalPages: totalPages(), total: totalElements() } }}
     </span>
     <div class="pagination-controls">
       <button type="button" class="pagination-button" [disabled]="page() === 0" (click)="goToPage(page() - 1)">
-        Previous
+        {{ 'common.previous' | transloco }}
       </button>
       <button type="button" class="pagination-button" [disabled]="page() >= totalPages() - 1" (click)="goToPage(page() + 1)">
-        Next
+        {{ 'common.next' | transloco }}
       </button>
     </div>
   </div>
@@ -191,23 +201,25 @@
 @if (formOpen()) {
   <div class="modal-backdrop" (click)="closeForm()"></div>
   <div class="modal">
-    <h2 class="modal-title">{{ formMode() === 'add' ? 'Add new device' : 'Edit device' }}</h2>
+    <h2 class="modal-title">
+      {{ (formMode() === 'add' ? 'devices.modalAddTitle' : 'devices.modalEditTitle') | transloco }}
+    </h2>
     <form (ngSubmit)="submitForm()">
       <label class="modal-field">
-        <span>Device identifier</span>
+        <span>{{ 'devices.fieldDeviceIdentifier' | transloco }}</span>
         <input type="text" [(ngModel)]="formDeviceIdentifier" name="deviceIdentifier" required autocomplete="off" />
       </label>
       <label class="modal-field">
-        <span>Name</span>
+        <span>{{ 'common.nameLabel' | transloco }}</span>
         <input type="text" [(ngModel)]="formName" name="name" required autocomplete="off" />
       </label>
       <label class="modal-field">
-        <span>Owner ID</span>
+        <span>{{ 'devices.fieldOwnerId' | transloco }}</span>
         <input type="text" [(ngModel)]="formOwnerId" name="ownerId" required autocomplete="off" />
       </label>
       <div class="modal-field-row">
         <label class="modal-field">
-          <span>Type</span>
+          <span>{{ 'devices.fieldType' | transloco }}</span>
           <select [(ngModel)]="formType" name="type" required>
             @for (type of deviceTypes; track type) {
               <option [value]="type">{{ type }}</option>
@@ -215,7 +227,7 @@
           </select>
         </label>
         <label class="modal-field">
-          <span>Status</span>
+          <span>{{ 'common.statusLabel' | transloco }}</span>
           <select [(ngModel)]="formStatus" name="status">
             @for (status of deviceStatuses; track status) {
               <option [value]="status">{{ status }}</option>
@@ -224,23 +236,28 @@
         </label>
       </div>
       <label class="modal-field">
-        <span>Category</span>
+        <span>{{ 'common.categoryLabel' | transloco }}</span>
         <select [(ngModel)]="formCategoryId" name="category">
-          <option value="">No category</option>
+          <option value="">{{ 'common.noCategory' | transloco }}</option>
           @for (category of categories(); track category.id) {
             <option [value]="category.id">{{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}</option>
           }
         </select>
       </label>
       <label class="modal-field">
-        <span>Tags</span>
+        <span>{{ 'common.tagsLabel' | transloco }}</span>
         <div class="tag-input-wrapper">
           @if (formTags().length > 0) {
             <div class="tag-chip-list">
               @for (tag of formTags(); track tag) {
                 <span class="tag-chip">
                   {{ tag }}
-                  <button type="button" class="tag-chip-remove" aria-label="Remove tag {{ tag }}" (click)="removeFormTag(tag)">
+                  <button
+                    type="button"
+                    class="tag-chip-remove"
+                    [attr.aria-label]="'common.removeTag' | transloco: { tag: tag }"
+                    (click)="removeFormTag(tag)"
+                  >
                     <span class="material-symbols-outlined" aria-hidden="true">close</span>
                   </button>
                 </span>
@@ -253,7 +270,7 @@
             (ngModelChange)="onFormTagInputChange($event)"
             (keydown)="onFormTagInputKeydown($event)"
             name="tagInput"
-            placeholder="Type to add tags…"
+            [placeholder]="'common.tagsInputPlaceholder' | transloco"
             autocomplete="off"
           />
           @if (formTagSuggestions().length > 0) {
@@ -271,13 +288,15 @@
         <p class="modal-error">{{ formError() }}</p>
       }
       <div class="modal-actions">
-        <button type="button" class="modal-button modal-button-secondary" (click)="closeForm()">Cancel</button>
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeForm()">
+          {{ 'common.cancel' | transloco }}
+        </button>
         <button
           type="submit"
           class="modal-button modal-button-primary"
           [disabled]="formSaving() || !formDeviceIdentifier().trim() || !formName().trim() || !formOwnerId().trim()"
         >
-          {{ formSaving() ? 'Saving…' : formMode() === 'add' ? 'Add device' : 'Save changes' }}
+          {{ (formSaving() ? 'common.saving' : formMode() === 'add' ? 'devices.addSubmit' : 'common.saveChanges') | transloco }}
         </button>
       </div>
     </form>
@@ -287,20 +306,22 @@
 @if (deleteTarget(); as device) {
   <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
   <div class="modal">
-    <h2 class="modal-title">Delete device?</h2>
-    <p class="modal-subtitle">"{{ device.name || 'Unnamed device' }}" will be permanently deleted. This can't be undone.</p>
+    <h2 class="modal-title">{{ 'devices.deleteTitle' | transloco }}</h2>
+    <p class="modal-subtitle">"{{ device.name || ('devices.unnamed' | transloco) }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
     @if (deleteError()) {
       <p class="modal-error">{{ deleteError() }}</p>
     }
     <div class="modal-actions">
-      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">Cancel</button>
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | transloco }}
+      </button>
       <button
         type="button"
         class="modal-button modal-button-danger"
         [disabled]="deletingDevice()"
         (click)="confirmDelete()"
       >
-        {{ deletingDevice() ? 'Deleting…' : 'Delete' }}
+        {{ (deletingDevice() ? 'common.deleting' : 'common.delete') | transloco }}
       </button>
     </div>
   </div>

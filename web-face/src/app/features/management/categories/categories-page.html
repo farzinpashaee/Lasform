@@ -1,11 +1,11 @@
-<h1 class="page-title">Categories</h1>
+<h1 class="page-title">{{ 'categories.title' | transloco }}</h1>
 
 <div class="toolbar">
   <div class="toolbar-filters">
     <input
       type="search"
       class="search-input"
-      placeholder="Search by name or description…"
+      [placeholder]="'categories.searchPlaceholder' | transloco"
       [ngModel]="searchTerm()"
       (ngModelChange)="onSearchInputChange($event)"
       name="search"
@@ -15,7 +15,7 @@
 
   <button type="button" class="add-button" (click)="openAddModal()">
     <span class="material-symbols-outlined" aria-hidden="true">add</span>
-    <span>Add new category</span>
+    <span>{{ 'categories.addNew' | transloco }}</span>
   </button>
 </div>
 
@@ -23,11 +23,11 @@
   <table class="categories-table">
     <thead>
       <tr>
-        <th class="marker-column">Marker</th>
+        <th class="marker-column">{{ 'categories.colMarker' | transloco }}</th>
         @for (column of sortableColumns; track column.field) {
           <th class="sortable" (click)="sortBy(column.field)">
             <button type="button" class="sort-header">
-              {{ column.label }}
+              {{ column.labelKey | transloco }}
               @if (sortField() === column.field) {
                 <span class="sort-arrow material-symbols-outlined" aria-hidden="true">
                   {{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
@@ -36,14 +36,14 @@
             </button>
           </th>
         }
-        <th>Description</th>
-        <th class="actions-column">Actions</th>
+        <th>{{ 'categories.colDescription' | transloco }}</th>
+        <th class="actions-column">{{ 'categories.colActions' | transloco }}</th>
       </tr>
     </thead>
     <tbody>
       @if (loading()) {
         <tr>
-          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">Loading categories…</td>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">{{ 'categories.loading' | transloco }}</td>
         </tr>
       } @else if (loadError()) {
         <tr>
@@ -51,7 +51,7 @@
         </tr>
       } @else if (categories().length === 0) {
         <tr>
-          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">No categories found.</td>
+          <td [attr.colspan]="sortableColumns.length + 3" class="state-cell">{{ 'categories.empty' | transloco }}</td>
         </tr>
       } @else {
         @for (category of categories(); track category.id) {
@@ -76,13 +76,18 @@
               }
             </td>
             <td class="actions-column">
-              <button type="button" class="icon-action-button" aria-label="Edit category" (click)="openEditModal(category)">
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'common.edit' | transloco"
+                (click)="openEditModal(category)"
+              >
                 <span class="material-symbols-outlined" aria-hidden="true">edit</span>
               </button>
               <button
                 type="button"
                 class="icon-action-button icon-action-button-danger"
-                aria-label="Delete category"
+                [attr.aria-label]="'common.delete' | transloco"
                 (click)="openDeleteConfirm(category)"
               >
                 <span class="material-symbols-outlined" aria-hidden="true">delete</span>
@@ -98,14 +103,14 @@
 @if (!loading() && !loadError() && totalElements() > 0) {
   <div class="pagination-bar">
     <span class="pagination-summary">
-      Page {{ page() + 1 }} of {{ totalPages() }} ({{ totalElements() }} total)
+      {{ 'common.pageSummary' | transloco: { page: page() + 1, totalPages: totalPages(), total: totalElements() } }}
     </span>
     <div class="pagination-controls">
       <button type="button" class="pagination-button" [disabled]="page() === 0" (click)="goToPage(page() - 1)">
-        Previous
+        {{ 'common.previous' | transloco }}
       </button>
       <button type="button" class="pagination-button" [disabled]="page() >= totalPages() - 1" (click)="goToPage(page() + 1)">
-        Next
+        {{ 'common.next' | transloco }}
       </button>
     </div>
   </div>
@@ -114,37 +119,41 @@
 @if (formOpen()) {
   <div class="modal-backdrop" (click)="closeForm()"></div>
   <div class="modal">
-    <h2 class="modal-title">{{ formMode() === 'add' ? 'Add new category' : 'Edit category' }}</h2>
+    <h2 class="modal-title">
+      {{ (formMode() === 'add' ? 'categories.modalAddTitle' : 'categories.modalEditTitle') | transloco }}
+    </h2>
     <form (ngSubmit)="submitForm()">
       <label class="modal-field">
-        <span>Name</span>
+        <span>{{ 'common.nameLabel' | transloco }}</span>
         <input type="text" [(ngModel)]="formName" name="name" required autocomplete="off" />
       </label>
       <label class="modal-field">
-        <span>Description</span>
+        <span>{{ 'common.descriptionLabel' | transloco }}</span>
         <textarea [(ngModel)]="formDescription" name="description" rows="3"></textarea>
       </label>
       <label class="modal-field">
-        <span>Marker</span>
+        <span>{{ 'categories.fieldMarker' | transloco }}</span>
         <input
           type="text"
           [(ngModel)]="formMarker"
           name="marker"
           autocomplete="off"
-          placeholder="A short emoji or symbol, e.g. 🏥"
+          [placeholder]="'categories.markerPlaceholder' | transloco"
         />
       </label>
       @if (formError()) {
         <p class="modal-error">{{ formError() }}</p>
       }
       <div class="modal-actions">
-        <button type="button" class="modal-button modal-button-secondary" (click)="closeForm()">Cancel</button>
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeForm()">
+          {{ 'common.cancel' | transloco }}
+        </button>
         <button
           type="submit"
           class="modal-button modal-button-primary"
           [disabled]="formSaving() || !formName().trim()"
         >
-          {{ formSaving() ? 'Saving…' : formMode() === 'add' ? 'Add category' : 'Save changes' }}
+          {{ (formSaving() ? 'common.saving' : formMode() === 'add' ? 'categories.addSubmit' : 'common.saveChanges') | transloco }}
         </button>
       </div>
     </form>
@@ -154,20 +163,22 @@
 @if (deleteTarget(); as category) {
   <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
   <div class="modal">
-    <h2 class="modal-title">Delete category?</h2>
-    <p class="modal-subtitle">"{{ category.name }}" will be permanently deleted. This can't be undone.</p>
+    <h2 class="modal-title">{{ 'categories.deleteTitle' | transloco }}</h2>
+    <p class="modal-subtitle">"{{ category.name }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
     @if (deleteError()) {
       <p class="modal-error">{{ deleteError() }}</p>
     }
     <div class="modal-actions">
-      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">Cancel</button>
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | transloco }}
+      </button>
       <button
         type="button"
         class="modal-button modal-button-danger"
         [disabled]="deletingCategory()"
         (click)="confirmDelete()"
       >
-        {{ deletingCategory() ? 'Deleting…' : 'Delete' }}
+        {{ (deletingCategory() ? 'common.deleting' : 'common.delete') | transloco }}
       </button>
     </div>
   </div>

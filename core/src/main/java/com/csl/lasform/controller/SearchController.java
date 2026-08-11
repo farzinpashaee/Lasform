@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.csl.lasform.exception.BadRequestException;
 import com.csl.lasform.model.search.SearchHit;
 import com.csl.lasform.model.search.SearchResultType;
 import com.csl.lasform.service.SearchService;
@@ -34,11 +35,11 @@ public class SearchController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer size) {
         if (page < 0) {
-            throw new IllegalArgumentException("'page' must not be negative");
+            throw new BadRequestException("error.search.pageNegative");
         }
         int pageSize = size == null ? DEFAULT_PAGE_SIZE : size;
         if (pageSize < 1 || pageSize > MAX_PAGE_SIZE) {
-            throw new IllegalArgumentException("'size' must be between 1 and " + MAX_PAGE_SIZE);
+            throw new BadRequestException("error.search.sizeOutOfRange", MAX_PAGE_SIZE);
         }
         return searchService.search(type, category, tag, q, PageRequest.of(page, pageSize));
     }

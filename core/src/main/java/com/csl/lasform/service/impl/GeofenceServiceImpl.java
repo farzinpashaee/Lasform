@@ -49,7 +49,7 @@ public class GeofenceServiceImpl extends AbstractCrudService<Geofence, String> i
     }
 
     @Override
-    protected String entityName() {
-        return "Geofence";
+    protected String notFoundMessageCode() {
+        return "error.geofence.notFound";
     }
 }

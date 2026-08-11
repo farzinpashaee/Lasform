@@ -30,7 +30,7 @@ public class Location extends Auditable implements Identifiable, Imageable {
     private String id;
 
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
-    @NotNull
+    @NotNull(message = "{validation.location.point.required}")
     private GeoJsonPoint point;
 
     private String name;
@@ -56,7 +56,7 @@ public class Location extends Auditable implements Identifiable, Imageable {
     private List<Image> images = new ArrayList<>();
 
     @Indexed
-    @NotNull
+    @NotNull(message = "{validation.location.recordedAt.required}")
     private Instant recordedAt;
 
     @CreatedDate

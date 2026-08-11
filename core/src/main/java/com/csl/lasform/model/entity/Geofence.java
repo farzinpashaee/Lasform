@@ -44,16 +44,16 @@ public class Geofence extends Auditable implements Identifiable {
     @Id
     private String id;
 
-    @NotBlank
+    @NotBlank(message = "{validation.geofence.name.required}")
     private String name;
 
     private String description;
 
     @Indexed
-    @NotNull
+    @NotNull(message = "{validation.geofence.ownerId.required}")
     private String ownerId;
 
-    @NotNull
+    @NotNull(message = "{validation.geofence.shape.required}")
     private GeofenceShape shape;
 
     private GeoJsonPoint center;

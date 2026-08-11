@@ -44,18 +44,18 @@ public class Device extends Auditable implements Identifiable, Imageable {
 
     /** Hardware-reported identifier (IMEI/serial), distinct from the Mongo id. */
     @Indexed(unique = true)
-    @NotBlank
+    @NotBlank(message = "{validation.device.deviceIdentifier.required}")
     @Field("device_identifier")
     private String deviceIdentifier;
 
-    @NotBlank
+    @NotBlank(message = "{validation.device.name.required}")
     private String name;
 
     @Indexed
-    @NotNull
+    @NotNull(message = "{validation.device.ownerId.required}")
     private String ownerId;
 
-    @NotNull
+    @NotNull(message = "{validation.device.type.required}")
     private DeviceType type;
 
     @Indexed

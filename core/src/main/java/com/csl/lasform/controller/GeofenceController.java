@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.csl.lasform.exception.BadRequestException;
 import com.csl.lasform.model.entity.Geofence;
 import com.csl.lasform.model.entity.enums.GeofenceStatus;
 import com.csl.lasform.service.GeofenceService;
@@ -50,6 +51,6 @@ public class GeofenceController extends AbstractCrudController<Geofence> {
         if (deviceId != null) {
             return geofenceService.findByDeviceId(deviceId);
         }
-        throw new IllegalArgumentException("At least one of 'ownerId', 'status' or 'deviceId' must be provided");
+        throw new BadRequestException("error.geofence.filterRequired");
     }
 }

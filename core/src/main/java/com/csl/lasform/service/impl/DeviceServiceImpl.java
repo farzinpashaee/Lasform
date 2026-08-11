@@ -38,7 +38,7 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
         super(deviceRepository);
         this.deviceRepository = deviceRepository;
         this.imageStorageService = imageStorageService;
-        this.imageService = new EntityImageService<>(deviceRepository, imageStorageService, "Device");
+        this.imageService = new EntityImageService<>(deviceRepository, imageStorageService, "error.device.notFound");
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -46,7 +46,7 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
     public Device create(Device entity) {
         if (deviceRepository.existsByDeviceIdentifier(entity.getDeviceIdentifier())) {
             throw new DuplicateResourceException(
-                    "Device identifier already registered: " + entity.getDeviceIdentifier());
+                    "error.device.duplicateIdentifier", entity.getDeviceIdentifier());
         }
         return super.create(entity);
     }
@@ -55,7 +55,7 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
     public Device findByDeviceIdentifier(String deviceIdentifier) {
         return deviceRepository.findByDeviceIdentifier(deviceIdentifier)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Device not found with identifier: " + deviceIdentifier));
+                        "error.device.notFoundByIdentifier", deviceIdentifier));
     }
 
     @Override
@@ -107,8 +107,8 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
     }
 
     @Override
-    protected String entityName() {
-        return "Device";
+    protected String notFoundMessageCode() {
+        return "error.device.notFound";
     }
 
     @Override

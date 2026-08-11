@@ -53,7 +53,7 @@ public class EventServiceImpl extends AbstractCrudService<Event, String> impleme
     }
 
     @Override
-    protected String entityName() {
-        return "Event";
+    protected String notFoundMessageCode() {
+        return "error.event.notFound";
     }
 }

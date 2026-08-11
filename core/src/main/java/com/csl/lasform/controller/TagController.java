@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.csl.lasform.exception.BadRequestException;
 import com.csl.lasform.service.TagService;
 
 /** Free-text tag autocomplete, aggregated across Location and Device. */
@@ -27,7 +28,7 @@ public class TagController {
     public List<String> suggest(@RequestParam(required = false) String prefix, @RequestParam(required = false) Integer limit) {
         int effectiveLimit = limit == null ? DEFAULT_LIMIT : limit;
         if (effectiveLimit < 1 || effectiveLimit > MAX_LIMIT) {
-            throw new IllegalArgumentException("'limit' must be between 1 and " + MAX_LIMIT);
+            throw new BadRequestException("error.tag.limitOutOfRange", MAX_LIMIT);
         }
         return tagService.suggest(prefix, effectiveLimit);
     }

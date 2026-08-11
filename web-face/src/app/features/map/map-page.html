@@ -8,7 +8,7 @@
         <input
           class="search-input"
           type="text"
-          placeholder="Search Lasform Maps"
+          [placeholder]="'map.searchPlaceholder' | transloco"
           [(ngModel)]="searchQuery"
           name="search"
         />
@@ -18,11 +18,11 @@
         <div class="results-card">
           @if (hasSearched()) {
             @if (searching()) {
-              <div class="results-status">Searching…</div>
+              <div class="results-status">{{ 'map.searching' | transloco }}</div>
             } @else if (searchError()) {
               <div class="results-status results-error">{{ searchError() }}</div>
             } @else if (searchResults().length === 0) {
-              <div class="results-status">No results for "{{ searchQuery() }}"</div>
+              <div class="results-status">{{ 'map.noResults' | transloco: { query: searchQuery() } }}</div>
             } @else {
               <div class="results-slider" [class.showing-details]="selectedResult() !== null">
                 <div class="results-slide">
@@ -46,7 +46,7 @@
                     <div class="details-slide-header">
                       <button type="button" class="panel-action-button" (click)="closeDetails()">
                         <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-                        <span>Back to results</span>
+                        <span>{{ 'map.backToResults' | transloco }}</span>
                       </button>
                       <div class="details-actions">
                         <ng-container [ngTemplateOutlet]="entityActions" [ngTemplateOutletContext]="{ hit }" />
@@ -61,7 +61,12 @@
             <div class="details-standalone">
               <div class="details-actions details-actions-standalone">
                 <ng-container [ngTemplateOutlet]="entityActions" [ngTemplateOutletContext]="{ hit }" />
-                <button type="button" class="icon-action-button" aria-label="Close" (click)="closeDetails()">
+                <button
+                  type="button"
+                  class="icon-action-button"
+                  [attr.aria-label]="'common.close' | transloco"
+                  (click)="closeDetails()"
+                >
                   <span class="material-symbols-outlined" aria-hidden="true">close</span>
                 </button>
               </div>
@@ -72,10 +77,20 @@
       }
 
       <ng-template #entityActions let-hit="hit">
-        <button type="button" class="icon-action-button" aria-label="Edit" (click)="openEditModal(hit)">
+        <button
+          type="button"
+          class="icon-action-button"
+          [attr.aria-label]="'common.edit' | transloco"
+          (click)="openEditModal(hit)"
+        >
           <span class="material-symbols-outlined" aria-hidden="true">edit</span>
         </button>
-        <button type="button" class="icon-action-button icon-action-danger" aria-label="Delete" (click)="openDeleteConfirm(hit)">
+        <button
+          type="button"
+          class="icon-action-button icon-action-danger"
+          [attr.aria-label]="'common.delete' | transloco"
+          (click)="openDeleteConfirm(hit)"
+        >
           <span class="material-symbols-outlined" aria-hidden="true">delete</span>
         </button>
       </ng-template>
@@ -108,20 +123,20 @@
     </div>
 
     <div class="top-right">
-      <button class="icon-button round" type="button" aria-label="Settings" (click)="openManagement()">
+      <button class="icon-button round" type="button" [attr.aria-label]="'common.settings' | transloco" (click)="openManagement()">
         <span class="material-symbols-outlined" aria-hidden="true">settings</span>
       </button>
       <button
         class="icon-button round"
         type="button"
-        aria-label="Toggle dark mode"
+        [attr.aria-label]="'common.toggleDarkMode' | transloco"
         [class.active]="darkMode()"
         [attr.aria-pressed]="darkMode()"
         (click)="toggleDarkMode()"
       >
         <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
       </button>
-      <button class="avatar" type="button" aria-label="Account">F</button>
+      <button class="avatar" type="button" [attr.aria-label]="'common.account' | transloco">F</button>
     </div>
   </div>
 
@@ -129,7 +144,7 @@
     <button
       class="icon-button round"
       type="button"
-      aria-label="My location"
+      [attr.aria-label]="'map.myLocation' | transloco"
       [disabled]="locating()"
       (click)="locateMe()"
     >
@@ -144,7 +159,7 @@
     <button
       class="icon-button round"
       type="button"
-      aria-label="Toggle marker clustering"
+      [attr.aria-label]="'map.toggleClustering' | transloco"
       [class.active]="clusteringEnabled()"
       [attr.aria-pressed]="clusteringEnabled()"
       (click)="toggleClustering()"
@@ -152,10 +167,10 @@
       <span class="material-symbols-outlined" aria-hidden="true">scatter_plot</span>
     </button>
     <div class="zoom-stack">
-      <button class="icon-button square" type="button" aria-label="Zoom in" (click)="zoomIn()">
+      <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomIn' | transloco" (click)="zoomIn()">
         <span class="material-symbols-outlined" aria-hidden="true">add</span>
       </button>
-      <button class="icon-button square" type="button" aria-label="Zoom out" (click)="zoomOut()">
+      <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomOut' | transloco" (click)="zoomOut()">
         <span class="material-symbols-outlined" aria-hidden="true">remove</span>
       </button>
     </div>
@@ -173,13 +188,13 @@
       <li>
         <button type="button" class="context-menu-item" (click)="centerMapContextMenuHere()">
           <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
-          <span>Center here</span>
+          <span>{{ 'map.centerHere' | transloco }}</span>
         </button>
       </li>
       <li>
         <button type="button" class="context-menu-item" (click)="openAddLocationModal()">
           <span class="material-symbols-outlined" aria-hidden="true">add_location</span>
-          <span>Add new location</span>
+          <span>{{ 'map.addNewLocation' | transloco }}</span>
         </button>
       </li>
     </ul>
@@ -188,22 +203,22 @@
   @if (newLocationTarget(); as target) {
     <div class="modal-backdrop" (click)="closeAddLocationModal()"></div>
     <div class="modal">
-      <h2 class="modal-title">Add new location</h2>
+      <h2 class="modal-title">{{ 'map.addNewLocation' | transloco }}</h2>
       <p class="modal-subtitle">{{ target.lat.toFixed(5) }}, {{ target.lng.toFixed(5) }}</p>
       <form (ngSubmit)="submitAddLocation()">
         <label class="modal-field">
-          <span>Name</span>
+          <span>{{ 'common.nameLabel' | transloco }}</span>
           <input type="text" [(ngModel)]="newLocationName" name="name" required autocomplete="off" />
         </label>
         <label class="modal-field">
-          <span>Description</span>
+          <span>{{ 'common.descriptionLabel' | transloco }}</span>
           <textarea [(ngModel)]="newLocationDescription" name="description" rows="3"></textarea>
         </label>
         <label class="modal-field">
-          <span>Category</span>
+          <span>{{ 'common.categoryLabel' | transloco }}</span>
           <div class="modal-field-row">
             <select [(ngModel)]="newLocationCategoryId" name="category">
-              <option value="">No category</option>
+              <option value="">{{ 'common.noCategory' | transloco }}</option>
               @for (category of categories(); track category.id) {
                 <option [value]="category.id">
                   {{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}
@@ -213,7 +228,7 @@
             <button
               type="button"
               class="icon-action-button modal-add-category-button"
-              aria-label="Add new category"
+              [attr.aria-label]="'map.addNewCategory' | transloco"
               (click)="openAddCategoryModal()"
             >
               <span class="material-symbols-outlined" aria-hidden="true">add</span>
@@ -221,14 +236,19 @@
           </div>
         </label>
         <label class="modal-field">
-          <span>Tags</span>
+          <span>{{ 'common.tagsLabel' | transloco }}</span>
           <div class="tag-input-wrapper">
             @if (newLocationTags().length > 0) {
               <div class="tag-chip-list">
                 @for (tag of newLocationTags(); track tag) {
                   <span class="tag-chip">
                     {{ tag }}
-                    <button type="button" class="tag-chip-remove" aria-label="Remove tag {{ tag }}" (click)="removeTag(tag)">
+                    <button
+                      type="button"
+                      class="tag-chip-remove"
+                      [attr.aria-label]="'common.removeTag' | transloco: { tag: tag }"
+                      (click)="removeTag(tag)"
+                    >
                       <span class="material-symbols-outlined" aria-hidden="true">close</span>
                     </button>
                   </span>
@@ -241,7 +261,7 @@
               (ngModelChange)="onTagInputChange($event)"
               (keydown)="onTagInputKeydown($event)"
               name="tagInput"
-              placeholder="Type to add tags…"
+              [placeholder]="'common.tagsInputPlaceholder' | transloco"
               autocomplete="off"
             />
             @if (tagSuggestions().length > 0) {
@@ -262,14 +282,14 @@
         }
         <div class="modal-actions">
           <button type="button" class="modal-button modal-button-secondary" (click)="closeAddLocationModal()">
-            Cancel
+            {{ 'common.cancel' | transloco }}
           </button>
           <button
             type="submit"
             class="modal-button modal-button-primary"
             [disabled]="addingLocation() || !newLocationName().trim()"
           >
-            {{ addingLocation() ? 'Adding…' : 'Add location' }}
+            {{ (addingLocation() ? 'common.adding' : 'map.addLocation') | transloco }}
           </button>
         </div>
       </form>
@@ -279,24 +299,24 @@
   @if (addCategoryModalOpen()) {
     <div class="modal-backdrop" (click)="closeAddCategoryModal()"></div>
     <div class="modal">
-      <h2 class="modal-title">Add new category</h2>
+      <h2 class="modal-title">{{ 'map.addNewCategory' | transloco }}</h2>
       <form (ngSubmit)="submitAddCategory()">
         <label class="modal-field">
-          <span>Name</span>
+          <span>{{ 'common.nameLabel' | transloco }}</span>
           <input type="text" [(ngModel)]="newCategoryName" name="categoryName" required autocomplete="off" />
         </label>
         <label class="modal-field">
-          <span>Description</span>
+          <span>{{ 'common.descriptionLabel' | transloco }}</span>
           <textarea [(ngModel)]="newCategoryDescription" name="categoryDescription" rows="2"></textarea>
         </label>
         <label class="modal-field">
-          <span>Marker (emoji)</span>
+          <span>{{ 'map.markerEmojiLabel' | transloco }}</span>
           <input
             type="text"
             [(ngModel)]="newCategoryMarker"
             name="categoryMarker"
             maxlength="4"
-            placeholder="e.g. 🏥"
+            [placeholder]="'map.markerEmojiPlaceholder' | transloco"
             autocomplete="off"
           />
         </label>
@@ -305,14 +325,14 @@
         }
         <div class="modal-actions">
           <button type="button" class="modal-button modal-button-secondary" (click)="closeAddCategoryModal()">
-            Cancel
+            {{ 'common.cancel' | transloco }}
           </button>
           <button
             type="submit"
             class="modal-button modal-button-primary"
             [disabled]="addingCategory() || !newCategoryName().trim()"
           >
-            {{ addingCategory() ? 'Adding…' : 'Add category' }}
+            {{ (addingCategory() ? 'common.adding' : 'map.addCategory') | transloco }}
           </button>
         </div>
       </form>
@@ -322,20 +342,22 @@
   @if (editingTarget(); as hit) {
     <div class="modal-backdrop" (click)="closeEditModal()"></div>
     <div class="modal">
-      <h2 class="modal-title">Edit {{ hit.type === 'DEVICE' ? 'device' : 'location' }}</h2>
+      <h2 class="modal-title">
+        {{ (hit.type === 'DEVICE' ? 'map.editDeviceTitle' : 'map.editLocationTitle') | transloco }}
+      </h2>
       <form (ngSubmit)="submitEdit()">
         <label class="modal-field">
-          <span>Name</span>
+          <span>{{ 'common.nameLabel' | transloco }}</span>
           <input type="text" [(ngModel)]="editName" name="editName" required autocomplete="off" />
         </label>
         @if (hit.type === 'LOCATION') {
           <label class="modal-field">
-            <span>Description</span>
+            <span>{{ 'common.descriptionLabel' | transloco }}</span>
             <textarea [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
           </label>
         } @else {
           <label class="modal-field">
-            <span>Status</span>
+            <span>{{ 'common.statusLabel' | transloco }}</span>
             <select [(ngModel)]="editStatus" name="editStatus">
               @for (status of deviceStatuses; track status) {
                 <option [value]="status">{{ status }}</option>
@@ -348,14 +370,14 @@
         }
         <div class="modal-actions">
           <button type="button" class="modal-button modal-button-secondary" (click)="closeEditModal()">
-            Cancel
+            {{ 'common.cancel' | transloco }}
           </button>
           <button
             type="submit"
             class="modal-button modal-button-primary"
             [disabled]="savingEdit() || !editName().trim()"
           >
-            {{ savingEdit() ? 'Saving…' : 'Save changes' }}
+            {{ (savingEdit() ? 'common.saving' : 'common.saveChanges') | transloco }}
           </button>
         </div>
       </form>
@@ -365,14 +387,16 @@
   @if (deleteTarget(); as hit) {
     <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
     <div class="modal">
-      <h2 class="modal-title">Delete {{ hit.type === 'DEVICE' ? 'device' : 'location' }}?</h2>
-      <p class="modal-subtitle">"{{ resultTitle(hit) }}" will be permanently deleted. This can't be undone.</p>
+      <h2 class="modal-title">
+        {{ (hit.type === 'DEVICE' ? 'map.deleteDeviceTitle' : 'map.deleteLocationTitle') | transloco }}
+      </h2>
+      <p class="modal-subtitle">"{{ resultTitle(hit) }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
       @if (deleteError()) {
         <p class="modal-error">{{ deleteError() }}</p>
       }
       <div class="modal-actions">
         <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">
-          Cancel
+          {{ 'common.cancel' | transloco }}
         </button>
         <button
           type="button"
@@ -380,7 +404,7 @@
           [disabled]="deletingEntity()"
           (click)="confirmDelete()"
         >
-          {{ deletingEntity() ? 'Deleting…' : 'Delete' }}
+          {{ (deletingEntity() ? 'common.deleting' : 'common.delete') | transloco }}
         </button>
       </div>
     </div>

@@ -4,6 +4,16 @@ spring:
   application:
     name: lasform
 
+  # Backs GlobalExceptionHandler's message-code resolution (see LocaleConfig for the
+  # LocaleResolver that picks the request's Locale from Accept-Language).
+  messages:
+    basename: messages
+    encoding: UTF-8
+    # Without this, a missing key silently falls back to whatever locale the JVM/OS
+    # happens to be running under instead of the base (English) bundle, which is
+    # non-deterministic across environments.
+    fallback-to-system-locale: false
+
   # Connection settings live under spring.mongodb.* (not spring.data.mongodb.*) as of
   # Spring Boot 4's MongoProperties/DataMongoProperties split. Getting this prefix wrong
   # fails silently: Boot falls back to its built-in default URI (mongodb://localhost/test)

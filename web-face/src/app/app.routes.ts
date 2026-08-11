@@ -16,13 +16,17 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'settings/map-provider', pathMatch: 'full' },
       { path: 'settings/map-provider', component: MapProviderSettings },
-      { path: 'settings/web-face-styles', component: ComingSoon, data: { title: 'Web Face Styles' } },
-      { path: 'users', component: ComingSoon, data: { title: 'Users' } },
+      { path: 'settings/web-face-styles', component: ComingSoon, data: { titleKey: 'management.navWebFaceStyles' } },
+      {
+        path: 'settings/features-management',
+        component: ComingSoon,
+        data: { titleKey: 'management.navFeaturesManagement' },
+      },
+      { path: 'users', component: ComingSoon, data: { titleKey: 'management.navUsers' } },
       { path: 'locations', component: LocationsPage },
       { path: 'devices', component: DevicesPage },
       { path: 'categories', component: CategoriesPage },
-      { path: 'tags', component: ComingSoon, data: { title: 'Tags' } },
-      { path: 'geofences', component: ComingSoon, data: { title: 'Geofences' } },
+      { path: 'geofences', component: ComingSoon, data: { titleKey: 'management.navGeofences' } },
     ],
   },
 ];

@@ -1,8 +1,8 @@
-<h1 class="page-title">Map Providers Settings</h1>
+<h1 class="page-title">{{ 'mapProviderSettings.title' | transloco }}</h1>
 
 <form class="settings-form" (ngSubmit)="save()">
   <label class="form-field">
-    <span>Provider</span>
+    <span>{{ 'mapProviderSettings.provider' | transloco }}</span>
     <select [(ngModel)]="provider" (ngModelChange)="onFieldChange()" name="provider">
       <option value="leaflet">leaflet</option>
       <option value="google">google</option>
@@ -10,22 +10,23 @@
   </label>
 
   <label class="form-field">
-    <span>API Key: (if required)</span>
+    <span>{{ 'mapProviderSettings.apiKeyLabel' | transloco }}</span>
     <input
       type="text"
       [(ngModel)]="apiKey"
       (ngModelChange)="onFieldChange()"
       name="apiKey"
       autocomplete="off"
-      placeholder="Only needed for the Google provider"
+      [placeholder]="'mapProviderSettings.apiKeyPlaceholder' | transloco"
     />
   </label>
 
   <div class="form-actions">
-    <button type="submit" class="save-button">Save</button>
+    <button type="submit" class="save-button">{{ 'common.save' | transloco }}</button>
     @if (saved()) {
       <span class="saved-note">
-        Saved. <button type="button" class="reload-link" (click)="reload()">Reload to apply</button>
+        {{ 'mapProviderSettings.saved' | transloco }}
+        <button type="button" class="reload-link" (click)="reload()">{{ 'mapProviderSettings.reload' | transloco }}</button>
       </span>
     }
   </div>

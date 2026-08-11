@@ -22,12 +22,13 @@ class EntityImageService<T extends Imageable> implements ImageAttachable {
 
     private final MongoRepository<T, String> repository;
     private final ImageStorageService imageStorage;
-    private final String entityName;
+    private final String ownerNotFoundMessageCode;
 
-    EntityImageService(MongoRepository<T, String> repository, ImageStorageService imageStorage, String entityName) {
+    EntityImageService(
+            MongoRepository<T, String> repository, ImageStorageService imageStorage, String ownerNotFoundMessageCode) {
         this.repository = repository;
         this.imageStorage = imageStorage;
-        this.entityName = entityName;
+        this.ownerNotFoundMessageCode = ownerNotFoundMessageCode;
     }
 
     @Override
@@ -59,7 +60,7 @@ class EntityImageService<T extends Imageable> implements ImageAttachable {
         T entity = getOrThrow(ownerId);
         List<Image> images = currentImages(entity);
         if (!images.removeIf(image -> image.getFilename().equals(filename))) {
-            throw new ResourceNotFoundException("Image not found: " + filename);
+            throw new ResourceNotFoundException("error.image.notFound", filename);
         }
 
         entity.setImages(images);
@@ -74,7 +75,7 @@ class EntityImageService<T extends Imageable> implements ImageAttachable {
         Image target = images.stream()
                 .filter(image -> image.getFilename().equals(filename))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Image not found: " + filename));
+                .orElseThrow(() -> new ResourceNotFoundException("error.image.notFound", filename));
 
         images.forEach(image -> image.setPrimary(image == target));
         entity.setImages(images);
@@ -88,6 +89,6 @@ class EntityImageService<T extends Imageable> implements ImageAttachable {
 
     private T getOrThrow(String ownerId) {
         return repository.findById(ownerId)
-                .orElseThrow(() -> new ResourceNotFoundException(entityName + " not found: " + ownerId));
+                .orElseThrow(() -> new ResourceNotFoundException(ownerNotFoundMessageCode, ownerId));
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.csl.lasform.exception.BadRequestException;
 import com.csl.lasform.model.entity.Alert;
 import com.csl.lasform.model.entity.enums.AlertStatus;
 import com.csl.lasform.service.AlertService;
@@ -49,7 +50,7 @@ public class AlertController extends AbstractCrudController<Alert> {
         if (status != null) {
             return alertService.findByStatus(status);
         }
-        throw new IllegalArgumentException("At least one of 'deviceId' or 'status' must be provided");
+        throw new BadRequestException("error.alert.filterRequired");
     }
 
     @GetMapping("/count")

@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { Category } from '../../../core/models/category.model';
 import { Location } from '../../../core/models/location.model';
@@ -11,21 +12,22 @@ import { TagService } from '../../../core/services/tag.service';
 
 interface SortableColumn {
   field: string;
-  label: string;
+  /** A transloco translation key, not display text — resolved in the template via the transloco pipe. */
+  labelKey: string;
 }
 
 const PAGE_SIZE = 10;
 
 const SORTABLE_COLUMNS: SortableColumn[] = [
-  { field: 'name', label: 'Name' },
-  { field: 'recordedAt', label: 'Recorded' },
-  { field: 'createdAt', label: 'Created' },
-  { field: 'updatedAt', label: 'Updated' },
+  { field: 'name', labelKey: 'common.nameColumn' },
+  { field: 'recordedAt', labelKey: 'locations.colRecorded' },
+  { field: 'createdAt', labelKey: 'common.createdColumn' },
+  { field: 'updatedAt', labelKey: 'common.updatedColumn' },
 ];
 
 @Component({
   selector: 'app-locations-page',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslocoPipe],
   templateUrl: './locations-page.html',
   styleUrl: './locations-page.scss',
 })
@@ -34,6 +36,7 @@ export class LocationsPage implements OnInit, OnDestroy {
   private readonly categoryService = inject(CategoryService);
   private readonly tagService = inject(TagService);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly sortableColumns = SORTABLE_COLUMNS;
 
@@ -122,7 +125,7 @@ export class LocationsPage implements OnInit, OnDestroy {
         error: () => {
           this.loading.set(false);
           this.locations.set([]);
-          this.loadError.set('Failed to load locations. Please try again.');
+          this.loadError.set(this.transloco.translate('locations.loadFailed'));
         },
       });
   }
@@ -309,7 +312,7 @@ export class LocationsPage implements OnInit, OnDestroy {
 
   private handleFormError(): void {
     this.formSaving.set(false);
-    this.formError.set('Failed to save location. Please try again.');
+    this.formError.set(this.transloco.translate('locations.saveFailed'));
   }
 
   protected onFormTagInputChange(value: string): void {
@@ -382,7 +385,7 @@ export class LocationsPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.deletingLocation.set(false);
-        this.deleteError.set('Failed to delete location. Please try again.');
+        this.deleteError.set(this.transloco.translate('locations.deleteFailed'));
       },
     });
   }

@@ -42,10 +42,10 @@ public class Event implements Identifiable {
     private String id;
 
     @Indexed
-    @NotNull
+    @NotNull(message = "{validation.event.type.required}")
     private EventType type;
 
-    @NotNull
+    @NotNull(message = "{validation.event.source.required}")
     private EventSource source;
 
     private String deviceId;
@@ -61,14 +61,14 @@ public class Event implements Identifiable {
     private Double altitude;
 
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
-    @NotNull
+    @NotNull(message = "{validation.event.point.required}")
     private GeoJsonPoint point;
 
     @Builder.Default
     private Map<String, Object> payload = new HashMap<>();
 
     @Indexed
-    @NotNull
+    @NotNull(message = "{validation.event.occurredAt.required}")
     private Instant occurredAt;
 
     @CreatedDate

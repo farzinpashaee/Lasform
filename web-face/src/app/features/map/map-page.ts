@@ -11,6 +11,7 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider } from '../../core/maps';
 import { Category } from '../../core/models/category.model';
@@ -37,7 +38,7 @@ interface MapContextMenuState {
 
 @Component({
   selector: 'app-map-page',
-  imports: [FormsModule, NgTemplateOutlet],
+  imports: [FormsModule, NgTemplateOutlet, TranslocoPipe],
   templateUrl: './map-page.html',
   styleUrl: './map-page.scss',
 })
@@ -46,6 +47,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly transloco = inject(TranslocoService);
   private readonly locationService = inject(LocationService);
   private readonly deviceService = inject(DeviceService);
   private readonly categoryService = inject(CategoryService);
@@ -280,7 +282,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       },
       error: () => {
         this.addingLocation.set(false);
-        this.addLocationError.set('Failed to add location. Please try again.');
+        this.addLocationError.set(this.transloco.translate('map.addLocationFailed'));
       },
     });
   }
@@ -321,7 +323,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       },
       error: () => {
         this.addingCategory.set(false);
-        this.addCategoryError.set('Failed to add category. Please try again.');
+        this.addCategoryError.set(this.transloco.translate('map.addCategoryFailed'));
       },
     });
   }
@@ -390,7 +392,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       error: () => {
         this.searching.set(false);
         this.searchResults.set([]);
-        this.searchError.set('Search failed. Please try again.');
+        this.searchError.set(this.transloco.translate('map.searchFailed'));
       },
     });
   }
@@ -464,7 +466,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   private handleEditError(): void {
     this.savingEdit.set(false);
-    this.editError.set('Failed to save changes. Please try again.');
+    this.editError.set(this.transloco.translate('map.saveFailed'));
   }
 
   protected openDeleteConfirm(hit: SearchHit): void {
@@ -498,7 +500,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       },
       error: () => {
         this.deletingEntity.set(false);
-        this.deleteError.set('Failed to delete. Please try again.');
+        this.deleteError.set(this.transloco.translate('map.deleteFailed'));
       },
     });
   }
@@ -521,7 +523,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   protected resultTitle(hit: SearchHit): string {
-    return hit.data.name || (hit.type === 'LOCATION' ? 'Unnamed location' : 'Unnamed device');
+    return (
+      hit.data.name ||
+      this.transloco.translate(hit.type === 'LOCATION' ? 'map.unnamedLocation' : 'map.unnamedDevice')
+    );
   }
 
   protected resultSubtitle(hit: SearchHit): string {
@@ -543,45 +548,51 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private locationDetailFields(location: Location): { label: string; value: string }[] {
     const fields: { label: string; value: string }[] = [];
     if (location.description) {
-      fields.push({ label: 'Description', value: location.description });
+      fields.push({ label: this.transloco.translate('map.detail.description'), value: location.description });
     }
     const address = [location.address?.address, location.address?.city, location.address?.country]
       .filter(Boolean)
       .join(', ');
     if (address) {
-      fields.push({ label: 'Address', value: address });
+      fields.push({ label: this.transloco.translate('map.detail.address'), value: address });
     }
     const [lng, lat] = location.point.coordinates;
-    fields.push({ label: 'Coordinates', value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+    fields.push({ label: this.transloco.translate('map.detail.coordinates'), value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
     if (location.recordedAt) {
-      fields.push({ label: 'Recorded', value: new Date(location.recordedAt).toLocaleString() });
+      fields.push({
+        label: this.transloco.translate('map.detail.recorded'),
+        value: new Date(location.recordedAt).toLocaleString(),
+      });
     }
     if (location.tags?.length) {
-      fields.push({ label: 'Tags', value: location.tags.join(', ') });
+      fields.push({ label: this.transloco.translate('map.detail.tags'), value: location.tags.join(', ') });
     }
     return fields;
   }
 
   private deviceDetailFields(device: Device): { label: string; value: string }[] {
     const fields: { label: string; value: string }[] = [
-      { label: 'Identifier', value: device.deviceIdentifier },
-      { label: 'Type', value: device.type },
+      { label: this.transloco.translate('map.detail.identifier'), value: device.deviceIdentifier },
+      { label: this.transloco.translate('map.detail.type'), value: device.type },
     ];
     if (device.status) {
-      fields.push({ label: 'Status', value: device.status });
+      fields.push({ label: this.transloco.translate('map.detail.status'), value: device.status });
     }
     if (device.batteryLevel != null) {
-      fields.push({ label: 'Battery', value: `${device.batteryLevel}%` });
+      fields.push({ label: this.transloco.translate('map.detail.battery'), value: `${device.batteryLevel}%` });
     }
     if (device.lastSeenAt) {
-      fields.push({ label: 'Last seen', value: new Date(device.lastSeenAt).toLocaleString() });
+      fields.push({
+        label: this.transloco.translate('map.detail.lastSeen'),
+        value: new Date(device.lastSeenAt).toLocaleString(),
+      });
     }
     if (device.lastKnownPoint) {
       const [lng, lat] = device.lastKnownPoint.coordinates;
-      fields.push({ label: 'Last location', value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+      fields.push({ label: this.transloco.translate('map.detail.lastLocation'), value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
     }
     if (device.tags?.length) {
-      fields.push({ label: 'Tags', value: device.tags.join(', ') });
+      fields.push({ label: this.transloco.translate('map.detail.tags'), value: device.tags.join(', ') });
     }
     return fields;
   }

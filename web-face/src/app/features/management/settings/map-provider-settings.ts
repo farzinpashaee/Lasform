@@ -1,12 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 import { MapProviderKind } from '../../../core/maps/map-provider.model';
 import { MapSettingsService } from '../../../core/services/map-settings.service';
 
 @Component({
   selector: 'app-map-provider-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslocoPipe],
   templateUrl: './map-provider-settings.html',
   styleUrl: './map-provider-settings.scss',
 })

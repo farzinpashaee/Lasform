@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { Category } from '../../../core/models/category.model';
 import { Device } from '../../../core/models/device.model';
@@ -11,16 +12,17 @@ import { TagService } from '../../../core/services/tag.service';
 
 interface SortableColumn {
   field: string;
-  label: string;
+  /** A transloco translation key, not display text — resolved in the template via the transloco pipe. */
+  labelKey: string;
 }
 
 const PAGE_SIZE = 10;
 
 const SORTABLE_COLUMNS: SortableColumn[] = [
-  { field: 'name', label: 'Name' },
-  { field: 'lastSeenAt', label: 'Last Seen' },
-  { field: 'createdAt', label: 'Created' },
-  { field: 'updatedAt', label: 'Updated' },
+  { field: 'name', labelKey: 'common.nameColumn' },
+  { field: 'lastSeenAt', labelKey: 'devices.colLastSeen' },
+  { field: 'createdAt', labelKey: 'common.createdColumn' },
+  { field: 'updatedAt', labelKey: 'common.updatedColumn' },
 ];
 
 const DEVICE_TYPES: DeviceType[] = ['GPS_TRACKER', 'MOBILE_PHONE', 'VEHICLE_UNIT', 'WEARABLE', 'IOT_SENSOR', 'OTHER'];
@@ -29,7 +31,7 @@ const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINT
 
 @Component({
   selector: 'app-devices-page',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslocoPipe],
   templateUrl: './devices-page.html',
   styleUrl: './devices-page.scss',
 })
@@ -37,6 +39,7 @@ export class DevicesPage implements OnInit, OnDestroy {
   private readonly deviceService = inject(DeviceService);
   private readonly categoryService = inject(CategoryService);
   private readonly tagService = inject(TagService);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly sortableColumns = SORTABLE_COLUMNS;
   protected readonly deviceTypes = DEVICE_TYPES;
@@ -130,7 +133,7 @@ export class DevicesPage implements OnInit, OnDestroy {
         error: () => {
           this.loading.set(false);
           this.devices.set([]);
-          this.loadError.set('Failed to load devices. Please try again.');
+          this.loadError.set(this.transloco.translate('devices.loadFailed'));
         },
       });
   }
@@ -331,7 +334,7 @@ export class DevicesPage implements OnInit, OnDestroy {
 
   private handleFormError(): void {
     this.formSaving.set(false);
-    this.formError.set('Failed to save device. Please try again.');
+    this.formError.set(this.transloco.translate('devices.saveFailed'));
   }
 
   protected onFormTagInputChange(value: string): void {
@@ -404,7 +407,7 @@ export class DevicesPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.deletingDevice.set(false);
-        this.deleteError.set('Failed to delete device. Please try again.');
+        this.deleteError.set(this.transloco.translate('devices.deleteFailed'));
       },
     });
   }

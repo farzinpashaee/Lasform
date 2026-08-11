@@ -38,7 +38,7 @@ public class LocationServiceImpl extends AbstractCrudService<Location, String> i
         super(locationRepository);
         this.locationRepository = locationRepository;
         this.imageStorageService = imageStorageService;
-        this.imageService = new EntityImageService<>(locationRepository, imageStorageService, "Location");
+        this.imageService = new EntityImageService<>(locationRepository, imageStorageService, "error.location.notFound");
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -93,8 +93,8 @@ public class LocationServiceImpl extends AbstractCrudService<Location, String> i
     }
 
     @Override
-    protected String entityName() {
-        return "Location";
+    protected String notFoundMessageCode() {
+        return "error.location.notFound";
     }
 
     @Override

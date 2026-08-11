@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.csl.lasform.config.ImageStorageProperties;
+import com.csl.lasform.exception.BadRequestException;
 import com.csl.lasform.exception.DuplicateResourceException;
 import com.csl.lasform.exception.ResourceNotFoundException;
 import com.csl.lasform.service.ImageStorageService;
@@ -36,11 +37,11 @@ public class FileSystemImageStorageService implements ImageStorageService {
     @Override
     public String store(String ownerId, MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File must not be empty");
+            throw new BadRequestException("error.image.uploadRequired");
         }
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("File must be an image, got content type: " + contentType);
+            throw new BadRequestException("error.image.invalidContentType", contentType);
         }
 
         Path ownerDir = resolveOwnerDir(ownerId);
@@ -48,7 +49,7 @@ public class FileSystemImageStorageService implements ImageStorageService {
         Path target = resolveFile(ownerDir, filename);
 
         if (Files.exists(target)) {
-            throw new DuplicateResourceException("An image named '" + filename + "' already exists");
+            throw new DuplicateResourceException("error.image.alreadyExists", filename);
         }
         try {
             Files.createDirectories(ownerDir);
@@ -63,7 +64,7 @@ public class FileSystemImageStorageService implements ImageStorageService {
     public Resource load(String ownerId, String filename) {
         Path target = resolveFile(resolveOwnerDir(ownerId), sanitizeFilename(filename));
         if (!Files.isRegularFile(target)) {
-            throw new ResourceNotFoundException("Image not found: " + filename);
+            throw new ResourceNotFoundException("error.image.notFound", filename);
         }
         try {
             return new UrlResource(target.toUri());
@@ -97,11 +98,11 @@ public class FileSystemImageStorageService implements ImageStorageService {
     /** {@code ownerId} is client-supplied (a path variable), so it gets the same traversal guard as filenames. */
     private Path resolveOwnerDir(String ownerId) {
         if (ownerId == null || ownerId.isBlank()) {
-            throw new IllegalArgumentException("Owner id must not be blank");
+            throw new BadRequestException("error.image.ownerIdRequired");
         }
         Path resolved = basePath.resolve(ownerId).normalize();
         if (!resolved.startsWith(basePath) || resolved.equals(basePath)) {
-            throw new IllegalArgumentException("Invalid owner id: " + ownerId);
+            throw new BadRequestException("error.image.invalidOwnerId", ownerId);
         }
         return resolved;
     }
@@ -109,7 +110,7 @@ public class FileSystemImageStorageService implements ImageStorageService {
     private Path resolveFile(Path ownerDir, String filename) {
         Path resolved = ownerDir.resolve(filename).normalize();
         if (!resolved.startsWith(ownerDir) || resolved.equals(ownerDir)) {
-            throw new IllegalArgumentException("Invalid filename: " + filename);
+            throw new BadRequestException("error.image.invalidFilename", filename);
         }
         return resolved;
     }
@@ -117,12 +118,12 @@ public class FileSystemImageStorageService implements ImageStorageService {
     /** Strips any directory components and rejects blank/traversal-only names, so only a bare filename survives. */
     private String sanitizeFilename(String rawFilename) {
         if (rawFilename == null) {
-            throw new IllegalArgumentException("Filename must not be blank");
+            throw new BadRequestException("error.image.filenameRequired");
         }
         Path cleaned = Paths.get(StringUtils.cleanPath(rawFilename)).getFileName();
         String filename = cleaned == null ? null : cleaned.toString();
         if (!StringUtils.hasText(filename) || filename.equals(".") || filename.equals("..")) {
-            throw new IllegalArgumentException("Invalid filename: " + rawFilename);
+            throw new BadRequestException("error.image.invalidFilename", rawFilename);
         }
         return filename;
     }

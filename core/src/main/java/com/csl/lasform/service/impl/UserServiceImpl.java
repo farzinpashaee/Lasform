@@ -37,10 +37,10 @@ public class UserServiceImpl extends AbstractCrudService<User, String> implement
     @Override
     public User create(User entity) {
         if (userRepository.existsByUsername(entity.getUsername())) {
-            throw new DuplicateResourceException("Username already in use: " + entity.getUsername());
+            throw new DuplicateResourceException("error.user.duplicateUsername", entity.getUsername());
         }
         if (userRepository.existsByEmail(entity.getEmail())) {
-            throw new DuplicateResourceException("Email already in use: " + entity.getEmail());
+            throw new DuplicateResourceException("error.user.duplicateEmail", entity.getEmail());
         }
         return super.create(entity);
     }
@@ -48,13 +48,13 @@ public class UserServiceImpl extends AbstractCrudService<User, String> implement
     @Override
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("error.user.notFoundByUsername", username));
     }
 
     @Override
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("error.user.notFoundByEmail", email));
     }
 
     @Override
@@ -102,7 +102,7 @@ public class UserServiceImpl extends AbstractCrudService<User, String> implement
     }
 
     @Override
-    protected String entityName() {
-        return "User";
+    protected String notFoundMessageCode() {
+        return "error.user.notFound";
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.csl.lasform.exception.BadRequestException;
 import com.csl.lasform.model.entity.Event;
 import com.csl.lasform.model.entity.enums.EventType;
 import com.csl.lasform.service.EventService;
@@ -59,7 +60,6 @@ public class EventController extends AbstractCrudController<Event> {
         if (type != null && from != null && to != null) {
             return eventService.findByTypeAndOccurredAtBetween(type, from, to);
         }
-        throw new IllegalArgumentException(
-                "Provide 'deviceId', 'userId', or 'type' together with 'from' and 'to'");
+        throw new BadRequestException("error.event.filterRequired");
     }
 }

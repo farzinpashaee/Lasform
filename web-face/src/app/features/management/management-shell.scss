@@ -150,11 +150,32 @@ $radius: 8px;
 }
 
 .nav-group-label {
-  display: block;
-  padding: 8px 20px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  font: inherit;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.nav-group-chevron {
+  font-size: 18px;
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+
+  &.collapsed {
+    transform: rotate(-90deg);
+  }
 }
 
 .nav-list {

@@ -34,7 +34,7 @@ public class CategoryServiceImpl extends AbstractCrudService<Category, String> i
     @Override
     public Category create(Category entity) {
         if (categoryRepository.existsByName(entity.getName())) {
-            throw new DuplicateResourceException("Category name already in use: " + entity.getName());
+            throw new DuplicateResourceException("error.category.duplicateName", entity.getName());
         }
         return super.create(entity);
     }
@@ -42,7 +42,7 @@ public class CategoryServiceImpl extends AbstractCrudService<Category, String> i
     @Override
     public Category findByName(String name) {
         return categoryRepository.findByName(name)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with name: " + name));
+                .orElseThrow(() -> new ResourceNotFoundException("error.category.notFoundByName", name));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class CategoryServiceImpl extends AbstractCrudService<Category, String> i
     }
 
     @Override
-    protected String entityName() {
-        return "Category";
+    protected String notFoundMessageCode() {
+        return "error.category.notFound";
     }
 }

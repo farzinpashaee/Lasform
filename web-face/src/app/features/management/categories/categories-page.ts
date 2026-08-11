@@ -1,31 +1,34 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { Category } from '../../../core/models/category.model';
 import { CategoryService } from '../../../core/services/category.service';
 
 interface SortableColumn {
   field: string;
-  label: string;
+  /** A transloco translation key, not display text — resolved in the template via the transloco pipe. */
+  labelKey: string;
 }
 
 const PAGE_SIZE = 10;
 
 const SORTABLE_COLUMNS: SortableColumn[] = [
-  { field: 'name', label: 'Name' },
-  { field: 'createdAt', label: 'Created' },
-  { field: 'updatedAt', label: 'Updated' },
+  { field: 'name', labelKey: 'common.nameColumn' },
+  { field: 'createdAt', labelKey: 'common.createdColumn' },
+  { field: 'updatedAt', labelKey: 'common.updatedColumn' },
 ];
 
 @Component({
   selector: 'app-categories-page',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, TranslocoPipe],
   templateUrl: './categories-page.html',
   styleUrl: './categories-page.scss',
 })
 export class CategoriesPage implements OnInit, OnDestroy {
   private readonly categoryService = inject(CategoryService);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly sortableColumns = SORTABLE_COLUMNS;
 
@@ -85,7 +88,7 @@ export class CategoriesPage implements OnInit, OnDestroy {
         error: () => {
           this.loading.set(false);
           this.categories.set([]);
-          this.loadError.set('Failed to load categories. Please try again.');
+          this.loadError.set(this.transloco.translate('categories.loadFailed'));
         },
       });
   }
@@ -185,7 +188,7 @@ export class CategoriesPage implements OnInit, OnDestroy {
 
   private handleFormError(): void {
     this.formSaving.set(false);
-    this.formError.set('Failed to save category. Please try again.');
+    this.formError.set(this.transloco.translate('categories.saveFailed'));
   }
 
   protected openDeleteConfirm(category: Category): void {
@@ -214,7 +217,7 @@ export class CategoriesPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.deletingCategory.set(false);
-        this.deleteError.set('Failed to delete category. Please try again.');
+        this.deleteError.set(this.transloco.translate('categories.deleteFailed'));
       },
     });
   }

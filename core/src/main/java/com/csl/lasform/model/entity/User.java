@@ -39,16 +39,16 @@ public class User extends Auditable implements Identifiable {
     private String id;
 
     @Indexed(unique = true)
-    @NotBlank
+    @NotBlank(message = "{validation.user.username.required}")
     private String username;
 
     @Indexed(unique = true)
-    @Email
-    @NotBlank
+    @Email(message = "{validation.user.email.invalid}")
+    @NotBlank(message = "{validation.user.email.required}")
     private String email;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @NotBlank
+    @NotBlank(message = "{validation.user.passwordHash.required}")
     @Field("password_hash")
     private String passwordHash;
 
