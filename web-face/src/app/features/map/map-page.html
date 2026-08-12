@@ -85,22 +85,24 @@
       }
 
       <ng-template #entityActions let-hit="hit">
-        <button
-          type="button"
-          class="icon-action-button"
-          [attr.aria-label]="'common.edit' | transloco"
-          (click)="openEditModal(hit)"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-        </button>
-        <button
-          type="button"
-          class="icon-action-button icon-action-danger"
-          [attr.aria-label]="'common.delete' | transloco"
-          (click)="openDeleteConfirm(hit)"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-        </button>
+        @if (canEditHit(hit)) {
+          <button
+            type="button"
+            class="icon-action-button"
+            [attr.aria-label]="'common.edit' | transloco"
+            (click)="openEditModal(hit)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+          </button>
+          <button
+            type="button"
+            class="icon-action-button icon-action-danger"
+            [attr.aria-label]="'common.delete' | transloco"
+            (click)="openDeleteConfirm(hit)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          </button>
+        }
       </ng-template>
 
       <ng-template #entityIcon let-hit="hit">
@@ -131,9 +133,11 @@
     </div>
 
     <div class="top-right">
-      <button class="icon-button round" type="button" [attr.aria-label]="'common.settings' | transloco" (click)="openManagement()">
-        <span class="material-symbols-outlined" aria-hidden="true">settings</span>
-      </button>
+      @if (authService.hasPermission('location:write')) {
+        <button class="icon-button round" type="button" [attr.aria-label]="'common.settings' | transloco" (click)="openManagement()">
+          <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+        </button>
+      }
       <button
         class="icon-button round"
         type="button"
@@ -144,7 +148,18 @@
       >
         <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
       </button>
-      <button class="avatar" type="button" [attr.aria-label]="'common.account' | transloco">F</button>
+      <button
+        class="avatar"
+        type="button"
+        [attr.aria-label]="(authService.isAuthenticated() ? 'common.account' : 'map.signIn') | transloco"
+        (click)="onAccountClick()"
+      >
+        @if (authService.isAuthenticated()) {
+          F
+        } @else {
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        }
+      </button>
     </div>
   </div>
 
@@ -199,12 +214,14 @@
           <span>{{ 'map.centerHere' | transloco }}</span>
         </button>
       </li>
-      <li>
-        <button type="button" class="context-menu-item" (click)="openAddLocationModal()">
-          <span class="material-symbols-outlined" aria-hidden="true">add_location</span>
-          <span>{{ 'map.addNewLocation' | transloco }}</span>
-        </button>
-      </li>
+      @if (authService.hasPermission('location:write')) {
+        <li>
+          <button type="button" class="context-menu-item" (click)="openAddLocationModal()">
+            <span class="material-symbols-outlined" aria-hidden="true">add_location</span>
+            <span>{{ 'map.addNewLocation' | transloco }}</span>
+          </button>
+        </li>
+      }
     </ul>
   }
 

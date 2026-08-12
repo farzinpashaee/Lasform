@@ -433,6 +433,9 @@ $radius: 8px;
 }
 
 .avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -443,6 +446,10 @@ $radius: 8px;
   font-size: 15px;
   cursor: pointer;
   box-shadow: var(--shadow);
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
 }
 
 .bottom-right {

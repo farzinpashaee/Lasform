@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider } from '../../core/maps';
 import { Category } from '../../core/models/category.model';
 import { Device } from '../../core/models/device.model';
@@ -46,6 +47,7 @@ interface MapContextMenuState {
 export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly title = signal('LasformWebFace');
 
+  protected readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly transloco = inject(TranslocoService);
@@ -150,6 +152,17 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected goToLogin(): void {
     this.router.navigate(['/login'], { queryParams: { returnUrl: '/' } });
+  }
+
+  /** Signed-in users get no-op for now (no account menu yet); signed-out users are sent to log in. */
+  protected onAccountClick(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.goToLogin();
+    }
+  }
+
+  protected canEditHit(hit: SearchHit): boolean {
+    return this.authService.hasPermission(hit.type === 'LOCATION' ? 'location:write' : 'device:write');
   }
 
   private loadLocationMarkers(): void {
