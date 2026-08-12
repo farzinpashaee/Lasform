@@ -2,3 +2,52 @@
   display: block;
   height: 100%;
 }
+
+.forbidden-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--danger-bg, #fce8e6);
+  color: var(--danger-text, #b3261e);
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.3));
+  font-size: 13px;
+
+  .material-symbols-outlined {
+    flex: 0 0 auto;
+    font-size: 18px;
+  }
+}
+
+.forbidden-message {
+  min-width: 0;
+}
+
+.forbidden-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
+}

@@ -119,16 +119,28 @@ $radius: 8px;
   border-radius: 50%;
 }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
   border: none;
-  background: #1a73e8;
-  color: #fff;
-  font-weight: 600;
-  font-size: 14px;
+  border-radius: 4px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--hover);
+    color: var(--text-primary);
+  }
 }
 
 .management-body {

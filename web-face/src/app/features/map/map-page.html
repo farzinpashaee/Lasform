@@ -1,6 +1,14 @@
 <div class="map-page" [class.dark-theme]="darkMode()">
   <div #mapContainer class="map-container"></div>
 
+  @if (mapAccessDenied()) {
+    <div class="map-access-denied">
+      <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+      <p>{{ 'map.accessDenied' | transloco }}</p>
+      <button type="button" class="sign-in-button" (click)="goToLogin()">{{ 'map.signInToView' | transloco }}</button>
+    </div>
+  }
+
   <div class="top-bar">
     <div class="search-column">
       <form class="search-bar" (ngSubmit)="onSearchSubmit()">

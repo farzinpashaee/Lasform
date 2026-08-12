@@ -1,0 +1,13 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <span class="material-symbols-outlined auth-icon" aria-hidden="true">block</span>
+    <h1 class="auth-title">{{ 'auth.notAuthorized.title' | transloco }}</h1>
+    <p class="auth-subtitle">{{ 'auth.notAuthorized.subtitle' | transloco }}</p>
+
+    <a class="auth-submit auth-submit-link" routerLink="/">{{ 'auth.notAuthorized.backToMap' | transloco }}</a>
+
+    @if (authService.isAuthenticated()) {
+      <button type="button" class="auth-link" (click)="logout()">{{ 'auth.notAuthorized.switchAccount' | transloco }}</button>
+    }
+  </div>
+</div>

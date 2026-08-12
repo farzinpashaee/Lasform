@@ -1,0 +1,27 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-title">{{ 'auth.login.title' | transloco }}</h1>
+
+    <form (ngSubmit)="submit()">
+      <label class="auth-field">
+        <span>{{ 'auth.login.email' | transloco }}</span>
+        <input type="email" [(ngModel)]="email" name="email" required autocomplete="username" />
+      </label>
+
+      <label class="auth-field">
+        <span>{{ 'auth.login.password' | transloco }}</span>
+        <input type="password" [(ngModel)]="password" name="password" required autocomplete="current-password" />
+      </label>
+
+      @if (error()) {
+        <p class="auth-error">{{ error() }}</p>
+      }
+
+      <button type="submit" class="auth-submit" [disabled]="submitting() || !email().trim() || !password()">
+        {{ (submitting() ? 'auth.login.submitting' : 'auth.login.submit') | transloco }}
+      </button>
+    </form>
+
+    <a class="auth-link" routerLink="/">{{ 'auth.login.backToMap' | transloco }}</a>
+  </div>
+</div>

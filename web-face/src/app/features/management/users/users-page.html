@@ -1,0 +1,137 @@
+<h1 class="page-title">{{ 'users.title' | transloco }}</h1>
+
+<div class="toolbar">
+  <span class="toolbar-note">{{ 'users.note' | transloco }}</span>
+  <button type="button" class="add-button" *hasPermission="'user:invite'" (click)="openCreateModal()">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    <span>{{ 'users.addNew' | transloco }}</span>
+  </button>
+</div>
+
+<div class="users-table-wrapper">
+  <table class="users-table">
+    <thead>
+      <tr>
+        <th>{{ 'users.colEmail' | transloco }}</th>
+        <th>{{ 'users.colStatus' | transloco }}</th>
+        <th>{{ 'users.colMustResetPassword' | transloco }}</th>
+        <th>{{ 'common.createdColumn' | transloco }}</th>
+        <th class="actions-column">{{ 'users.colActions' | transloco }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="5" class="state-cell">{{ 'users.loading' | transloco }}</td>
+        </tr>
+      } @else if (loadError()) {
+        <tr>
+          <td colspan="5" class="state-cell error">{{ loadError() }}</td>
+        </tr>
+      } @else if (users().length === 0) {
+        <tr>
+          <td colspan="5" class="state-cell">{{ 'users.empty' | transloco }}</td>
+        </tr>
+      } @else {
+        @for (user of users(); track user.id) {
+          <tr>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="status-chip" [class.status-disabled]="user.status === 'DISABLED'">{{ user.status }}</span>
+            </td>
+            <td>
+              @if (user.mustResetPassword) {
+                <span class="reset-chip">{{ 'users.pendingReset' | transloco }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td>{{ user.createdAt ? (user.createdAt | date: 'short') : '—' }}</td>
+            <td class="actions-column">
+              <button
+                type="button"
+                class="icon-action-button"
+                *hasPermission="'user:manage_roles'"
+                [attr.aria-label]="'users.assignRole' | transloco"
+                (click)="openRoleAssignmentModal(user)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">assignment_ind</span>
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (createOpen()) {
+  <div class="modal-backdrop" (click)="closeCreateModal()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ 'users.addNew' | transloco }}</h2>
+    <form (ngSubmit)="submitCreate()">
+      <label class="modal-field">
+        <span>{{ 'common.email' | transloco }}</span>
+        <input type="email" [(ngModel)]="createEmail" name="email" required autocomplete="off" />
+      </label>
+      <label class="modal-field">
+        <span>{{ 'users.temporaryPassword' | transloco }}</span>
+        <input type="password" [(ngModel)]="createPassword" name="temporaryPassword" required minlength="8" autocomplete="off" />
+      </label>
+      <p class="modal-hint">{{ 'users.temporaryPasswordHint' | transloco }}</p>
+      @if (createError()) {
+        <p class="modal-error">{{ createError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeCreateModal()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button
+          type="submit"
+          class="modal-button modal-button-primary"
+          [disabled]="creating() || !createEmail().trim() || createPassword().length < 8"
+        >
+          {{ (creating() ? 'common.adding' : 'users.addNew') | transloco }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (roleAssignmentTarget(); as user) {
+  <div class="modal-backdrop" (click)="closeRoleAssignmentModal()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ 'users.assignRoleTo' | transloco: { email: user.email } }}</h2>
+    @if (assignRoleSuccess()) {
+      <p class="modal-hint">{{ 'users.assignRoleSuccess' | transloco }}</p>
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-primary" (click)="closeRoleAssignmentModal()">
+          {{ 'common.close' | transloco }}
+        </button>
+      </div>
+    } @else {
+      <form (ngSubmit)="submitRoleAssignment()">
+        <label class="modal-field">
+          <span>{{ 'users.role' | transloco }}</span>
+          <select [(ngModel)]="selectedRoleId" name="roleId" required>
+            <option value="" disabled>{{ 'users.selectRole' | transloco }}</option>
+            @for (role of roles(); track role.id) {
+              <option [value]="role.id">{{ role.name }}</option>
+            }
+          </select>
+        </label>
+        @if (assignRoleError()) {
+          <p class="modal-error">{{ assignRoleError() }}</p>
+        }
+        <div class="modal-actions">
+          <button type="button" class="modal-button modal-button-secondary" (click)="closeRoleAssignmentModal()">
+            {{ 'common.cancel' | transloco }}
+          </button>
+          <button type="submit" class="modal-button modal-button-primary" [disabled]="assigningRole() || !selectedRoleId()">
+            {{ (assigningRole() ? 'common.saving' : 'users.assignRole') | transloco }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+}

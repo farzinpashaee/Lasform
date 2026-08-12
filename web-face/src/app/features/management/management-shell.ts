@@ -2,12 +2,17 @@ import { Component, inject, signal, WritableSignal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 
+import { AuthService } from '../../core/auth/auth.service';
+import { HasPermissionDirective } from '../../core/auth/has-permission.directive';
+
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
 
 interface NavLeaf {
   /** A transloco translation key, not display text — resolved in the template via the transloco pipe. */
   labelKey: string;
   path: string;
+  /** Omitted for leaves that only require being logged in (enforced by the route's canActivateChild already). */
+  permission?: string;
 }
 
 interface NavGroup {
@@ -19,12 +24,13 @@ interface NavGroup {
 
 @Component({
   selector: 'app-management-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslocoPipe],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslocoPipe, HasPermissionDirective],
   templateUrl: './management-shell.html',
   styleUrl: './management-shell.scss',
 })
 export class ManagementShell {
   private readonly router = inject(Router);
+  protected readonly authService = inject(AuthService);
 
   protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
 
@@ -41,11 +47,11 @@ export class ManagementShell {
   ];
 
   protected readonly navLinks: NavLeaf[] = [
-    { labelKey: 'management.navUsers', path: 'users' },
-    { labelKey: 'management.navLocations', path: 'locations' },
-    { labelKey: 'management.navDevices', path: 'devices' },
+    { labelKey: 'management.navUsers', path: 'users', permission: 'user:read' },
+    { labelKey: 'management.navLocations', path: 'locations', permission: 'location:read' },
+    { labelKey: 'management.navDevices', path: 'devices', permission: 'device:read' },
     { labelKey: 'management.navCategories', path: 'categories' },
-    { labelKey: 'management.navGeofences', path: 'geofences' },
+    { labelKey: 'management.navGeofences', path: 'geofences', permission: 'geofence:read' },
   ];
 
   protected toggleGroup(group: NavGroup): void {
@@ -59,5 +65,10 @@ export class ManagementShell {
 
   protected backToMap(): void {
     this.router.navigate(['/']);
+  }
+
+  protected logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

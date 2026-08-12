@@ -28,7 +28,9 @@
     "createdColumn": "Created",
     "updatedColumn": "Updated",
     "removeTagFilter": "Remove tag filter {{tag}}",
-    "removeTag": "Remove tag {{tag}}"
+    "removeTag": "Remove tag {{tag}}",
+    "email": "Email",
+    "logout": "Log out"
   },
   "map": {
     "searchPlaceholder": "Search Lasform Maps",
@@ -47,6 +49,8 @@
     "addCategoryFailed": "Failed to add category. Please try again.",
     "saveFailed": "Failed to save changes. Please try again.",
     "deleteFailed": "Failed to delete. Please try again.",
+    "accessDenied": "You need to sign in to view this map.",
+    "signInToView": "Sign in to view the map",
     "editDeviceTitle": "Edit device",
     "editLocationTitle": "Edit location",
     "deleteDeviceTitle": "Delete device?",
@@ -162,5 +166,54 @@
     "loadFailed": "Failed to load locations. Please try again.",
     "saveFailed": "Failed to save location. Please try again.",
     "deleteFailed": "Failed to delete location. Please try again."
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "email": "Email",
+      "password": "Password",
+      "invalidCredentials": "Invalid email or password.",
+      "submitting": "Signing in…",
+      "submit": "Sign in",
+      "backToMap": "Back to map"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "You need to set a new password before continuing.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "mismatch": "Passwords don't match.",
+      "failed": "Failed to reset password. Please try again.",
+      "submitting": "Saving…",
+      "submit": "Set password"
+    },
+    "notAuthorized": {
+      "title": "Not authorized",
+      "subtitle": "You don't have permission to view this page.",
+      "backToMap": "Back to map",
+      "switchAccount": "Switch account"
+    }
+  },
+  "users": {
+    "title": "Users",
+    "note": "Manage user accounts and role assignments.",
+    "addNew": "Add new user",
+    "colEmail": "Email",
+    "colStatus": "Status",
+    "colMustResetPassword": "Password reset",
+    "colActions": "Actions",
+    "loading": "Loading users…",
+    "empty": "No users found.",
+    "pendingReset": "Pending",
+    "assignRole": "Assign role",
+    "assignRoleTo": "Assign role to {{email}}",
+    "assignRoleSuccess": "Role assigned.",
+    "role": "Role",
+    "selectRole": "Select a role…",
+    "temporaryPassword": "Temporary password",
+    "temporaryPasswordHint": "The user will be required to change this the first time they sign in.",
+    "loadFailed": "Failed to load users. Please try again.",
+    "createFailed": "Failed to create user. Please try again.",
+    "assignRoleFailed": "Failed to assign role. Please try again."
   }
 }

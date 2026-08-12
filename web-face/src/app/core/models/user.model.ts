@@ -1,17 +1,11 @@
-import { Auditable } from './auditable.model';
-import { UserRole, UserStatus } from './enums';
+import { UserStatus } from './enums';
 
-export interface User extends Auditable {
-  id?: string;
-  username: string;
+/** Mirrors com.csl.lasform.auth.infrastructure.web.dto.UserResponse — passwordHash is never sent to the client. */
+export interface User {
+  id: string;
+  orgId: string;
   email: string;
-  /** Write-only on the backend: send when creating a user, never present on a response. */
-  passwordHash?: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  roles?: UserRole[];
-  status?: UserStatus;
-  lastLoginAt?: string;
-  version?: number;
+  status: UserStatus;
+  mustResetPassword: boolean;
+  createdAt: string;
 }

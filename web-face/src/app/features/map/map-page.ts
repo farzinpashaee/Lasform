@@ -8,6 +8,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -103,6 +104,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly deletingEntity = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
+  /** Set when the marker load 401s — e.g. an admin revoked map:view_public for anonymous callers. */
+  protected readonly mapAccessDenied = signal(false);
+
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
       center: { lat: 43.8628, lng: -79.4308 },
@@ -144,14 +148,26 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.router.navigate(['/management']);
   }
 
+  protected goToLogin(): void {
+    this.router.navigate(['/login'], { queryParams: { returnUrl: '/' } });
+  }
+
   private loadLocationMarkers(): void {
-    this.locationService.findAll({ size: 200 }).subscribe((page) => {
-      this.allLocationHits = page.content.map((location) => ({ type: 'LOCATION' as const, data: location }));
-      const markers = page.content.map((location) => {
-        const [lng, lat] = location.point.coordinates;
-        return { id: location.id, lat, lng, title: location.name };
-      });
-      this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
+    this.locationService.findAll({ size: 200 }).subscribe({
+      next: (page) => {
+        this.mapAccessDenied.set(false);
+        this.allLocationHits = page.content.map((location) => ({ type: 'LOCATION' as const, data: location }));
+        const markers = page.content.map((location) => {
+          const [lng, lat] = location.point.coordinates;
+          return { id: location.id, lat, lng, title: location.name };
+        });
+        this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
+      },
+      error: (error: unknown) => {
+        if (error instanceof HttpErrorResponse && error.status === 401) {
+          this.mapAccessDenied.set(true);
+        }
+      },
     });
   }
 

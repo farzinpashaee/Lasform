@@ -730,3 +730,44 @@ $radius: 8px;
     cursor: default;
   }
 }
+
+.map-access-denied {
+  position: absolute;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  background: var(--surface);
+
+  .material-symbols-outlined {
+    font-size: 40px;
+    color: var(--text-secondary);
+  }
+
+  p {
+    margin: 0;
+    max-width: 320px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+}
+
+.sign-in-button {
+  border: none;
+  border-radius: $radius;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent, #1a73e8);
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.92;
+  }
+}

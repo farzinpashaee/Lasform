@@ -1,20 +1,36 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../../environments/environment';
 import { User } from '../models/user.model';
-import { CrudService } from './crud.service';
 
+export interface CreateUserRequest {
+  email: string;
+  temporaryPassword: string;
+}
+
+/**
+ * Lives under {@link environment.authApiUrl} (`/api/users`), not `/api/v1` like CrudService's
+ * resources — this is part of the auth module, not the versioned entity API.
+ */
 @Injectable({ providedIn: 'root' })
-export class UserService extends CrudService<User> {
-  constructor() {
-    super('users');
+export class UserService {
+  private readonly http = inject(HttpClient);
+  private readonly resourceUrl = `${environment.authApiUrl}/users`;
+
+  /** Requires user:read. Flat/unpaginated — matches the backend, which doesn't paginate this yet either. */
+  list(): Observable<User[]> {
+    return this.http.get<User[]>(this.resourceUrl);
   }
 
-  findByUsername(username: string): Observable<User> {
-    return this.http.get<User>(`${this.resourceUrl}/by-username/${username}`);
+  /** Requires user:invite. The created user always has mustResetPassword=true. */
+  create(request: CreateUserRequest): Observable<User> {
+    return this.http.post<User>(this.resourceUrl, request);
   }
 
-  findByEmail(email: string): Observable<User> {
-    return this.http.get<User>(`${this.resourceUrl}/by-email/${email}`);
+  /** Requires user:manage_roles. Additive — grants roleId alongside whatever the user already has. */
+  assignRole(userId: string, roleId: string): Observable<void> {
+    return this.http.post<void>(`${this.resourceUrl}/${userId}/roles`, { roleId });
   }
 }

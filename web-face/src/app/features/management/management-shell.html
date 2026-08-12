@@ -16,7 +16,10 @@
       >
         <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
       </button>
-      <button class="avatar" type="button" [attr.aria-label]="'common.account' | transloco">F</button>
+      <button type="button" class="logout-button" (click)="logout()">
+        <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+        <span>{{ 'common.logout' | transloco }}</span>
+      </button>
     </div>
   </header>
 
@@ -24,7 +27,7 @@
     <nav class="management-sidebar">
       <ul class="nav-list">
         @for (link of navLinks; track link.path) {
-          <li>
+          <li *hasPermission="link.permission ? [link.permission] : []">
             <a class="nav-link" [routerLink]="link.path" routerLinkActive="active">{{ link.labelKey | transloco }}</a>
           </li>
         }
