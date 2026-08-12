@@ -39,3 +39,35 @@ lasform:
     images:
       # Root directory Location/Device images are stored under, one subfolder per entity id.
       base-path: ./data/images
+
+  seed:
+    # Runs AuthSeeder on startup: (re)syncs the fixed Permission catalog and the 5 system roles
+    # every run (idempotent — safe to leave on), and creates the single Organization + initial
+    # SUPER_ADMIN user once, only if none exist yet. Set to false for e.g. a read replica or a
+    # test profile that shouldn't write on boot.
+    enabled: true
+
+  org:
+    # Name of the single organization AuthSeeder creates on first run.
+    name: Lasform
+
+  admin:
+    # Initial SUPER_ADMIN account, created once on first run. Deliberately left blank here —
+    # never hardcode credentials. Set via the LASFORM_ADMIN_EMAIL / LASFORM_ADMIN_PASSWORD
+    # environment variables (or an external secrets store that injects them the same way). If
+    # both are still unset the first time the app starts with no users in the database,
+    # AuthSeeder logs a warning and skips creating the admin account rather than guessing.
+    email:
+    password:
+
+  jwt:
+    # HMAC-SHA256 signing key for access/refresh tokens — at least 32 characters. Deliberately
+    # left blank here: never hardcode a signing secret. Set via LASFORM_JWT_SECRET for any
+    # deployment that needs tokens (and thus sessions) to survive a restart; if left unset,
+    # JwtService falls back to a random ephemeral key generated at startup (logged as a warning)
+    # so the app still runs locally without extra setup, at the cost of invalidating every
+    # existing token on each restart.
+    secret:
+    # Simple duration syntax (Spring's DurationStyle): e.g. 15m, 1h, 7d.
+    access-token-ttl: 15m
+    refresh-token-ttl: 7d
