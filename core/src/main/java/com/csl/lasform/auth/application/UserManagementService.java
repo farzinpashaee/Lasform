@@ -47,4 +47,11 @@ public class UserManagementService {
         }
         userRoleRepository.save(UserRole.builder().userId(userId).roleId(roleId).orgId(orgId).build());
     }
+
+    /** Self-service only — a user setting their own displayName, not an admin editing someone else's. */
+    public User updateOwnProfile(String userId, String displayName) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("error.user.notFound", userId));
+        user.setDisplayName(displayName);
+        return userRepository.save(user);
+    }
 }

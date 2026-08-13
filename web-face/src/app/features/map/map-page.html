@@ -148,18 +148,7 @@
       >
         <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
       </button>
-      <button
-        class="avatar"
-        type="button"
-        [attr.aria-label]="(authService.isAuthenticated() ? 'common.account' : 'map.signIn') | transloco"
-        (click)="onAccountClick()"
-      >
-        @if (authService.isAuthenticated()) {
-          F
-        } @else {
-          <span class="material-symbols-outlined" aria-hidden="true">person</span>
-        }
-      </button>
+      <app-account-menu />
     </div>
   </div>
 

@@ -40,6 +40,8 @@ public class JwtService {
     private static final String CLAIM_ORG_ID = "orgId";
     private static final String CLAIM_PERMISSIONS = "permissions";
     private static final String CLAIM_MUST_RESET_PASSWORD = "mustResetPassword";
+    private static final String CLAIM_EMAIL = "email";
+    private static final String CLAIM_DISPLAY_NAME = "displayName";
     private static final String CLAIM_TYPE = "type";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
@@ -72,13 +74,16 @@ public class JwtService {
                         + "at-least-32-character value for any deployment that needs to survive a restart.");
     }
 
-    public String generateAccessToken(String userId, String orgId, Set<String> permissions, boolean mustResetPassword) {
+    public String generateAccessToken(
+            String userId, String orgId, Set<String> permissions, boolean mustResetPassword, String email, String displayName) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId)
                 .claim(CLAIM_ORG_ID, orgId)
                 .claim(CLAIM_PERMISSIONS, List.copyOf(permissions))
                 .claim(CLAIM_MUST_RESET_PASSWORD, mustResetPassword)
+                .claim(CLAIM_EMAIL, email)
+                .claim(CLAIM_DISPLAY_NAME, displayName)
                 .claim(CLAIM_TYPE, TYPE_ACCESS)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(accessTokenTtl)))
@@ -108,7 +113,9 @@ public class JwtService {
                     claims.getSubject(),
                     claims.get(CLAIM_ORG_ID, String.class),
                     permissions == null ? Set.of() : Set.copyOf(permissions),
-                    mustResetPassword);
+                    mustResetPassword,
+                    claims.get(CLAIM_EMAIL, String.class),
+                    claims.get(CLAIM_DISPLAY_NAME, String.class));
         });
     }
 

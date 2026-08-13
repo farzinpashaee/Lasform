@@ -5,6 +5,7 @@ export interface User {
   id: string;
   orgId: string;
   email: string;
+  displayName: string | null;
   status: UserStatus;
   mustResetPassword: boolean;
   createdAt: string;

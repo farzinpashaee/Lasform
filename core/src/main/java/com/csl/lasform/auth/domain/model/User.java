@@ -29,6 +29,9 @@ public class User {
 
     private String email;
 
+    /** Optional — set by the user themselves via the profile page; null until they do. */
+    private String displayName;
+
     private String passwordHash;
 
     private UserStatus status;

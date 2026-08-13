@@ -432,26 +432,6 @@ $radius: 8px;
   pointer-events: auto;
 }
 
-.avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: #1a73e8;
-  color: #fff;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-
-  .material-symbols-outlined {
-    font-size: 20px;
-  }
-}
-
 .bottom-right {
   position: absolute;
   bottom: 24px;

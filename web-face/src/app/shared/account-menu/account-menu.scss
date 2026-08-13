@@ -1,0 +1,137 @@
+$radius: 8px;
+
+.account-wrapper {
+  position: relative;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #1a73e8;
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
+.account-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.account-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 901;
+  width: 280px;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.account-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.account-menu-email {
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.account-menu-greeting {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.account-menu-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.icon-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--hover);
+    color: var(--text-primary);
+  }
+}
+
+.modal-button {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-button-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.modal-button-primary {
+  background: var(--accent);
+  color: #fff;
+
+  &:hover {
+    opacity: 0.92;
+  }
+}

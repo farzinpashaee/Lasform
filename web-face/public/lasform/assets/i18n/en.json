@@ -62,6 +62,10 @@
     "markerEmojiPlaceholder": "e.g. 🏥",
     "addLocation": "Add location",
     "addCategory": "Add category",
+    "account": {
+      "greeting": "Hi, {{name}}!",
+      "viewProfile": "Manage your profile"
+    },
     "detail": {
       "description": "Description",
       "address": "Address",
@@ -194,6 +198,14 @@
       "backToMap": "Back to map",
       "switchAccount": "Switch account"
     }
+  },
+  "profile": {
+    "title": "Your profile",
+    "backToMap": "Back to map",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "e.g. Farzin",
+    "saved": "Saved.",
+    "saveFailed": "Failed to save your profile. Please try again."
   },
   "users": {
     "title": "Users",

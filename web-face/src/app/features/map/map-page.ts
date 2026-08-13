@@ -1,13 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  HostListener,
-  OnDestroy,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +17,7 @@ import { DeviceService } from '../../core/services/device.service';
 import { LocationService } from '../../core/services/location.service';
 import { SearchService } from '../../core/services/search.service';
 import { TagService } from '../../core/services/tag.service';
+import { AccountMenu } from '../../shared/account-menu/account-menu';
 
 const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
 
@@ -40,7 +32,7 @@ interface MapContextMenuState {
 
 @Component({
   selector: 'app-map-page',
-  imports: [FormsModule, NgTemplateOutlet, TranslocoPipe],
+  imports: [FormsModule, NgTemplateOutlet, TranslocoPipe, AccountMenu],
   templateUrl: './map-page.html',
   styleUrl: './map-page.scss',
 })
@@ -152,13 +144,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected goToLogin(): void {
     this.router.navigate(['/login'], { queryParams: { returnUrl: '/' } });
-  }
-
-  /** Signed-in users get no-op for now (no account menu yet); signed-out users are sent to log in. */
-  protected onAccountClick(): void {
-    if (!this.authService.isAuthenticated()) {
-      this.goToLogin();
-    }
   }
 
   protected canEditHit(hit: SearchHit): boolean {

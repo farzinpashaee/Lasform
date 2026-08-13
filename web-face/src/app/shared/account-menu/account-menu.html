@@ -1,0 +1,39 @@
+<div class="account-wrapper">
+  <button
+    class="avatar"
+    type="button"
+    [attr.aria-label]="(authService.isAuthenticated() ? 'common.account' : 'map.signIn') | transloco"
+    [attr.aria-expanded]="authService.isAuthenticated() ? menuOpen() : null"
+    (click)="onAvatarClick()"
+  >
+    @if (authService.isAuthenticated()) {
+      {{ accountLetter() }}
+    } @else {
+      <span class="material-symbols-outlined" aria-hidden="true">person</span>
+    }
+  </button>
+
+  @if (menuOpen()) {
+    <div class="account-menu-backdrop" (click)="closeMenu()" (contextmenu)="closeMenu()"></div>
+    <div class="account-menu">
+      <div class="account-menu-header">
+        <span class="account-menu-email">{{ authService.currentUser()?.email }}</span>
+        <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeMenu()">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <div class="account-menu-avatar">{{ accountLetter() }}</div>
+      @if (authService.currentUser()?.displayName; as name) {
+        <p class="account-menu-greeting">{{ 'map.account.greeting' | transloco: { name } }}</p>
+      }
+      <div class="account-menu-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="signOut()">
+          {{ 'common.logout' | transloco }}
+        </button>
+        <button type="button" class="modal-button modal-button-primary" (click)="goToProfile()">
+          {{ 'map.account.viewProfile' | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

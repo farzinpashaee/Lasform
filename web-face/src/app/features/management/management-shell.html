@@ -16,10 +16,7 @@
       >
         <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
       </button>
-      <button type="button" class="logout-button" (click)="logout()">
-        <span class="material-symbols-outlined" aria-hidden="true">logout</span>
-        <span>{{ 'common.logout' | transloco }}</span>
-      </button>
+      <app-account-menu />
     </div>
   </header>
 

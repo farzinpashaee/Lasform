@@ -11,6 +11,7 @@ import { MapPage } from './features/map/map-page';
 import { LoginPage } from './features/auth/login/login-page';
 import { NotAuthorizedPage } from './features/auth/not-authorized/not-authorized-page';
 import { ResetPasswordPage } from './features/auth/reset-password/reset-password-page';
+import { ProfilePage } from './features/profile/profile-page';
 import { permissionGuard } from './core/auth/permission.guard';
 import { forcePasswordResetGuard } from './core/auth/force-password-reset.guard';
 
@@ -21,6 +22,7 @@ export const routes: Routes = [
   { path: '', component: MapPage, canActivate: [forcePasswordResetGuard] },
   { path: 'login', component: LoginPage },
   { path: 'reset-password', component: ResetPasswordPage, canActivate: [permissionGuard] },
+  { path: 'profile', component: ProfilePage, canActivate: [permissionGuard] },
   { path: 'not-authorized', component: NotAuthorizedPage },
   {
     path: 'management',

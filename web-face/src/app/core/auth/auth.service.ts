@@ -40,7 +40,15 @@ export class AuthService {
   readonly currentPermissions = computed(() => new Set(this.claimsSignal()?.permissions ?? []));
   readonly currentUser = computed<CurrentUser | null>(() => {
     const claims = this.claimsSignal();
-    return claims ? { userId: claims.sub, orgId: claims.orgId, mustResetPassword: claims.mustResetPassword } : null;
+    return claims
+      ? {
+          userId: claims.sub,
+          orgId: claims.orgId,
+          mustResetPassword: claims.mustResetPassword,
+          email: claims.email,
+          displayName: claims.displayName,
+        }
+      : null;
   });
 
   /** Set on a 403 response by the auth interceptor; a banner (see App) shows/clears it. Cosmetic — the backend already refused the request. */

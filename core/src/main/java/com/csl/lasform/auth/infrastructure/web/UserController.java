@@ -4,8 +4,10 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +21,7 @@ import com.csl.lasform.auth.domain.repository.UserRepository;
 import com.csl.lasform.auth.infrastructure.security.JwtPrincipal;
 import com.csl.lasform.auth.infrastructure.web.dto.AssignRoleRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.CreateUserRequest;
+import com.csl.lasform.auth.infrastructure.web.dto.UpdateProfileRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.UserResponse;
 
 import jakarta.validation.Valid;
@@ -58,5 +61,20 @@ public class UserController {
         JwtPrincipal principal = (JwtPrincipal) authentication.getPrincipal();
         userManagementService.assignRole(id, request.roleId(), principal.orgId());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * No {@code @PreAuthorize} — every authenticated user, regardless of role, can edit their own
+     * profile, so there's no single permission key to gate on. The {@code instanceof} check is
+     * what actually rejects anonymous callers (see AuthController#resetPassword for the same
+     * pattern) — everything is {@code permitAll()} at the security-filter layer.
+     */
+    @PatchMapping("/me")
+    public UserResponse updateOwnProfile(@Valid @RequestBody UpdateProfileRequest request, Authentication authentication) {
+        if (!(authentication.getPrincipal() instanceof JwtPrincipal principal)) {
+            throw new BadCredentialsException("Authentication is required.");
+        }
+        User updated = userManagementService.updateOwnProfile(principal.userId(), request.displayName());
+        return UserResponse.from(updated);
     }
 }

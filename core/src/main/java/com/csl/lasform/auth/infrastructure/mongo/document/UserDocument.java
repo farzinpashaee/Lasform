@@ -37,6 +37,8 @@ public class UserDocument {
     @Indexed(unique = true)
     private String email;
 
+    private String displayName;
+
     private String passwordHash;
 
     private UserStatus status;
