@@ -35,7 +35,7 @@ $radius: 8px;
 
   &:focus {
     outline: none;
-    border-color: var(--accent, #1a73e8);
+    border-color: var(--accent, #da5050);
   }
 }
 
@@ -50,7 +50,7 @@ $radius: 8px;
   font-size: 14px;
   font-weight: 500;
   color: #fff;
-  background: var(--accent, #1a73e8);
+  background: var(--accent, #da5050);
   cursor: pointer;
 
   .material-symbols-outlined {
@@ -259,7 +259,7 @@ th.sortable {
 
     &:focus {
       outline: none;
-      border-color: var(--accent, #1a73e8);
+      border-color: var(--accent, #da5050);
     }
   }
 }
@@ -295,7 +295,7 @@ th.sortable {
 }
 
 .modal-button-primary {
-  background: var(--accent, #1a73e8);
+  background: var(--accent, #da5050);
   color: #fff;
 
   &:hover {
@@ -347,8 +347,8 @@ th.sortable {
   }
 
   &:hover {
-    color: var(--accent, #1a73e8);
-    background: var(--accent-bg, #e8f0fe);
+    color: var(--accent, #da5050);
+    background: var(--accent-bg, #fbeaea);
   }
 }
 

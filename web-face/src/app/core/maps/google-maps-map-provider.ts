@@ -117,7 +117,7 @@ export class GoogleMapsMapProvider implements MapProvider {
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 8,
-        fillColor: '#1a73e8',
+        fillColor: '#da5050',
         fillOpacity: 1,
         strokeColor: '#fff',
         strokeWeight: 2,

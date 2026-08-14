@@ -12,7 +12,7 @@ $radius: 8px;
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: #1a73e8;
+  background: #da5050;
   color: #fff;
   font-weight: 600;
   font-size: 15px;
@@ -35,66 +35,26 @@ $radius: 8px;
   top: calc(100% + 8px);
   right: 0;
   z-index: 901;
-  width: 280px;
-  padding: 16px;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  padding: 20px;
   background: var(--surface);
   border-radius: $radius;
   box-shadow: var(--shadow);
-  text-align: center;
-}
-
-.account-menu-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
   text-align: left;
 }
 
-.account-menu-email {
-  font-size: 13px;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.account-menu-avatar {
+.account-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 12px;
-  border-radius: 50%;
-  background: #1a73e8;
-  color: #fff;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.account-menu-greeting {
-  margin: 0 0 16px;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.account-menu-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.icon-action-button {
-  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
   border: none;
-  border-radius: 4px;
+  border-radius: 50%;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
@@ -109,29 +69,79 @@ $radius: 8px;
   }
 }
 
-.modal-button {
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
+.account-menu-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
-.modal-button-secondary {
-  background: transparent;
+.account-menu-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #da5050;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.account-menu-info {
+  min-width: 0;
+}
+
+.account-menu-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-email {
+  margin: 2px 0 0;
+  font-size: 13px;
   color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.account-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
 
   &:hover {
     background: var(--hover);
   }
 }
 
-.modal-button-primary {
-  background: var(--accent);
-  color: #fff;
-
-  &:hover {
-    opacity: 0.92;
-  }
+.account-logout-button {
+  flex: 1 1 auto;
 }

@@ -174,13 +174,19 @@
   },
   "auth": {
     "login": {
-      "title": "Sign in",
+      "title": "Sign In",
+      "subtitle": "Welcome back! Choose how you'd like to sign in.",
+      "googleSignIn": "Sign in with Google",
+      "or": "or",
       "email": "Email",
       "password": "Password",
+      "forgotPasswordPrefix": "Have you",
+      "forgotPasswordLink": "forget your password?",
       "invalidCredentials": "Invalid email or password.",
       "submitting": "Signing in…",
-      "submit": "Sign in",
-      "backToMap": "Back to map"
+      "submit": "Sign In",
+      "notRegisteredPrefix": "Not registered yet?",
+      "newAccountLink": "Create New Account"
     },
     "resetPassword": {
       "title": "Set a new password",

@@ -135,7 +135,7 @@ private map?: L.Map;
       radius: 8,
       color: '#fff',
       weight: 2,
-      fillColor: '#1a73e8',
+      fillColor: '#da5050',
       fillOpacity: 1,
     }).addTo(this.map);
   }

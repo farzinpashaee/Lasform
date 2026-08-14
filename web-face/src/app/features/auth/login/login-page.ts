@@ -1,13 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login-page',
-  imports: [FormsModule, RouterLink, TranslocoPipe],
+  imports: [FormsModule, TranslocoPipe],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
 })
@@ -48,6 +48,10 @@ export class LoginPage {
         this.error.set(this.transloco.translate('auth.login.invalidCredentials'));
       },
     });
+  }
+
+  protected close(): void {
+    this.router.navigate(['/']);
   }
 
   private redirectAfterLogin(): void {
