@@ -1,4 +1,4 @@
-<div class="map-page" [class.dark-theme]="darkMode()">
+<div class="map-page" [class.dark-theme]="darkMode()" [class.imagery-view]="mapType() !== 'roadmap'">
   <div #mapContainer class="map-container"></div>
 
   @if (mapAccessDenied()) {
@@ -168,6 +168,40 @@
         <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
       }
     </button>
+    <div class="map-type-wrapper">
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="'map.changeMapType' | transloco"
+        [class.active]="mapTypeMenuOpen()"
+        [attr.aria-expanded]="mapTypeMenuOpen()"
+        (click)="toggleMapTypeMenu()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">layers</span>
+      </button>
+
+      @if (mapTypeMenuOpen()) {
+        <div class="context-menu-backdrop" (click)="closeMapTypeMenu()" (contextmenu)="closeMapTypeMenu()"></div>
+        <ul class="map-type-menu">
+          @for (option of mapTypeOptions; track option.type) {
+            <li>
+              <button
+                type="button"
+                class="context-menu-item"
+                [class.active]="mapType() === option.type"
+                (click)="selectMapType(option.type)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
+                <span>{{ option.labelKey | transloco }}</span>
+                @if (mapType() === option.type) {
+                  <span class="material-symbols-outlined map-type-check" aria-hidden="true">check</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
     <button
       class="icon-button round"
       type="button"

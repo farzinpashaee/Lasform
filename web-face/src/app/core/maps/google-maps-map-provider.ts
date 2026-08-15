@@ -1,6 +1,6 @@
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 
-import { MapContextMenuEvent, MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
+import { MapContextMenuEvent, MapMarkerData, MapProvider, MapType, MapViewOptions } from './map-provider.model';
 import { loadGoogleMaps } from './google-maps-script-loader';
 
 export class GoogleMapsMapProvider implements MapProvider {
@@ -130,6 +130,10 @@ export class GoogleMapsMapProvider implements MapProvider {
   clearUserLocation(): void {
     this.userLocationMarker?.setMap(null);
     this.userLocationMarker = undefined;
+  }
+
+  setMapType(type: MapType): void {
+    this.map?.setMapTypeId(type);
   }
 
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void {

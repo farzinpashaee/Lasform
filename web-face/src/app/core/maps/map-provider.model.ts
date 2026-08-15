@@ -1,6 +1,8 @@
 /** Supported map rendering backends; selected via environment.mapProvider. */
 export type MapProviderKind = 'leaflet' | 'google';
 
+export type MapType = 'roadmap' | 'satellite' | 'terrain';
+
 export interface MapViewOptions {
   center: { lat: number; lng: number };
   zoom: number;
@@ -51,6 +53,9 @@ export interface MapProvider {
 
   /** Removes the "you are here" dot, if one is currently shown. */
   clearUserLocation(): void;
+
+  /** Switches between the standard road map and satellite imagery. No-op if already on that type. */
+  setMapType(type: MapType): void;
 
   /** Registers the handler fired on right-click on the map surface. */
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void;
