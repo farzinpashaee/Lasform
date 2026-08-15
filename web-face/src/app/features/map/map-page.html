@@ -1,4 +1,4 @@
-<div class="map-page" [class.dark-theme]="darkMode()">
+<div class="map-page" [class.dark-theme]="darkMode()" [class.satellite-view]="mapType() === 'satellite'">
   <div #mapContainer class="map-container"></div>
 
   @if (mapAccessDenied()) {
@@ -167,6 +167,16 @@
       } @else {
         <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
       }
+    </button>
+    <button
+      class="icon-button round"
+      type="button"
+      [attr.aria-label]="(mapType() === 'roadmap' ? 'map.satelliteView' : 'map.mapView') | transloco"
+      [class.active]="mapType() === 'satellite'"
+      [attr.aria-pressed]="mapType() === 'satellite'"
+      (click)="toggleMapType()"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">{{ mapType() === 'roadmap' ? 'satellite_alt' : 'map' }}</span>
     </button>
     <button
       class="icon-button round"

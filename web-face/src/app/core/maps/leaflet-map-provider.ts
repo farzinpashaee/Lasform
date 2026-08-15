@@ -1,7 +1,11 @@
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 
-import { MapContextMenuEvent, MapMarkerData, MapProvider, MapViewOptions } from './map-provider.model';
+import { MapContextMenuEvent, MapMarkerData, MapProvider, MapType, MapViewOptions } from './map-provider.model';
+
+const ROADMAP_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+/** Esri's free World Imagery service — no API key required. */
+const SATELLITE_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
 // Leaflet's default icon resolves its image URLs relative to the stylesheet that
 // declared it, which esbuild's bundling breaks — markers render as a broken-image
@@ -20,6 +24,9 @@ private map?: L.Map;
   private allMarkers: L.Marker[] = [];
   private clusteringEnabled = false;
   private userLocationMarker?: L.CircleMarker;
+  private mapType: MapType = 'roadmap';
+  private roadmapLayer?: L.TileLayer;
+  private satelliteLayer?: L.TileLayer;
 
   initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
     this.map = L.map(container, {
@@ -29,8 +36,9 @@ private map?: L.Map;
       attributionControl: false,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    this.roadmapLayer = L.tileLayer(ROADMAP_TILE_URL, {
       maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.map);
 
     // Leaflet caches the container's size at construction time; if the browser hasn't finished
@@ -145,6 +153,31 @@ private map?: L.Map;
     this.userLocationMarker = undefined;
   }
 
+  setMapType(type: MapType): void {
+    if (!this.map || this.mapType === type) {
+      return;
+    }
+    this.mapType = type;
+
+    if (type === 'satellite') {
+      this.roadmapLayer?.remove();
+      this.ensureSatelliteLayer().addTo(this.map);
+    } else {
+      this.satelliteLayer?.remove();
+      this.roadmapLayer?.addTo(this.map);
+    }
+  }
+
+  private ensureSatelliteLayer(): L.TileLayer {
+    if (!this.satelliteLayer) {
+      this.satelliteLayer = L.tileLayer(SATELLITE_TILE_URL, {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri',
+      });
+    }
+    return this.satelliteLayer;
+  }
+
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void {
     if (!this.map) {
       return;
@@ -168,5 +201,8 @@ private map?: L.Map;
     this.markersById.clear();
     this.allMarkers = [];
     this.userLocationMarker = undefined;
+    this.mapType = 'roadmap';
+    this.roadmapLayer = undefined;
+    this.satelliteLayer = undefined;
   }
 }

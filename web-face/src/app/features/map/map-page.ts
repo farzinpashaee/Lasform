@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider } from '../../core/maps';
+import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider, MapType } from '../../core/maps';
 import { Category } from '../../core/models/category.model';
 import { Device } from '../../core/models/device.model';
 import { DeviceStatus } from '../../core/models/enums';
@@ -66,6 +66,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly selectedResult = signal<SearchHit | null>(null);
   protected readonly locating = signal(false);
   protected readonly clusteringEnabled = signal(false);
+  protected readonly mapType = signal<MapType>('roadmap');
   protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
 
   protected readonly mapContextMenu = signal<MapContextMenuState | null>(null);
@@ -178,6 +179,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected toggleClustering(): void {
     this.clusteringEnabled.update((enabled) => !enabled);
     this.mapProvider.setClusteringEnabled(this.clusteringEnabled());
+  }
+
+  protected toggleMapType(): void {
+    const next: MapType = this.mapType() === 'roadmap' ? 'satellite' : 'roadmap';
+    this.mapType.set(next);
+    this.mapProvider.setMapType(next);
   }
 
   protected toggleDarkMode(): void {

@@ -39,6 +39,8 @@
     "searchFailed": "Search failed. Please try again.",
     "backToResults": "Back to results",
     "myLocation": "My location",
+    "satelliteView": "Satellite view",
+    "mapView": "Map view",
     "toggleClustering": "Toggle marker clustering",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",

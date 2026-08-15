@@ -55,6 +55,12 @@ $radius: 8px;
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
+.map-page.dark-theme.satellite-view .map-container {
+  /* Inverting satellite photography looks broken (photo-negative), unlike line-drawn roadmap
+     tiles — leave imagery untouched regardless of theme, same as every other map product does. */
+  filter: none;
+}
+
 .top-bar {
   position: absolute;
   top: 12px;
