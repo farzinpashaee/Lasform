@@ -32,6 +32,10 @@ public class User {
     /** Optional — set by the user themselves via the profile page; null until they do. */
     private String displayName;
 
+    /** Optional — populated from the provider's profile photo for Google-signed-up accounts; null otherwise. */
+    private String avatarUrl;
+
+    /** Null for accounts created via Google sign-in/sign-up — there's no local password to check against. */
     private String passwordHash;
 
     private UserStatus status;

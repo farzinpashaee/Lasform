@@ -7,14 +7,15 @@
     </button>
 
     <div class="auth-content">
-      @if (googlePending()) {
-        <h1 class="auth-title">{{ 'auth.google.pendingTitle' | transloco }}</h1>
-        <p class="auth-subtitle">{{ 'auth.google.pendingMessage' | transloco }}</p>
+      @if (success()) {
+        <h1 class="auth-title">{{ 'auth.signUp.successTitle' | transloco }}</h1>
+        <p class="auth-subtitle">{{ 'auth.signUp.successMessage' | transloco }}</p>
+        <a class="auth-submit auth-submit-link" routerLink="/login">{{ 'auth.signUp.backToSignIn' | transloco }}</a>
       } @else {
-        <h1 class="auth-title">{{ 'auth.login.title' | transloco }}</h1>
-        <p class="auth-subtitle">{{ 'auth.login.subtitle' | transloco }}</p>
+        <h1 class="auth-title">{{ 'auth.signUp.title' | transloco }}</h1>
+        <p class="auth-subtitle">{{ 'auth.signUp.subtitle' | transloco }}</p>
 
-        <button type="button" class="google-button" [disabled]="googleSubmitting()" (click)="signInWithGoogle()">
+        <button type="button" class="google-button" [disabled]="googleSubmitting()" (click)="signUpWithGoogle()">
           <svg class="google-icon" viewBox="0 0 18 18" aria-hidden="true">
             <path
               fill="#4285F4"
@@ -33,7 +34,7 @@
               d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"
             />
           </svg>
-          <span>{{ (googleSubmitting() ? 'auth.google.submitting' : 'auth.login.googleSignIn') | transloco }}</span>
+          <span>{{ (googleSubmitting() ? 'auth.google.submitting' : 'auth.signUp.googleSignUp') | transloco }}</span>
         </button>
 
         <div class="auth-divider">
@@ -41,6 +42,17 @@
         </div>
 
         <form (ngSubmit)="submit()">
+          <div class="auth-field">
+            <input
+              type="text"
+              [(ngModel)]="fullName"
+              name="fullName"
+              required
+              autocomplete="name"
+              [placeholder]="'auth.signUp.fullName' | transloco"
+            />
+          </div>
+
           <div class="auth-field">
             <input
               type="email"
@@ -63,7 +75,8 @@
               [(ngModel)]="password"
               name="password"
               required
-              autocomplete="current-password"
+              minlength="8"
+              autocomplete="new-password"
               [placeholder]="'auth.login.password' | transloco"
             />
             <button
@@ -76,23 +89,44 @@
             </button>
           </div>
 
-          <p class="auth-forgot">
-            {{ 'auth.login.forgotPasswordPrefix' | transloco }}
-            <button type="button" class="inline-link">{{ 'auth.login.forgotPasswordLink' | transloco }}</button>
-          </p>
+          <div class="auth-field auth-field-password">
+            <input
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              [(ngModel)]="confirmPassword"
+              name="confirmPassword"
+              required
+              minlength="8"
+              autocomplete="new-password"
+              [placeholder]="'auth.signUp.confirmPassword' | transloco"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="toggleConfirmPasswordVisibility()"
+              [attr.aria-label]="'common.togglePasswordVisibility' | transloco"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">{{
+                showConfirmPassword() ? 'visibility_off' : 'visibility'
+              }}</span>
+            </button>
+          </div>
 
           @if (error()) {
             <p class="auth-error">{{ error() }}</p>
           }
 
-          <button type="submit" class="auth-submit" [disabled]="submitting() || !email().trim() || !password()">
-            {{ (submitting() ? 'auth.login.submitting' : 'auth.login.submit') | transloco }}
+          <button
+            type="submit"
+            class="auth-submit"
+            [disabled]="submitting() || !fullName().trim() || !email().trim() || password().length < 8 || !confirmPassword()"
+          >
+            {{ (submitting() ? 'auth.signUp.submitting' : 'auth.signUp.submit') | transloco }}
           </button>
         </form>
 
         <p class="auth-register">
-          {{ 'auth.login.notRegisteredPrefix' | transloco }}
-          <button type="button" class="inline-link" routerLink="/signup">{{ 'auth.login.newAccountLink' | transloco }}</button>
+          {{ 'auth.signUp.alreadyHaveAccountPrefix' | transloco }}
+          <button type="button" class="inline-link" routerLink="/login">{{ 'auth.signUp.signInLink' | transloco }}</button>
         </p>
       }
     </div>

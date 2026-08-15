@@ -9,4 +9,12 @@ export const environment = {
   mapProvider: 'leaflet' as MapProviderKind,
   /** Required only when mapProvider is 'google'. */
   googleMapsApiKey: '',
+  /**
+   * OAuth2 Client ID from Google Cloud Console (APIs & Services > Credentials > OAuth client ID,
+   * type "Web application", with this app's origin(s) under Authorized JavaScript origins — no
+   * redirect URI needed, the token-client popup flow doesn't use one). Safe to expose client-side
+   * by design. Required for the "Sign in/up with Google" buttons to work at all; left blank they
+   * fail with a clear error instead of silently doing nothing.
+   */
+  googleClientId: '',
 };

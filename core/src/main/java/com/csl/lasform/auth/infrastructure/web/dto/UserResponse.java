@@ -11,6 +11,7 @@ public record UserResponse(
         String orgId,
         String email,
         String displayName,
+        String avatarUrl,
         UserStatus status,
         boolean mustResetPassword,
         Instant createdAt) {
@@ -21,6 +22,7 @@ public record UserResponse(
                 user.getOrgId(),
                 user.getEmail(),
                 user.getDisplayName(),
+                user.getAvatarUrl(),
                 user.getStatus(),
                 user.isMustResetPassword(),
                 user.getCreatedAt());

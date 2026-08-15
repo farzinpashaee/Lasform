@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { CurrentUser, JwtClaims, TokenResponse } from './auth.model';
+import { CurrentUser, GoogleAuthResponse, JwtClaims, TokenResponse } from './auth.model';
 import { decodeJwtPayload } from './jwt.util';
 
 const REFRESH_TOKEN_STORAGE_KEY = 'lasform.refreshToken';
@@ -83,6 +83,29 @@ export class AuthService {
   /** Only clears local session state — callers navigate afterward themselves (a logout button and a failed silent refresh want different destinations). */
   logout(): void {
     this.clearSession();
+  }
+
+  /**
+   * Backs both "Sign in with Google" and "Sign up with Google" — same endpoint, same response
+   * shape either way (see core/README.md's "Google sign-in/sign-up" section for why). `accessToken`
+   * is the Google OAuth2 token from GoogleAuthService, not a Lasform token. Resolves `true` when
+   * the account is newly created or still pending admin approval (no session was established —
+   * the caller should show that state, not redirect), `false` once the session is live.
+   */
+  loginWithGoogle(googleAccessToken: string): Observable<boolean> {
+    return this.http.post<GoogleAuthResponse>(`${this.authUrl}/google`, { accessToken: googleAccessToken }).pipe(
+      tap((response) => {
+        if (!response.pendingApproval && response.accessToken && response.tokenType && response.expiresIn != null) {
+          this.applyTokenResponse({
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken ?? null,
+            tokenType: response.tokenType,
+            expiresIn: response.expiresIn,
+          });
+        }
+      }),
+      map((response) => response.pendingApproval),
+    );
   }
 
   /**

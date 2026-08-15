@@ -1,6 +1,5 @@
-// Standalone route (not nested under management-shell/map-page), so the --text-primary etc.
-// custom properties those define aren't in scope here — every var() below carries its own
-// light-theme fallback instead, matching the rest of the app's default palette.
+// Standalone route (not nested under management-shell/map-page) — see login-page.scss for why
+// every var() below carries its own light-theme fallback.
 
 .auth-page {
   display: flex;
@@ -59,6 +58,7 @@
   padding: 40px 48px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .auth-title {
@@ -189,12 +189,6 @@
   }
 }
 
-.auth-forgot {
-  margin: -4px 0 16px;
-  font-size: 12px;
-  color: var(--text-secondary, #5f6368);
-}
-
 .inline-link {
   border: none;
   background: transparent;
@@ -216,7 +210,9 @@
 }
 
 .auth-submit {
+  display: block;
   width: 100%;
+  box-sizing: border-box;
   border: none;
   border-radius: 4px;
   padding: 11px;
@@ -225,6 +221,8 @@
   color: #fff;
   background: #da5050;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
 
   &:hover:not(:disabled) {
     background: #c23f3f;
@@ -235,6 +233,10 @@
     color: var(--disabled-text, #80868b);
     cursor: default;
   }
+}
+
+.auth-submit-link {
+  margin-top: 8px;
 }
 
 .auth-register {

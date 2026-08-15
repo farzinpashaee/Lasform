@@ -9,4 +9,6 @@ export const environment = {
   mapProvider: 'leaflet' as MapProviderKind,
   /** Required only when mapProvider is 'google'. */
   googleMapsApiKey: '',
+  /** See environment.ts for what this is and how to obtain one. */
+  googleClientId: '',
 };

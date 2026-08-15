@@ -52,6 +52,30 @@ gets `mustResetPassword=true`. Their access token still carries their real permi
 with 403 (`password_reset_required`) until `POST /api/auth/reset-password` clears the flag. This is
 a single filter, not a check repeated in every controller.
 
+### Google sign-in/sign-up
+
+```
+POST /api/auth/google {accessToken}
+  → accessToken is a Google OAuth2 access token obtained client-side via Google Identity
+    Services' initTokenClient (scope: openid email profile) — see web-face's GoogleAuthService
+  → GoogleUserInfoClient calls Google's userinfo endpoint with it as a Bearer token; a
+    successful response IS the proof the token is genuine (Google rejects anything
+    expired/revoked/malformed before we'd see a body) — no local JWKS/signature verification
+  → look up the returned email:
+      no account yet        → create one (DISABLED, VIEWER-only, no password — see
+                               UserManagementService#signUpViaGoogle) → {pendingApproval: true}
+      account exists, not ACTIVE → same {pendingApproval: true}, no tokens issued
+      account exists, ACTIVE     → {pendingApproval: false, accessToken, refreshToken, ...},
+                                    same as a normal login, minus the password check
+```
+
+One endpoint backs both the "Sign in with Google" and "Sign up with Google" buttons — the two
+only ever differed by which case above applies, not by anything the frontend needs to decide
+ahead of time. Accounts created this way have `passwordHash = null`; `AuthenticationService.login`
+guards against calling the password encoder on that. Requires a Google OAuth2 Client ID configured
+on the **frontend** (`googleClientId` in `environment.ts`) — the backend needs no matching config
+since it doesn't check the token's audience (see the "Known gaps" note below).
+
 ### Refresh token storage: DB, not Redis
 
 Refresh tokens are stored in Mongo (`refresh_tokens` collection) rather than Redis. Tradeoff: Mongo
@@ -76,6 +100,9 @@ All in `application.yml`, overridable via env var (Spring's relaxed binding, e.g
 | `lasform.seed.enabled` | `LASFORM_SEED_ENABLED` | `true` | Turn off for e.g. a read replica. |
 | `lasform.org.name` | `LASFORM_ORG_NAME` | `Lasform` | Name of the single org created on first run. |
 | `lasform.admin.email` / `lasform.admin.password` | `LASFORM_ADMIN_EMAIL` / `LASFORM_ADMIN_PASSWORD` | *(none)* | Initial SUPER_ADMIN, created once on first run. Unset → `AuthSeeder` logs a warning and skips creating it, rather than guessing. |
+
+Google sign-in has no backend config — see the "Google sign-in/sign-up" section above. The Client
+ID it needs lives entirely on the frontend (`googleClientId` in `web-face/src/environments`).
 
 ### Adding a new permission-gated endpoint
 
@@ -109,3 +136,9 @@ All in `application.yml`, overridable via env var (Spring's relaxed binding, e.g
   API) don't exist — `role:manage` is seeded but nothing currently checks it.
 - Users can only reset **their own** password via `/api/auth/reset-password`; there's no
   admin-initiated "force a reset" or "revoke all sessions" endpoint yet.
+- **Google auth doesn't check the access token's audience.** `GoogleUserInfoClient` trusts any
+  access token Google's userinfo endpoint accepts, without confirming it was minted for *our*
+  Client ID specifically (there's no `lasform.google.*` backend config to check against). Accepted
+  for a single-purpose app; add an audience check (Google's `tokeninfo` endpoint, or switch to
+  verifying a signed ID token instead of an access token) before this app is ever a shared backend
+  for multiple frontends/clients.

@@ -29,3 +29,12 @@ export interface CurrentUser {
   email: string;
   displayName: string | null;
 }
+
+/** Mirrors com.csl.lasform.auth.infrastructure.web.dto.GoogleAuthResponse. Token fields are absent when pendingApproval is true. */
+export interface GoogleAuthResponse {
+  pendingApproval: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  tokenType?: string;
+  expiresIn?: number;
+}

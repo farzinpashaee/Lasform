@@ -10,8 +10,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.csl.lasform.auth.application.AccessTokenResult;
 import com.csl.lasform.auth.application.AuthenticationService;
+import com.csl.lasform.auth.application.GoogleAuthResult;
 import com.csl.lasform.auth.application.LoginResult;
+import com.csl.lasform.auth.infrastructure.google.GoogleUserInfo;
+import com.csl.lasform.auth.infrastructure.google.GoogleUserInfoClient;
 import com.csl.lasform.auth.infrastructure.security.JwtPrincipal;
+import com.csl.lasform.auth.infrastructure.web.dto.GoogleAuthRequest;
+import com.csl.lasform.auth.infrastructure.web.dto.GoogleAuthResponse;
 import com.csl.lasform.auth.infrastructure.web.dto.LoginRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.RefreshRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.ResetPasswordRequest;
@@ -21,7 +26,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * No {@code @PreAuthorize} on any of these: login/refresh must work for a caller who isn't
+ * No {@code @PreAuthorize} on any of these: login/refresh/google must work for a caller who isn't
  * authenticated yet, and reset-password must work for a caller whose only permission-gated
  * capability is that endpoint (see PasswordResetEnforcementFilter — it's what actually restricts
  * everything else while {@code mustResetPassword} is true, not a permission check here).
@@ -32,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthenticationService authenticationService;
+    private final GoogleUserInfoClient googleUserInfoClient;
 
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
@@ -52,5 +58,20 @@ public class AuthController {
         }
         authenticationService.resetPassword(principal.userId(), request.newPassword());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Backs both the "Sign in with Google" and "Sign up with Google" buttons — same request, same
+     * response shape; see AuthenticationService#googleAuth for why the two flows collapse into one.
+     */
+    @PostMapping("/google")
+    public GoogleAuthResponse google(@Valid @RequestBody GoogleAuthRequest request) {
+        GoogleUserInfo info = googleUserInfoClient.fetchUserInfo(request.accessToken());
+        GoogleAuthResult result = authenticationService.googleAuth(info);
+        if (result.pendingApproval()) {
+            return GoogleAuthResponse.pending();
+        }
+        LoginResult tokens = result.tokens();
+        return GoogleAuthResponse.authenticated(TokenResponse.of(tokens.accessToken(), tokens.refreshToken(), tokens.expiresInSeconds()));
     }
 }

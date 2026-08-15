@@ -21,6 +21,7 @@ import com.csl.lasform.auth.domain.repository.UserRepository;
 import com.csl.lasform.auth.infrastructure.security.JwtPrincipal;
 import com.csl.lasform.auth.infrastructure.web.dto.AssignRoleRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.CreateUserRequest;
+import com.csl.lasform.auth.infrastructure.web.dto.SignUpRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.UpdateProfileRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.UserResponse;
 
@@ -48,6 +49,20 @@ public class UserController {
     public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request, Authentication authentication) {
         JwtPrincipal principal = (JwtPrincipal) authentication.getPrincipal();
         User created = userManagementService.createUser(principal.orgId(), request.email(), request.temporaryPassword());
+        return ResponseEntity.created(
+                        ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{id}").buildAndExpand(created.getId()).toUri())
+                .body(UserResponse.from(created));
+    }
+
+    /**
+     * Public self-registration — no {@code @PreAuthorize}, same {@code permitAll()} pattern as
+     * {@code /me} below. The created account is {@code DISABLED} with only {@code VIEWER}
+     * (see UserManagementService#signUp), so it can't be used to log in until an admin activates
+     * it; there's nothing sensitive to protect by requiring auth here.
+     */
+    @PostMapping("/signup")
+    public ResponseEntity<UserResponse> signUp(@Valid @RequestBody SignUpRequest request) {
+        User created = userManagementService.signUp(request.fullName(), request.email(), request.password());
         return ResponseEntity.created(
                         ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{id}").buildAndExpand(created.getId()).toUri())
                 .body(UserResponse.from(created));

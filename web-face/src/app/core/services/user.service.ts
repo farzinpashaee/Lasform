@@ -10,6 +10,12 @@ export interface CreateUserRequest {
   temporaryPassword: string;
 }
 
+export interface SignUpRequest {
+  fullName: string;
+  email: string;
+  password: string;
+}
+
 /**
  * Lives under {@link environment.authApiUrl} (`/api/users`), not `/api/v1` like CrudService's
  * resources — this is part of the auth module, not the versioned entity API.
@@ -37,5 +43,13 @@ export class UserService {
   /** No special permission — any authenticated user may edit their own displayName. */
   updateOwnProfile(displayName: string): Observable<User> {
     return this.http.patch<User>(`${this.resourceUrl}/me`, { displayName });
+  }
+
+  /**
+   * Public self-registration — no auth required. The created account is DISABLED with only the
+   * VIEWER role, so it can't sign in until an admin activates it (see core/README.md on the backend).
+   */
+  signUp(request: SignUpRequest): Observable<User> {
+    return this.http.post<User>(`${this.resourceUrl}/signup`, request);
   }
 }

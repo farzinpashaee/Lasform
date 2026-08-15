@@ -39,6 +39,8 @@ public class UserDocument {
 
     private String displayName;
 
+    private String avatarUrl;
+
     private String passwordHash;
 
     private UserStatus status;
