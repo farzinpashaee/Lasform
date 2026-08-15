@@ -67,6 +67,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly locating = signal(false);
   protected readonly clusteringEnabled = signal(false);
   protected readonly mapType = signal<MapType>('roadmap');
+  protected readonly mapTypeMenuOpen = signal(false);
+  protected readonly mapTypeOptions: { type: MapType; labelKey: string; icon: string }[] = [
+    { type: 'roadmap', labelKey: 'map.mapView', icon: 'map' },
+    { type: 'satellite', labelKey: 'map.satelliteView', icon: 'satellite_alt' },
+    { type: 'terrain', labelKey: 'map.terrainView', icon: 'terrain' },
+  ];
   protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
 
   protected readonly mapContextMenu = signal<MapContextMenuState | null>(null);
@@ -129,6 +135,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   @HostListener('document:keydown.escape')
   protected closeOverlays(): void {
     this.mapContextMenu.set(null);
+    this.mapTypeMenuOpen.set(false);
     this.closeAddCategoryModal();
     this.closeAddLocationModal();
     this.closeEditModal();
@@ -181,10 +188,18 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.mapProvider.setClusteringEnabled(this.clusteringEnabled());
   }
 
-  protected toggleMapType(): void {
-    const next: MapType = this.mapType() === 'roadmap' ? 'satellite' : 'roadmap';
-    this.mapType.set(next);
-    this.mapProvider.setMapType(next);
+  protected toggleMapTypeMenu(): void {
+    this.mapTypeMenuOpen.update((open) => !open);
+  }
+
+  protected closeMapTypeMenu(): void {
+    this.mapTypeMenuOpen.set(false);
+  }
+
+  protected selectMapType(type: MapType): void {
+    this.mapType.set(type);
+    this.mapProvider.setMapType(type);
+    this.closeMapTypeMenu();
   }
 
   protected toggleDarkMode(): void {

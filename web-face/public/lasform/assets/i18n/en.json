@@ -41,6 +41,8 @@
     "myLocation": "My location",
     "satelliteView": "Satellite view",
     "mapView": "Map view",
+    "terrainView": "Terrain view",
+    "changeMapType": "Change map type",
     "toggleClustering": "Toggle marker clustering",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",

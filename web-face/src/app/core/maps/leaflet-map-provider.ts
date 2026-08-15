@@ -6,6 +6,9 @@ import { MapContextMenuEvent, MapMarkerData, MapProvider, MapType, MapViewOption
 const ROADMAP_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 /** Esri's free World Imagery service — no API key required. */
 const SATELLITE_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+/** OpenTopoMap — free, no API key, but its tile server only renders up to z17. */
+const TERRAIN_TILE_URL = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+const TERRAIN_MAX_ZOOM = 17;
 
 // Leaflet's default icon resolves its image URLs relative to the stylesheet that
 // declared it, which esbuild's bundling breaks — markers render as a broken-image
@@ -27,6 +30,7 @@ private map?: L.Map;
   private mapType: MapType = 'roadmap';
   private roadmapLayer?: L.TileLayer;
   private satelliteLayer?: L.TileLayer;
+  private terrainLayer?: L.TileLayer;
 
   initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
     this.map = L.map(container, {
@@ -157,25 +161,30 @@ private map?: L.Map;
     if (!this.map || this.mapType === type) {
       return;
     }
+    const previousLayer = this.layerFor(this.mapType);
     this.mapType = type;
-
-    if (type === 'satellite') {
-      this.roadmapLayer?.remove();
-      this.ensureSatelliteLayer().addTo(this.map);
-    } else {
-      this.satelliteLayer?.remove();
-      this.roadmapLayer?.addTo(this.map);
-    }
+    previousLayer.remove();
+    this.layerFor(type).addTo(this.map);
   }
 
-  private ensureSatelliteLayer(): L.TileLayer {
-    if (!this.satelliteLayer) {
-      this.satelliteLayer = L.tileLayer(SATELLITE_TILE_URL, {
-        maxZoom: 19,
-        attribution: 'Tiles &copy; Esri',
-      });
+  /** Lazily creates (and caches) the tile layer for a map type — only the roadmap layer exists eagerly, from initialize(). */
+  private layerFor(type: MapType): L.TileLayer {
+    if (type === 'satellite') {
+      if (!this.satelliteLayer) {
+        this.satelliteLayer = L.tileLayer(SATELLITE_TILE_URL, { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
+      }
+      return this.satelliteLayer;
     }
-    return this.satelliteLayer;
+    if (type === 'terrain') {
+      if (!this.terrainLayer) {
+        this.terrainLayer = L.tileLayer(TERRAIN_TILE_URL, {
+          maxZoom: TERRAIN_MAX_ZOOM,
+          attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap (CC-BY-SA)',
+        });
+      }
+      return this.terrainLayer;
+    }
+    return this.roadmapLayer!;
   }
 
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void {
@@ -204,5 +213,6 @@ private map?: L.Map;
     this.mapType = 'roadmap';
     this.roadmapLayer = undefined;
     this.satelliteLayer = undefined;
+    this.terrainLayer = undefined;
   }
 }

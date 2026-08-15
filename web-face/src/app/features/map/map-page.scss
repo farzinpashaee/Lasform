@@ -55,9 +55,10 @@ $radius: 8px;
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
-.map-page.dark-theme.satellite-view .map-container {
-  /* Inverting satellite photography looks broken (photo-negative), unlike line-drawn roadmap
-     tiles — leave imagery untouched regardless of theme, same as every other map product does. */
+.map-page.dark-theme.imagery-view .map-container {
+  /* Inverting satellite photography or terrain's colored shading/contours looks broken
+     (photo-negative), unlike line-drawn roadmap tiles — leave imagery untouched regardless of
+     theme, same as every other map product does. */
   filter: none;
 }
 
@@ -497,6 +498,36 @@ $radius: 8px;
   &:hover {
     background: var(--hover);
   }
+
+  &.active {
+    color: var(--accent);
+
+    .material-symbols-outlined:first-child {
+      color: var(--accent);
+    }
+  }
+}
+
+.map-type-check {
+  margin-left: auto;
+}
+
+.map-type-wrapper {
+  position: relative;
+}
+
+.map-type-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 901;
+  width: 180px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
 }
 
 .modal-backdrop {

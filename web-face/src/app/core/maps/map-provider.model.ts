@@ -1,7 +1,7 @@
 /** Supported map rendering backends; selected via environment.mapProvider. */
 export type MapProviderKind = 'leaflet' | 'google';
 
-export type MapType = 'roadmap' | 'satellite';
+export type MapType = 'roadmap' | 'satellite' | 'terrain';
 
 export interface MapViewOptions {
   center: { lat: number; lng: number };
