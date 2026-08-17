@@ -574,6 +574,19 @@ export class MapPage implements AfterViewInit, OnDestroy {
     return device.deviceIdentifier || 'Device';
   }
 
+  /** 5 booleans (filled/empty), rounded to the nearest star — null for devices or unreviewed locations. */
+  protected resultRatingStars(hit: SearchHit): boolean[] | null {
+    if (hit.type !== 'LOCATION') {
+      return null;
+    }
+    const location = hit.data as Location;
+    if (!location.reviewCount) {
+      return null;
+    }
+    const filled = Math.round(location.averageRating ?? 0);
+    return Array.from({ length: 5 }, (_, i) => i < filled);
+  }
+
   protected resultDetailFields(hit: SearchHit): { label: string; value: string }[] {
     if (hit.type === 'LOCATION') {
       return this.locationDetailFields(hit.data as Location);

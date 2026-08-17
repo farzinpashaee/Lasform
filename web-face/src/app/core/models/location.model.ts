@@ -14,4 +14,7 @@ export interface Location extends Auditable {
   recordedAt: string;
   receivedAt?: string;
   metadata?: Record<string, unknown>;
+  /** Denormalized from published reviews — see com.csl.lasform.review. */
+  averageRating?: number;
+  reviewCount?: number;
 }

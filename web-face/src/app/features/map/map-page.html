@@ -41,6 +41,15 @@
                           <ng-container [ngTemplateOutlet]="entityIcon" [ngTemplateOutletContext]="{ hit }" />
                           <span class="result-text">
                             <span class="result-title">{{ resultTitle(hit) }}</span>
+                            @if (resultRatingStars(hit); as stars) {
+                              <span class="result-rating">
+                                @for (filled of stars; track $index) {
+                                  <span class="material-symbols-outlined rating-star" [class.filled]="filled" aria-hidden="true">
+                                    star
+                                  </span>
+                                }
+                              </span>
+                            }
                             <span class="result-subtitle">{{ resultSubtitle(hit) }}</span>
                           </span>
                         </button>

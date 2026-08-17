@@ -13,6 +13,7 @@ $radius: 8px;
   --disabled-bg: #dadce0;
   --disabled-text: #80868b;
   --scrollbar-thumb: #dadce0;
+  --scrollbar-thumb-hover: #bdc1c6;
   --device-icon-bg: #e6f4ea;
   --device-icon-color: #188038;
   --backdrop: rgba(0, 0, 0, 0.35);
@@ -37,6 +38,7 @@ $radius: 8px;
   --disabled-bg: #3c4043;
   --disabled-text: #6b6f73;
   --scrollbar-thumb: #5f6368;
+  --scrollbar-thumb-hover: #757a80;
   --device-icon-bg: #1e3a2a;
   --device-icon-color: #81c995;
   --backdrop: rgba(0, 0, 0, 0.6);
@@ -159,10 +161,14 @@ $radius: 8px;
 }
 
 @mixin thin-scrollbar {
-  scrollbar-width: thin;
-
+  // Deliberately *not* setting scrollbar-width/scrollbar-color here: on current
+  // Chromium/Windows, an element with those standard properties set renders via the
+  // new unified scrollbar model and ignores the ::-webkit-scrollbar-* pseudo-elements
+  // below entirely — which flattens the thumb to a plain flush bar with no radius or
+  // inset gap. Firefox (which only honors the standard properties) falls back to its
+  // default scrollbar; an accepted trade-off for the floating-pill look everywhere else.
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 12px;
   }
 
   &::-webkit-scrollbar-button {
@@ -176,8 +182,16 @@ $radius: 8px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border-radius: 4px;
+    /* A transparent border + padding-box clip insets the visible pill within the
+       track, so it reads as a floating rounded thumb instead of a flush-edge bar. */
+    background-color: var(--scrollbar-thumb);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover, var(--scrollbar-thumb));
   }
 }
 
@@ -364,6 +378,21 @@ $radius: 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.result-rating {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.rating-star {
+  font-size: 14px;
+  color: var(--border);
+
+  &.filled {
+    color: #fbbc04;
+  }
 }
 
 .icon-button {
