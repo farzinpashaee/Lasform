@@ -213,3 +213,35 @@ silently assumed away.
 | `review:moderate` | OPERATOR, ADMIN, SUPER_ADMIN — queue + approve/reject |
 
 No new roles — same 5 system roles as everything else in the app.
+
+## Device event ingestion
+
+`com.csl.lasform.ingestion` — lets a device push a reading in its own wire format instead of
+this app's internal `Event` shape, alongside the existing raw `POST /api/v1/events`:
+
+```
+POST /api/v1/events/sensorthings {"value": [Observation, ...]}   — OGC SensorThings API
+POST /api/v1/events/geojson      {"type": "FeatureCollection", "features": [Feature, ...]}
+  → EventIngestAdapter<T> translates the wire format into Event(s)
+    (type=LOCATION_RECEIVED, source=DEVICE; unmapped fields land in Event.payload)
+  → EventIngestionService persists them (EventService.createAll) and, for any event whose
+    deviceId matches a registered Device (Device.deviceIdentifier), updates that device's
+    lastKnownPoint/lastSeenAt/batteryLevel — best-effort, silently skipped if no match
+```
+
+Both collection shapes mirror their own protocol's convention (SensorThings' own `{"value":
+[...]}` collection response shape; GeoJSON's `FeatureCollection`) rather than a bare JSON array —
+even a single reading is posted as a one-element collection.
+
+**SensorThings support is a pragmatic subset**, not the full entity-linking API (no
+Things/Datastreams/ObservedProperties as separately queryable resources) — `Observation.result` is
+read as a map when it's telemetry-shaped (`speed`/`heading`/`accuracy`/`altitude`/`batteryLevel`
+extracted, the rest kept as opaque payload), and the device is identified via a pragmatic
+`parameters.deviceId` extension, falling back to `Datastream.Thing.name`/`@iot.id`.
+
+**Same open-access precedent as `POST /api/v1/events`** (see "Known gaps" above) — no
+`@PreAuthorize` on either endpoint, for the same reason: devices have no credential scheme yet.
+
+**`Event.deviceId` is treated as `Device.deviceIdentifier`** (the hardware/external identifier a
+real device would actually know about itself), not Mongo's internal `Device.id` — consistent with
+there being no FK enforcement between the two collections either way.
