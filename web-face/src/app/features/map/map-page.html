@@ -60,15 +60,6 @@
 
                 <div class="results-slide details-slide">
                   @if (selectedResult(); as hit) {
-                    <div class="details-slide-header">
-                      <button type="button" class="panel-action-button" (click)="closeDetails()">
-                        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-                        <span>{{ 'map.backToResults' | transloco }}</span>
-                      </button>
-                      <div class="details-actions">
-                        <ng-container [ngTemplateOutlet]="entityActions" [ngTemplateOutletContext]="{ hit }" />
-                      </div>
-                    </div>
                     <ng-container [ngTemplateOutlet]="detailsBody" [ngTemplateOutletContext]="{ hit }" />
                   }
                 </div>
@@ -76,43 +67,11 @@
             }
           } @else if (selectedResult(); as hit) {
             <div class="details-standalone">
-              <div class="details-actions details-actions-standalone">
-                <ng-container [ngTemplateOutlet]="entityActions" [ngTemplateOutletContext]="{ hit }" />
-                <button
-                  type="button"
-                  class="icon-action-button"
-                  [attr.aria-label]="'common.close' | transloco"
-                  (click)="closeDetails()"
-                >
-                  <span class="material-symbols-outlined" aria-hidden="true">close</span>
-                </button>
-              </div>
               <ng-container [ngTemplateOutlet]="detailsBody" [ngTemplateOutletContext]="{ hit }" />
             </div>
           }
         </div>
       }
-
-      <ng-template #entityActions let-hit="hit">
-        @if (canEditHit(hit)) {
-          <button
-            type="button"
-            class="icon-action-button"
-            [attr.aria-label]="'common.edit' | transloco"
-            (click)="openEditModal(hit)"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-          </button>
-          <button
-            type="button"
-            class="icon-action-button icon-action-danger"
-            [attr.aria-label]="'common.delete' | transloco"
-            (click)="openDeleteConfirm(hit)"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-          </button>
-        }
-      </ng-template>
 
       <ng-template #entityIcon let-hit="hit">
         <span class="result-icon" [class.result-icon-device]="hit.type === 'DEVICE'" aria-hidden="true">
@@ -125,19 +84,140 @@
       </ng-template>
 
       <ng-template #detailsBody let-hit="hit">
-        <div class="details-header">
-          <ng-container [ngTemplateOutlet]="entityIcon" [ngTemplateOutletContext]="{ hit }" />
-          <span class="result-title">{{ resultTitle(hit) }}</span>
+        <div class="details-top-bar">
+          @if (hasSearched()) {
+            <button type="button" class="back-link" (click)="closeDetails()">
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+              <span>{{ 'map.backToResults' | transloco }}</span>
+            </button>
+          } @else {
+            <span></span>
+          }
+          <div class="details-top-actions">
+            @if (canEditHit(hit)) {
+              <div class="entity-menu-wrapper">
+                <button
+                  type="button"
+                  class="icon-action-button"
+                  [attr.aria-label]="'common.moreActions' | transloco"
+                  [attr.aria-expanded]="entityMenuOpen()"
+                  (click)="toggleEntityMenu()"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+                </button>
+                @if (entityMenuOpen()) {
+                  <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
+                  <ul class="entity-menu">
+                    <li>
+                      <button type="button" class="entity-menu-item" (click)="openEditModal(hit); closeEntityMenu()">
+                        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                        <span>{{ 'common.edit' | transloco }}</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        class="entity-menu-item entity-menu-item-danger"
+                        (click)="openDeleteConfirm(hit); closeEntityMenu()"
+                      >
+                        <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                        <span>{{ 'common.delete' | transloco }}</span>
+                      </button>
+                    </li>
+                  </ul>
+                }
+              </div>
+            }
+            <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeDetails()">
+              <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+          </div>
         </div>
 
-        <dl class="details-fields">
-          @for (field of resultDetailFields(hit); track field.label) {
-            <div class="details-field">
-              <dt>{{ field.label }}</dt>
-              <dd>{{ field.value }}</dd>
-            </div>
-          }
-        </dl>
+        <div class="details-header">
+          <ng-container [ngTemplateOutlet]="entityIcon" [ngTemplateOutletContext]="{ hit }" />
+          <div class="details-header-text">
+            <span class="result-title">{{ resultTitle(hit) }}</span>
+            @if (resultRatingStars(hit); as stars) {
+              <span class="result-rating">
+                @for (filled of stars; track $index) {
+                  <span class="material-symbols-outlined rating-star" [class.filled]="filled" aria-hidden="true">star</span>
+                }
+              </span>
+            }
+          </div>
+        </div>
+
+        @if (primaryCategoryLabel(hit); as tag) {
+          <div class="details-tag-row">
+            <span class="category-chip">{{ tag }}</span>
+          </div>
+        }
+
+        @if (hit.type === 'LOCATION') {
+          <div class="details-tabs" role="tablist">
+            <button
+              type="button"
+              class="details-tab"
+              role="tab"
+              [class.active]="detailsTab() === 'overview'"
+              (click)="selectDetailsTab('overview', hit)"
+            >
+              {{ 'map.tabs.overview' | transloco }}
+            </button>
+            <button
+              type="button"
+              class="details-tab"
+              role="tab"
+              [class.active]="detailsTab() === 'reviews'"
+              (click)="selectDetailsTab('reviews', hit)"
+            >
+              {{ 'map.tabs.reviews' | transloco }}
+            </button>
+          </div>
+        }
+
+        @if (hit.type !== 'LOCATION' || detailsTab() === 'overview') {
+          <div class="overview-panel">
+            @if (locationDescription(hit); as description) {
+              <p class="overview-description">{{ description }}</p>
+            }
+            <dl class="details-fields">
+              @for (field of resultDetailFields(hit); track field.label) {
+                <div class="details-field">
+                  <dt>{{ field.label }}</dt>
+                  <dd>{{ field.value }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+        } @else {
+          <div class="reviews-panel">
+            @if (loadingReviews()) {
+              <div class="results-status">{{ 'map.reviews.loading' | transloco }}</div>
+            } @else if (reviewsLoadError()) {
+              <div class="results-status results-error">{{ reviewsLoadError() }}</div>
+            } @else if (reviews().length === 0) {
+              <div class="results-status">{{ 'map.reviews.empty' | transloco }}</div>
+            } @else {
+              <ul class="reviews-list">
+                @for (review of reviews(); track review.id) {
+                  <li class="review-item">
+                    <span class="result-rating">
+                      @for (filled of starsForRating(review.rating); track $index) {
+                        <span class="material-symbols-outlined rating-star" [class.filled]="filled" aria-hidden="true">star</span>
+                      }
+                    </span>
+                    @if (review.reviewText) {
+                      <p class="review-text">{{ review.reviewText }}</p>
+                    }
+                    <span class="review-date">{{ review.createdAt | date: 'mediumDate' }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
       </ng-template>
     </div>
 

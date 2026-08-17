@@ -1,6 +1,16 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, inject, signal, viewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -11,13 +21,17 @@ import { Category } from '../../core/models/category.model';
 import { Device } from '../../core/models/device.model';
 import { DeviceStatus } from '../../core/models/enums';
 import { Location } from '../../core/models/location.model';
+import { Review } from '../../core/models/review.model';
 import { SearchHit } from '../../core/models/search.model';
 import { CategoryService } from '../../core/services/category.service';
 import { DeviceService } from '../../core/services/device.service';
 import { LocationService } from '../../core/services/location.service';
+import { ReviewService } from '../../core/services/review.service';
 import { SearchService } from '../../core/services/search.service';
 import { TagService } from '../../core/services/tag.service';
 import { AccountMenu } from '../../shared/account-menu/account-menu';
+
+type DetailsTab = 'overview' | 'reviews';
 
 const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
 
@@ -32,7 +46,7 @@ interface MapContextMenuState {
 
 @Component({
   selector: 'app-map-page',
-  imports: [FormsModule, NgTemplateOutlet, TranslocoPipe, AccountMenu],
+  imports: [FormsModule, NgTemplateOutlet, TranslocoPipe, AccountMenu, DatePipe],
   templateUrl: './map-page.html',
   styleUrl: './map-page.scss',
 })
@@ -48,6 +62,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private readonly categoryService = inject(CategoryService);
   private readonly tagService = inject(TagService);
   private readonly searchService = inject(SearchService);
+  private readonly reviewService = inject(ReviewService);
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
 
   private readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
@@ -57,6 +72,15 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private tagSuggestionTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly categories = signal<Category[]>([]);
+  protected readonly categoryMap = computed(() => {
+    const map = new Map<string, Category>();
+    for (const category of this.categories()) {
+      if (category.id) {
+        map.set(category.id, category);
+      }
+    }
+    return map;
+  });
 
   protected readonly searchQuery = signal('');
   protected readonly searchResults = signal<SearchHit[]>([]);
@@ -64,6 +88,11 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly searchError = signal<string | null>(null);
   protected readonly hasSearched = signal(false);
   protected readonly selectedResult = signal<SearchHit | null>(null);
+  protected readonly entityMenuOpen = signal(false);
+  protected readonly detailsTab = signal<DetailsTab>('overview');
+  protected readonly reviews = signal<Review[]>([]);
+  protected readonly loadingReviews = signal(false);
+  protected readonly reviewsLoadError = signal<string | null>(null);
   protected readonly locating = signal(false);
   protected readonly clusteringEnabled = signal(false);
   protected readonly mapType = signal<MapType>('roadmap');
@@ -136,6 +165,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected closeOverlays(): void {
     this.mapContextMenu.set(null);
     this.mapTypeMenuOpen.set(false);
+    this.entityMenuOpen.set(false);
     this.closeAddCategoryModal();
     this.closeAddLocationModal();
     this.closeEditModal();
@@ -156,6 +186,28 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected canEditHit(hit: SearchHit): boolean {
     return this.authService.hasPermission(hit.type === 'LOCATION' ? 'location:write' : 'device:write');
+  }
+
+  protected toggleEntityMenu(): void {
+    this.entityMenuOpen.update((open) => !open);
+  }
+
+  protected closeEntityMenu(): void {
+    this.entityMenuOpen.set(false);
+  }
+
+  protected categoryLabel(categoryId: string): string {
+    const category = this.categoryMap().get(categoryId);
+    if (!category) {
+      return categoryId;
+    }
+    return category.marker ? `${category.marker} ${category.name}` : category.name;
+  }
+
+  /** The single tag chip shown under the name in the details panel — first category, if any. */
+  protected primaryCategoryLabel(hit: SearchHit): string | null {
+    const categoryIds = hit.type === 'LOCATION' ? (hit.data as Location).categoryIds : (hit.data as Device).categoryIds;
+    return categoryIds && categoryIds.length > 0 ? this.categoryLabel(categoryIds[0]) : null;
   }
 
   private loadLocationMarkers(): void {
@@ -435,6 +487,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected selectResult(hit: SearchHit): void {
     this.selectedResult.set(hit);
+    this.resetDetailsPanelState();
 
     const point = this.hitPoint(hit);
     if (!point) {
@@ -449,6 +502,38 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected closeDetails(): void {
     this.selectedResult.set(null);
+    this.entityMenuOpen.set(false);
+  }
+
+  protected selectDetailsTab(tab: DetailsTab, hit: SearchHit): void {
+    this.detailsTab.set(tab);
+    if (tab === 'reviews' && hit.type === 'LOCATION' && hit.data.id) {
+      this.loadReviews(hit.data.id);
+    }
+  }
+
+  private loadReviews(locationId: string): void {
+    this.loadingReviews.set(true);
+    this.reviewsLoadError.set(null);
+    this.reviewService.listForLocation(locationId, { size: 50, sort: 'createdAt,desc' }).subscribe({
+      next: (page) => {
+        this.loadingReviews.set(false);
+        this.reviews.set(page.content);
+      },
+      error: () => {
+        this.loadingReviews.set(false);
+        this.reviewsLoadError.set(this.transloco.translate('map.reviews.loadFailed'));
+      },
+    });
+  }
+
+  protected locationDescription(hit: SearchHit): string | null {
+    return hit.type === 'LOCATION' ? (hit.data as Location).description || null : null;
+  }
+
+  protected starsForRating(rating: number): boolean[] {
+    const filled = Math.round(rating);
+    return Array.from({ length: 5 }, (_, i) => i < filled);
   }
 
   protected openEditModal(hit: SearchHit): void {
@@ -555,7 +640,16 @@ export class MapPage implements AfterViewInit, OnDestroy {
     const hit = source.find((candidate) => candidate.data.id === id);
     if (hit) {
       this.selectedResult.set(hit);
+      this.resetDetailsPanelState();
     }
+  }
+
+  /** Clears the previous selection's tab/menu/reviews state so it doesn't leak into a newly selected hit. */
+  private resetDetailsPanelState(): void {
+    this.detailsTab.set('overview');
+    this.entityMenuOpen.set(false);
+    this.reviews.set([]);
+    this.reviewsLoadError.set(null);
   }
 
   protected resultTitle(hit: SearchHit): string {
@@ -583,8 +677,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (!location.reviewCount) {
       return null;
     }
-    const filled = Math.round(location.averageRating ?? 0);
-    return Array.from({ length: 5 }, (_, i) => i < filled);
+    return this.starsForRating(location.averageRating ?? 0);
   }
 
   protected resultDetailFields(hit: SearchHit): { label: string; value: string }[] {
@@ -594,56 +687,52 @@ export class MapPage implements AfterViewInit, OnDestroy {
     return this.deviceDetailFields(hit.data as Device);
   }
 
+  /** Description is rendered separately, unlabeled, above these fields — see locationDescription(). */
   private locationDetailFields(location: Location): { label: string; value: string }[] {
     const fields: { label: string; value: string }[] = [];
-    if (location.description) {
-      fields.push({ label: this.transloco.translate('map.detail.description'), value: location.description });
-    }
     const address = [location.address?.address, location.address?.city, location.address?.country]
       .filter(Boolean)
       .join(', ');
     if (address) {
-      fields.push({ label: this.transloco.translate('map.detail.address'), value: address });
+      fields.push({ label: this.detailLabel('map.detail.address'), value: address });
     }
     const [lng, lat] = location.point.coordinates;
-    fields.push({ label: this.transloco.translate('map.detail.coordinates'), value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+    fields.push({ label: this.detailLabel('map.detail.coordinates'), value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
     if (location.recordedAt) {
-      fields.push({
-        label: this.transloco.translate('map.detail.recorded'),
-        value: new Date(location.recordedAt).toLocaleString(),
-      });
+      fields.push({ label: this.detailLabel('map.detail.recorded'), value: new Date(location.recordedAt).toLocaleString() });
     }
     if (location.tags?.length) {
-      fields.push({ label: this.transloco.translate('map.detail.tags'), value: location.tags.join(', ') });
+      fields.push({ label: this.detailLabel('map.detail.tags'), value: location.tags.join(', ') });
     }
     return fields;
   }
 
   private deviceDetailFields(device: Device): { label: string; value: string }[] {
     const fields: { label: string; value: string }[] = [
-      { label: this.transloco.translate('map.detail.identifier'), value: device.deviceIdentifier },
-      { label: this.transloco.translate('map.detail.type'), value: device.type },
+      { label: this.detailLabel('map.detail.identifier'), value: device.deviceIdentifier },
+      { label: this.detailLabel('map.detail.type'), value: device.type },
     ];
     if (device.status) {
-      fields.push({ label: this.transloco.translate('map.detail.status'), value: device.status });
+      fields.push({ label: this.detailLabel('map.detail.status'), value: device.status });
     }
     if (device.batteryLevel != null) {
-      fields.push({ label: this.transloco.translate('map.detail.battery'), value: `${device.batteryLevel}%` });
+      fields.push({ label: this.detailLabel('map.detail.battery'), value: `${device.batteryLevel}%` });
     }
     if (device.lastSeenAt) {
-      fields.push({
-        label: this.transloco.translate('map.detail.lastSeen'),
-        value: new Date(device.lastSeenAt).toLocaleString(),
-      });
+      fields.push({ label: this.detailLabel('map.detail.lastSeen'), value: new Date(device.lastSeenAt).toLocaleString() });
     }
     if (device.lastKnownPoint) {
       const [lng, lat] = device.lastKnownPoint.coordinates;
-      fields.push({ label: this.transloco.translate('map.detail.lastLocation'), value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+      fields.push({ label: this.detailLabel('map.detail.lastLocation'), value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
     }
     if (device.tags?.length) {
-      fields.push({ label: this.transloco.translate('map.detail.tags'), value: device.tags.join(', ') });
+      fields.push({ label: this.detailLabel('map.detail.tags'), value: device.tags.join(', ') });
     }
     return fields;
+  }
+
+  private detailLabel(key: string): string {
+    return `${this.transloco.translate(key)}:`;
   }
 
   private showResultsOnMap(hits: SearchHit[]): void {

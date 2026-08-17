@@ -204,53 +204,41 @@ $radius: 8px;
   @include thin-scrollbar;
 }
 
-.panel-action-button {
+.details-top-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  flex: 1;
-  min-width: 0;
+  padding: 8px 8px 0 8px;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   border: none;
+  border-radius: 4px;
   background: transparent;
-  padding: 12px 16px;
+  padding: 6px 8px;
   cursor: pointer;
   color: var(--accent);
   font-size: 14px;
   font-weight: 500;
-  text-align: left;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
 
   &:hover {
     background: var(--hover);
   }
 }
 
-.details-slide-header {
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid var(--border);
-}
-
-.details-standalone {
-  position: relative;
-
-  .details-header {
-    padding-right: 104px;
-  }
-}
-
-.details-actions {
+.details-top-actions {
   display: flex;
   align-items: center;
   gap: 4px;
   flex: 0 0 auto;
-  padding-right: 8px;
-}
-
-.details-actions-standalone {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding-right: 0;
 }
 
 .icon-action-button {
@@ -278,22 +266,136 @@ $radius: 8px;
   color: var(--danger);
 }
 
+.entity-menu-wrapper {
+  position: relative;
+}
+
+.entity-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.entity-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 901;
+  width: 160px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+}
+
+.entity-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 14px;
+  text-align: left;
+
+  .material-symbols-outlined {
+    flex: 0 0 auto;
+    font-size: 18px;
+    color: var(--text-secondary);
+  }
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.entity-menu-item-danger {
+  color: var(--danger);
+
+  .material-symbols-outlined {
+    color: var(--danger);
+  }
+}
+
 .details-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 8px 16px 0;
+}
+
+.details-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .details-header .result-title {
-  font-size: 15px;
+  font-size: 17px;
+  font-weight: 500;
   white-space: normal;
+}
+
+.details-tag-row {
+  padding: 8px 16px 0;
+}
+
+.category-chip {
+  display: inline-block;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+.details-tabs {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.details-tab {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 10px 2px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+}
+
+.overview-description {
+  margin: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
 }
 
 .details-fields {
   margin: 0;
   padding: 0 16px 16px;
-  max-height: calc(60vh - 96px);
+  max-height: 45vh;
   overflow-y: auto;
   @include thin-scrollbar;
 }
@@ -310,6 +412,7 @@ $radius: 8px;
 .details-field dt {
   margin: 0 0 2px;
   font-size: 12px;
+  font-weight: 600;
   color: var(--text-secondary);
 }
 
@@ -318,6 +421,41 @@ $radius: 8px;
   font-size: 14px;
   color: var(--text-primary);
   word-break: break-word;
+}
+
+.reviews-panel {
+  padding: 12px 16px 16px;
+}
+
+.reviews-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+  @include thin-scrollbar;
+}
+
+.review-item {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.review-text {
+  margin: 6px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.review-date {
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .result-item {

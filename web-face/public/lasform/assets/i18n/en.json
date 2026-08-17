@@ -31,7 +31,8 @@
     "removeTag": "Remove tag {{tag}}",
     "email": "Email",
     "logout": "Log out",
-    "togglePasswordVisibility": "Toggle password visibility"
+    "togglePasswordVisibility": "Toggle password visibility",
+    "moreActions": "More actions"
   },
   "map": {
     "searchPlaceholder": "Search Lasform Maps",
@@ -70,6 +71,15 @@
     "account": {
       "greeting": "Hi, {{name}}!",
       "viewProfile": "Manage your profile"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "reviews": "Reviews"
+    },
+    "reviews": {
+      "loading": "Loading reviews…",
+      "empty": "No reviews yet.",
+      "loadFailed": "Failed to load reviews. Please try again."
     },
     "detail": {
       "description": "Description",
