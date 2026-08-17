@@ -182,13 +182,16 @@ public class AuthSeeder {
                         PermissionKey.DEVICE_READ, PermissionKey.DEVICE_WRITE, PermissionKey.DEVICE_DELETE,
                         PermissionKey.LOCATION_READ, PermissionKey.LOCATION_WRITE, PermissionKey.LOCATION_DELETE,
                         PermissionKey.GEOFENCE_READ, PermissionKey.GEOFENCE_WRITE, PermissionKey.GEOFENCE_DELETE,
-                        PermissionKey.EVENT_READ));
+                        PermissionKey.EVENT_READ,
+                        PermissionKey.REVIEW_CREATE, PermissionKey.REVIEW_VIEW, PermissionKey.REVIEW_DELETE_OWN,
+                        PermissionKey.REVIEW_DELETE_OTHERS, PermissionKey.REVIEW_MODERATE));
         map.put(
                 SystemRoleName.VIEWER,
                 List.of(
                         PermissionKey.DEVICE_READ, PermissionKey.LOCATION_READ, PermissionKey.GEOFENCE_READ,
-                        PermissionKey.EVENT_READ));
-        map.put(SystemRoleName.ANONYMOUS, List.of(PermissionKey.MAP_VIEW_PUBLIC));
+                        PermissionKey.EVENT_READ,
+                        PermissionKey.REVIEW_CREATE, PermissionKey.REVIEW_VIEW, PermissionKey.REVIEW_DELETE_OWN));
+        map.put(SystemRoleName.ANONYMOUS, List.of(PermissionKey.MAP_VIEW_PUBLIC, PermissionKey.REVIEW_VIEW));
 
         return map;
     }

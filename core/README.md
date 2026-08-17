@@ -142,3 +142,74 @@ ID it needs lives entirely on the frontend (`googleClientId` in `web-face/src/en
   for a single-purpose app; add an audience check (Google's `tokeninfo` endpoint, or switch to
   verifying a signed ID token instead of an access token) before this app is ever a shared backend
   for multiple frontends/clients.
+
+## Location reviews
+
+`com.csl.lasform.review` — 1-5 star ratings (+ optional text) on a `Location`, built hexagonal
+(`domain`/`application`/`infrastructure`) like `auth`, unlike the classic entity/repository/service
+stack `Location`/`Device`/etc. use. It depends on the classic `LocationRepository` directly (there's
+no domain port for `Location` to depend on instead) to keep the two denormalized fields in sync —
+an accepted seam between the two architectural styles, not an oversight.
+
+### Moderation flow
+
+```
+POST /api/locations/{locationId}/reviews {rating, reviewText}
+  → upsert: one review per (locationId, userId) — a second submission updates the first,
+    it never creates a duplicate (enforced by a unique compound index as a DB-level safety net)
+  → always resets status → PENDING and clears any prior soft-delete, even editing an
+    already-PUBLISHED review — an edited review needs re-moderation before it counts again
+  → reviewText is HTML-escaped on write (HtmlUtils.htmlEscape) — plain text only, never
+    rendered as markup by any frontend, so this closes off stored XSS regardless of whether
+    a later frontend also escapes on output
+
+GET /api/locations/{locationId}/reviews          — public: PUBLISHED + non-deleted only
+DELETE /api/locations/{locationId}/reviews/me      — soft-delete the caller's own review
+DELETE /api/reviews/{reviewId}                     — soft-delete someone else's review
+GET /api/reviews/pending                           — moderation queue (all PENDING)
+PATCH /api/reviews/{reviewId}/status {status}      — PENDING → PUBLISHED | REJECTED only
+```
+
+**Soft delete only** — nothing is ever removed from the `reviews` collection. A delete sets
+`deleted=true`/`deletedAt`/`deletedBy`; every public/moderation query filters on `deleted=false`
+(or the specific status it needs) rather than relying on the document being absent.
+
+**Ownership is checked in the service layer, not just `@PreAuthorize`.** `review:delete_others`
+proves the caller *can* delete someone's review, not that the target isn't their own —
+`ReviewService.deleteOthers` throws `AccessDeniedException` (403) if `review.userId == callerId`,
+regardless of whether that caller also holds `review:delete_own`. Deleting your own review always
+goes through the `/me` endpoint instead.
+
+**Status transitions are one-way and PENDING-gated.** `PATCH .../status` only accepts `PUBLISHED`
+or `REJECTED` as the target (400 on anything else, including `PENDING`), and only if the review's
+*current* status is `PENDING` (400 otherwise) — there's no "unpublish"/"un-reject" transition,
+because a resubmit (`POST` again) already resets status to `PENDING` for re-moderation, which is
+the only path back into the queue.
+
+**`Location.averageRating`/`reviewCount` are recalculated, never trusted from a client**, after
+every write that could change a location's published rating set — upsert, status transition,
+delete-own, delete-others — via a Mongo aggregation (`$avg`/`$count` scoped to
+`status=PUBLISHED, deleted=false`) in `ReviewRepositoryAdapter#aggregatePublished`, never by
+loading every review into memory. `LocationController#create` also zeroes both fields on the
+Location side regardless of what a `POST /api/v1/locations` body contains, since
+`AbstractCrudService.create` saves the bound entity as-is (unlike `update`, whose field-copy
+allow-list in `LocationServiceImpl#applyUpdate` already excludes them by omission).
+
+**No transaction wraps the review write and the location update** — this app runs against a
+standalone (non-replica-set) MongoDB instance (see `application.yml`; no `MongoTransactionManager`
+bean exists), so the two are separate, sequential writes. A crash between them leaves
+`Location.averageRating`/`reviewCount` briefly stale until the next write to that location's
+reviews recalculates them. Documented here and in `ReviewService`'s class Javadoc rather than
+silently assumed away.
+
+### Permissions
+
+| Key | Who |
+|---|---|
+| `review:create` | VIEWER, OPERATOR, ADMIN, SUPER_ADMIN — write/upsert your own review |
+| `review:view` | ANONYMOUS + everyone — read published reviews |
+| `review:delete_own` | VIEWER, OPERATOR, ADMIN, SUPER_ADMIN |
+| `review:delete_others` | OPERATOR, ADMIN, SUPER_ADMIN |
+| `review:moderate` | OPERATOR, ADMIN, SUPER_ADMIN — queue + approve/reject |
+
+No new roles — same 5 system roles as everything else in the app.

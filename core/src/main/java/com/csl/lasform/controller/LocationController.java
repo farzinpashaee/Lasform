@@ -85,6 +85,11 @@ public class LocationController extends AbstractCrudController<Location> {
     @PostMapping
     @PreAuthorize("hasAuthority('location:write')")
     public ResponseEntity<Location> create(@Valid @RequestBody Location entity) {
+        // Denormalized from reviews (see ReviewService) — never trust these from client input.
+        // PATCH is already safe by construction (applyUpdate only copies an explicit allow-list
+        // of fields that doesn't include these two), but create() saves the bound entity as-is.
+        entity.setAverageRating(0.0);
+        entity.setReviewCount(0);
         return createOne(entity);
     }
 

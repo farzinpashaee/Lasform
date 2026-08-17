@@ -64,4 +64,15 @@ public class Location extends Auditable implements Identifiable, Imageable {
 
     @Builder.Default
     private Map<String, Object> metadata = new HashMap<>();
+
+    /**
+     * Denormalized from the {@code reviews} collection — recalculated by {@code ReviewService}
+     * whenever a review is created, updated, moderated, or (soft-)deleted. Never written directly
+     * from client input; raw computed value (not rounded — rounding for display is a UI concern).
+     */
+    @Builder.Default
+    private Double averageRating = 0.0;
+
+    @Builder.Default
+    private Integer reviewCount = 0;
 }

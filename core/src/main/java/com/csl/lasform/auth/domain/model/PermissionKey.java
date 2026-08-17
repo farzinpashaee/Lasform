@@ -29,7 +29,13 @@ public enum PermissionKey {
 
     ROLE_MANAGE("role:manage", "Create, update, and delete roles and their permission bundles"),
 
-    MAP_VIEW_PUBLIC("map:view_public", "View the public map without authenticating");
+    MAP_VIEW_PUBLIC("map:view_public", "View the public map without authenticating"),
+
+    REVIEW_CREATE("review:create", "Create or update your own review for a location"),
+    REVIEW_VIEW("review:view", "View published reviews for a location"),
+    REVIEW_DELETE_OWN("review:delete_own", "Delete your own review"),
+    REVIEW_DELETE_OTHERS("review:delete_others", "Delete another user's review"),
+    REVIEW_MODERATE("review:moderate", "View the moderation queue and approve or reject pending reviews");
 
     private final String key;
     private final String description;
