@@ -13,6 +13,7 @@
     <thead>
       <tr>
         <th>{{ 'users.colEmail' | transloco }}</th>
+        <th>{{ 'users.colRole' | transloco }}</th>
         <th>{{ 'users.colStatus' | transloco }}</th>
         <th>{{ 'users.colMustResetPassword' | transloco }}</th>
         <th>{{ 'common.createdColumn' | transloco }}</th>
@@ -22,20 +23,27 @@
     <tbody>
       @if (loading()) {
         <tr>
-          <td colspan="5" class="state-cell">{{ 'users.loading' | transloco }}</td>
+          <td colspan="6" class="state-cell">{{ 'users.loading' | transloco }}</td>
         </tr>
       } @else if (loadError()) {
         <tr>
-          <td colspan="5" class="state-cell error">{{ loadError() }}</td>
+          <td colspan="6" class="state-cell error">{{ loadError() }}</td>
         </tr>
       } @else if (users().length === 0) {
         <tr>
-          <td colspan="5" class="state-cell">{{ 'users.empty' | transloco }}</td>
+          <td colspan="6" class="state-cell">{{ 'users.empty' | transloco }}</td>
         </tr>
       } @else {
         @for (user of users(); track user.id) {
           <tr>
             <td>{{ user.email }}</td>
+            <td>
+              @if (user.roleNames.length > 0) {
+                {{ user.roleNames.join(', ') }}
+              } @else {
+                <span class="muted">{{ 'users.noRole' | transloco }}</span>
+              }
+            </td>
             <td>
               <span class="status-chip" [class.status-disabled]="user.status === 'DISABLED'">{{ user.status }}</span>
             </td>

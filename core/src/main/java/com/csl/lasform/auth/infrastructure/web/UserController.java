@@ -1,6 +1,9 @@
 package com.csl.lasform.auth.infrastructure.web;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,8 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.csl.lasform.auth.application.UserManagementService;
+import com.csl.lasform.auth.domain.model.Role;
 import com.csl.lasform.auth.domain.model.User;
+import com.csl.lasform.auth.domain.repository.RoleRepository;
 import com.csl.lasform.auth.domain.repository.UserRepository;
+import com.csl.lasform.auth.domain.repository.UserRoleRepository;
 import com.csl.lasform.auth.infrastructure.security.JwtPrincipal;
 import com.csl.lasform.auth.infrastructure.web.dto.AssignRoleRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.CreateUserRequest;
@@ -35,12 +41,24 @@ public class UserController {
 
     private final UserManagementService userManagementService;
     private final UserRepository userRepository;
+    private final UserRoleRepository userRoleRepository;
+    private final RoleRepository roleRepository;
 
     /** Flat, unpaginated — fine while there's a single org and no reason yet to expect a large user count. */
     @GetMapping
     @PreAuthorize("hasAuthority('user:read')")
     public List<UserResponse> list() {
-        return userRepository.findAll().stream().map(UserResponse::from).toList();
+        Map<String, String> roleNameById = roleRepository.findAll().stream().collect(Collectors.toMap(Role::getId, Role::getName));
+        return userRepository.findAll().stream()
+                .map(user -> UserResponse.from(user, roleNamesFor(user.getId(), roleNameById)))
+                .toList();
+    }
+
+    private List<String> roleNamesFor(String userId, Map<String, String> roleNameById) {
+        return userRoleRepository.findByUserId(userId).stream()
+                .map(userRole -> roleNameById.get(userRole.getRoleId()))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     /** New users always belong to the creating admin's org — there's no cross-org creation surface yet (single org). */
