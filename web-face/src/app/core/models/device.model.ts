@@ -4,7 +4,8 @@ import { GeoJsonPoint } from './geo.model';
 
 export interface Device extends Auditable {
   id?: string;
-  deviceIdentifier: string;
+  /** System-generated on create (see core/README.md) — never supplied by the client, only ever read back or refreshed via regenerateIdentifier. */
+  deviceIdentifier?: string;
   name: string;
   ownerId: string;
   type: DeviceType;

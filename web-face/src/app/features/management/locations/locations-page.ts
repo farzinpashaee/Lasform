@@ -5,7 +5,9 @@ import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { Category } from '../../../core/models/category.model';
+import { PhoneNumberType } from '../../../core/models/enums';
 import { Location } from '../../../core/models/location.model';
+import { PhoneNumber } from '../../../core/models/phone-number.model';
 import { CategoryService } from '../../../core/services/category.service';
 import { LocationService } from '../../../core/services/location.service';
 import { TagService } from '../../../core/services/tag.service';
@@ -20,10 +22,11 @@ const PAGE_SIZE = 10;
 
 const SORTABLE_COLUMNS: SortableColumn[] = [
   { field: 'name', labelKey: 'common.nameColumn' },
-  { field: 'recordedAt', labelKey: 'locations.colRecorded' },
   { field: 'createdAt', labelKey: 'common.createdColumn' },
   { field: 'updatedAt', labelKey: 'common.updatedColumn' },
 ];
+
+const PHONE_NUMBER_TYPES: PhoneNumberType[] = ['MOBILE', 'LANDLINE', 'FAX', 'WHATSAPP', 'TOLL_FREE', 'OTHER'];
 
 @Component({
   selector: 'app-locations-page',
@@ -39,6 +42,7 @@ export class LocationsPage implements OnInit, OnDestroy {
   private readonly transloco = inject(TranslocoService);
 
   protected readonly sortableColumns = SORTABLE_COLUMNS;
+  protected readonly phoneNumberTypes = PHONE_NUMBER_TYPES;
 
   protected readonly locations = signal<Location[]>([]);
   protected readonly totalElements = signal(0);
@@ -79,6 +83,7 @@ export class LocationsPage implements OnInit, OnDestroy {
   protected readonly formTagInput = signal('');
   protected readonly formTags = signal<string[]>([]);
   protected readonly formTagSuggestions = signal<string[]>([]);
+  protected readonly formPhoneNumbers = signal<PhoneNumber[]>([]);
 
   protected readonly deleteTarget = signal<Location | null>(null);
   protected readonly deletingLocation = signal(false);
@@ -238,6 +243,7 @@ export class LocationsPage implements OnInit, OnDestroy {
     this.formTagInput.set('');
     this.formTags.set([]);
     this.formTagSuggestions.set([]);
+    this.formPhoneNumbers.set([]);
     this.formError.set(null);
     this.formOpen.set(true);
   }
@@ -254,6 +260,7 @@ export class LocationsPage implements OnInit, OnDestroy {
     this.formTagInput.set('');
     this.formTags.set([...(location.tags ?? [])]);
     this.formTagSuggestions.set([]);
+    this.formPhoneNumbers.set((location.phoneNumbers ?? []).map((phone) => ({ ...phone })));
     this.formError.set(null);
     this.formOpen.set(true);
   }
@@ -280,9 +287,17 @@ export class LocationsPage implements OnInit, OnDestroy {
     const description = this.formDescription().trim() || undefined;
     const categoryIds = categoryId ? [categoryId] : undefined;
     const tags = this.formTags().length > 0 ? this.formTags() : undefined;
+    const phoneNumbers = this.collectFormPhoneNumbers();
 
     if (this.formMode() === 'add') {
-      const location: Location = { point, name, description, categoryIds, tags, recordedAt: new Date().toISOString() };
+      const location: Location = {
+        point,
+        name,
+        description,
+        categoryIds,
+        tags,
+        phoneNumbers,
+      };
       this.locationService.create(location).subscribe({
         next: () => this.handleFormSuccess(),
         error: () => this.handleFormError(),
@@ -297,7 +312,7 @@ export class LocationsPage implements OnInit, OnDestroy {
     }
     // Full merged object — PATCH replaces whatever fields are present in the body, so a
     // sparse partial would wipe images/address/metadata that aren't part of this form.
-    const updated: Location = { ...original, point, name, description, categoryIds, tags };
+    const updated: Location = { ...original, point, name, description, categoryIds, tags, phoneNumbers };
     this.locationService.update(original.id, updated).subscribe({
       next: () => this.handleFormSuccess(),
       error: () => this.handleFormError(),
@@ -357,6 +372,33 @@ export class LocationsPage implements OnInit, OnDestroy {
 
   protected removeFormTag(tag: string): void {
     this.formTags.update((tags) => tags.filter((t) => t !== tag));
+  }
+
+  protected addFormPhoneNumber(): void {
+    this.formPhoneNumbers.update((phones) => [...phones, { type: 'MOBILE', countryCode: '', number: '', extension: '' }]);
+  }
+
+  protected removeFormPhoneNumber(index: number): void {
+    this.formPhoneNumbers.update((phones) => phones.filter((_, i) => i !== index));
+  }
+
+  protected updateFormPhoneNumber(index: number, field: keyof PhoneNumber, value: string): void {
+    this.formPhoneNumbers.update((phones) =>
+      phones.map((phone, i) => (i === index ? { ...phone, [field]: value } : phone)),
+    );
+  }
+
+  /** Blank rows (no number entered) are dropped rather than sent to the backend. */
+  private collectFormPhoneNumbers(): PhoneNumber[] | undefined {
+    const phones = this.formPhoneNumbers()
+      .filter((phone) => phone.number.trim())
+      .map((phone) => ({
+        type: phone.type,
+        countryCode: phone.countryCode?.trim() || undefined,
+        number: phone.number.trim(),
+        extension: phone.extension?.trim() || undefined,
+      }));
+    return phones.length > 0 ? phones : undefined;
   }
 
   protected openDeleteConfirm(location: Location): void {

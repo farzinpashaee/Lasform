@@ -1,6 +1,7 @@
 import { Address } from './address.model';
 import { Auditable } from './auditable.model';
 import { GeoJsonPoint } from './geo.model';
+import { PhoneNumber } from './phone-number.model';
 
 export interface Location extends Auditable {
   id?: string;
@@ -9,10 +10,9 @@ export interface Location extends Auditable {
   description?: string;
   altitude?: number;
   address?: Address;
+  phoneNumbers?: PhoneNumber[];
   categoryIds?: string[];
   tags?: string[];
-  recordedAt: string;
-  receivedAt?: string;
   metadata?: Record<string, unknown>;
   /** Denormalized from published reviews — see com.csl.lasform.review. */
   averageRating?: number;

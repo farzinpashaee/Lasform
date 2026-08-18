@@ -85,10 +85,10 @@ public class LocationServiceImpl extends AbstractCrudService<Location, String> i
         existing.setDescription(incoming.getDescription());
         existing.setAltitude(incoming.getAltitude());
         existing.setAddress(incoming.getAddress());
+        existing.setPhoneNumbers(incoming.getPhoneNumbers());
         existing.setCategoryIds(incoming.getCategoryIds());
         existing.setTags(incoming.getTags());
         existing.setImages(incoming.getImages());
-        existing.setRecordedAt(incoming.getRecordedAt());
         existing.setMetadata(incoming.getMetadata());
     }
 

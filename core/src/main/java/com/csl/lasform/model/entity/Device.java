@@ -42,9 +42,12 @@ public class Device extends Auditable implements Identifiable, Imageable {
     @Id
     private String id;
 
-    /** Hardware-reported identifier (IMEI/serial), distinct from the Mongo id. */
+    /**
+     * System-generated (md5 of this device's id + the UTC timestamp it was assigned), never
+     * client-supplied — see DeviceServiceImpl#create / #regenerateIdentifier. Not {@code @NotBlank}:
+     * a create request never needs to (and can't meaningfully) supply this itself.
+     */
     @Indexed(unique = true)
-    @NotBlank(message = "{validation.device.deviceIdentifier.required}")
     @Field("device_identifier")
     private String deviceIdentifier;
 

@@ -12,6 +12,9 @@ public interface DeviceService extends CrudService<Device, String>, ImageAttacha
 
     Device findByDeviceIdentifier(String deviceIdentifier);
 
+    /** Recomputes and persists a fresh deviceIdentifier for an existing device — see DeviceIdentifierGenerator. */
+    Device regenerateIdentifier(String id);
+
     /** Paginated/sortable listing, optionally filtered by free-text {@code q} (name/identifier/tags), category, tags, and/or status. */
     Page<Device> search(String q, String categoryId, List<String> tags, DeviceStatus status, Pageable pageable);
 }

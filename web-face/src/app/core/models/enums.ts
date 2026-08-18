@@ -41,3 +41,5 @@ export type EventType =
   | 'OTHER';
 
 export type EventSource = 'DEVICE' | 'USER' | 'SYSTEM';
+
+export type PhoneNumberType = 'MOBILE' | 'LANDLINE' | 'FAX' | 'WHATSAPP' | 'TOLL_FREE' | 'OTHER';

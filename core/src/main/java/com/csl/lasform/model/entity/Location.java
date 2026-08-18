@@ -2,7 +2,6 @@ package com.csl.lasform.model.entity;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
@@ -10,7 +9,6 @@ import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.Instant;
 import java.util.*;
 
 /**
@@ -42,6 +40,9 @@ public class Location extends Auditable implements Identifiable, Imageable {
     /** Reverse-geocoded address, cached to avoid repeated lookups. */
     private Address address;
 
+    @Builder.Default
+    private List<PhoneNumber> phoneNumbers = new ArrayList<>();
+
     /** {@link Category} ids this location is classified under; a location may have several. */
     @Builder.Default
     private Set<String> categoryIds = new HashSet<>();
@@ -54,13 +55,6 @@ public class Location extends Auditable implements Identifiable, Imageable {
     /** Images stored on disk under {@code ImageStorageProperties.basePath}/{@link #id}/{filename}. */
     @Builder.Default
     private List<Image> images = new ArrayList<>();
-
-    @Indexed
-    @NotNull(message = "{validation.location.recordedAt.required}")
-    private Instant recordedAt;
-
-    @CreatedDate
-    private Instant receivedAt;
 
     @Builder.Default
     private Map<String, Object> metadata = new HashMap<>();

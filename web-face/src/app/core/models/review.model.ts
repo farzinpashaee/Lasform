@@ -8,4 +8,6 @@ export interface Review {
   status: 'PENDING' | 'PUBLISHED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }

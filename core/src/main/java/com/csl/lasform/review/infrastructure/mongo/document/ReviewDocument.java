@@ -56,4 +56,8 @@ public class ReviewDocument {
     private Instant createdAt;
 
     private Instant updatedAt;
+
+    private String createdBy;
+
+    private String updatedBy;
 }

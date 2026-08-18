@@ -90,6 +90,13 @@ public class DeviceController extends AbstractCrudController<Device> {
         return deviceService.findByDeviceIdentifier(deviceIdentifier);
     }
 
+    /** Same permission as update() — regenerating is a write to the device, not a separate capability. */
+    @PostMapping("/{id}/identifier/regenerate")
+    @PreAuthorize("hasAuthority('device:write')")
+    public Device regenerateIdentifier(@PathVariable String id) {
+        return deviceService.regenerateIdentifier(id);
+    }
+
     /** Paginated/sortable listing for the management table: optional free-text {@code q}, category, tag and/or status filters. */
     @GetMapping("/search")
     @PreAuthorize("hasAuthority('device:read')")

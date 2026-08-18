@@ -24,6 +24,11 @@ export class DeviceService extends CrudService<Device> {
     return this.http.get<Device>(`${this.resourceUrl}/by-identifier/${deviceIdentifier}`);
   }
 
+  /** Recomputes and persists a fresh deviceIdentifier for an existing device. Requires device:write. */
+  regenerateIdentifier(id: string): Observable<Device> {
+    return this.http.post<Device>(`${this.resourceUrl}/${id}/identifier/regenerate`, {});
+  }
+
   /** Paginated/sortable listing, optionally filtered by free-text query, category, tags, and/or status. */
   search(params: DeviceSearchParams = {}): Observable<Page<Device>> {
     return this.http.get<Page<Device>>(`${this.resourceUrl}/search`, { params: buildHttpParams(params) });

@@ -76,8 +76,9 @@ public class ReviewController {
 
     @PatchMapping("/api/reviews/{reviewId}/status")
     @PreAuthorize("hasAuthority('review:moderate')")
-    public ReviewResponse updateStatus(@PathVariable String reviewId, @Valid @RequestBody ReviewStatusUpdateRequest request) {
-        Review review = reviewService.transitionStatus(reviewId, request.status());
+    public ReviewResponse updateStatus(
+            @PathVariable String reviewId, @Valid @RequestBody ReviewStatusUpdateRequest request, Authentication authentication) {
+        Review review = reviewService.transitionStatus(reviewId, request.status(), principal(authentication).userId());
         return ReviewResponse.from(review);
     }
 

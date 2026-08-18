@@ -9,6 +9,4 @@ import com.csl.lasform.model.entity.Device;
 public interface DeviceRepository extends MongoRepository<Device, String> {
 
     Optional<Device> findByDeviceIdentifier(String deviceIdentifier);
-
-    boolean existsByDeviceIdentifier(String deviceIdentifier);
 }

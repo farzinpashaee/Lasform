@@ -311,6 +311,20 @@ th.sortable {
   gap: 12px;
 }
 
+.identifier-field-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  input {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    background: var(--hover, #f1f3f4);
+    color: var(--text-secondary, #5f6368);
+  }
+}
+
 .tag-input-wrapper {
   position: relative;
 
@@ -489,6 +503,12 @@ th.sortable {
     color: var(--accent, #da5050);
     background: var(--accent-bg, #fbeaea);
   }
+
+  &:disabled {
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+    background: var(--surface, #fff);
+  }
 }
 
 .icon-action-button-danger {
@@ -496,4 +516,34 @@ th.sortable {
     color: var(--danger, #d93025);
     background: rgba(217, 48, 37, 0.1);
   }
+}
+
+.qr-modal {
+  width: 320px;
+  text-align: center;
+}
+
+.qr-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  min-height: 240px;
+  justify-content: center;
+}
+
+.qr-code-image {
+  width: 240px;
+  height: 240px;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+}
+
+.qr-code-value {
+  margin: 0;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text-secondary, #5f6368);
+  word-break: break-all;
 }

@@ -84,8 +84,9 @@
     "detail": {
       "description": "Description",
       "address": "Address",
+      "phone": "Phone",
       "coordinates": "Coordinates",
-      "recorded": "Recorded",
+      "created": "Created",
       "tags": "Tags",
       "identifier": "Identifier",
       "type": "Type",
@@ -162,7 +163,13 @@
     "deleteTitle": "Delete device?",
     "loadFailed": "Failed to load devices. Please try again.",
     "saveFailed": "Failed to save device. Please try again.",
-    "deleteFailed": "Failed to delete device. Please try again."
+    "deleteFailed": "Failed to delete device. Please try again.",
+    "regenerateIdentifier": "Regenerate identifier",
+    "regenerateIdentifierFailed": "Failed to regenerate the identifier. Please try again.",
+    "showQrCode": "Show as QR code",
+    "qrModalTitle": "Device identifier QR code",
+    "qrGenerating": "Generating…",
+    "qrGenerateFailed": "Failed to generate the QR code."
   },
   "locations": {
     "title": "Locations",
@@ -172,7 +179,6 @@
     "colCategory": "Category",
     "colTags": "Tags",
     "colActions": "Actions",
-    "colRecorded": "Recorded",
     "loading": "Loading locations…",
     "empty": "No locations found.",
     "unnamed": "Unnamed location",
@@ -185,7 +191,21 @@
     "deleteTitle": "Delete location?",
     "loadFailed": "Failed to load locations. Please try again.",
     "saveFailed": "Failed to save location. Please try again.",
-    "deleteFailed": "Failed to delete location. Please try again."
+    "deleteFailed": "Failed to delete location. Please try again.",
+    "phoneNumbersLabel": "Phone numbers",
+    "addPhoneNumber": "Add phone number",
+    "removePhoneNumber": "Remove phone number",
+    "fieldCountryCode": "Code",
+    "fieldNumber": "Number",
+    "fieldExtension": "Ext.",
+    "phoneType": {
+      "MOBILE": "Mobile",
+      "LANDLINE": "Landline",
+      "FAX": "Fax",
+      "WHATSAPP": "WhatsApp",
+      "TOLL_FREE": "Toll-free",
+      "OTHER": "Other"
+    }
   },
   "auth": {
     "invalidEmailFormat": "Please enter a valid email address.",

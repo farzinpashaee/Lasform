@@ -24,6 +24,8 @@ public final class ReviewMapper {
                 .deletedBy(document.getDeletedBy())
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getUpdatedAt())
+                .createdBy(document.getCreatedBy())
+                .updatedBy(document.getUpdatedBy())
                 .build();
     }
 
@@ -43,6 +45,8 @@ public final class ReviewMapper {
                 .deletedBy(domain.getDeletedBy())
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
+                .createdBy(domain.getCreatedBy())
+                .updatedBy(domain.getUpdatedBy())
                 .build();
     }
 }

@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
@@ -36,7 +35,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 @Document(collection = "events")
-public class Event implements Identifiable {
+public class Event extends Auditable implements Identifiable {
 
     @Id
     private String id;
@@ -70,7 +69,4 @@ public class Event implements Identifiable {
     @Indexed
     @NotNull(message = "{validation.event.occurredAt.required}")
     private Instant occurredAt;
-
-    @CreatedDate
-    private Instant createdAt;
 }

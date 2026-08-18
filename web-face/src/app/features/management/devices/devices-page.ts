@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { toDataURL } from 'qrcode';
 
 import { Category } from '../../../core/models/category.model';
 import { Device } from '../../../core/models/device.model';
@@ -78,6 +79,8 @@ export class DevicesPage implements OnInit, OnDestroy {
   protected readonly formSaving = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly formDeviceIdentifier = signal('');
+  protected readonly regeneratingIdentifier = signal(false);
+  protected readonly regenerateIdentifierError = signal<string | null>(null);
   protected readonly formName = signal('');
   protected readonly formOwnerId = signal('');
   protected readonly formType = signal<DeviceType>('GPS_TRACKER');
@@ -90,6 +93,10 @@ export class DevicesPage implements OnInit, OnDestroy {
   protected readonly deleteTarget = signal<Device | null>(null);
   protected readonly deletingDevice = signal(false);
   protected readonly deleteError = signal<string | null>(null);
+
+  protected readonly qrModalOpen = signal(false);
+  protected readonly qrDataUrl = signal<string | null>(null);
+  protected readonly qrError = signal<string | null>(null);
 
   private editingDevice: Device | null = null;
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
@@ -252,7 +259,7 @@ export class DevicesPage implements OnInit, OnDestroy {
   protected openEditModal(device: Device): void {
     this.editingDevice = device;
     this.formMode.set('edit');
-    this.formDeviceIdentifier.set(device.deviceIdentifier);
+    this.formDeviceIdentifier.set(device.deviceIdentifier ?? '');
     this.formName.set(device.name);
     this.formOwnerId.set(device.ownerId);
     this.formType.set(device.type);
@@ -262,6 +269,7 @@ export class DevicesPage implements OnInit, OnDestroy {
     this.formTags.set([...(device.tags ?? [])]);
     this.formTagSuggestions.set([]);
     this.formError.set(null);
+    this.regenerateIdentifierError.set(null);
     this.formOpen.set(true);
   }
 
@@ -272,11 +280,53 @@ export class DevicesPage implements OnInit, OnDestroy {
     clearTimeout(this.formTagDebounceTimer);
   }
 
+  /** Only meaningful in edit mode — a not-yet-created device has no id for the backend to derive an identifier from. */
+  protected regenerateIdentifier(): void {
+    const id = this.editingDevice?.id;
+    if (!id || this.regeneratingIdentifier()) {
+      return;
+    }
+    this.regeneratingIdentifier.set(true);
+    this.regenerateIdentifierError.set(null);
+
+    this.deviceService.regenerateIdentifier(id).subscribe({
+      next: (updated) => {
+        this.regeneratingIdentifier.set(false);
+        this.formDeviceIdentifier.set(updated.deviceIdentifier ?? '');
+        if (this.editingDevice) {
+          this.editingDevice.deviceIdentifier = updated.deviceIdentifier;
+        }
+      },
+      error: () => {
+        this.regeneratingIdentifier.set(false);
+        this.regenerateIdentifierError.set(this.transloco.translate('devices.regenerateIdentifierFailed'));
+      },
+    });
+  }
+
+  protected openQrModal(): void {
+    const identifier = this.formDeviceIdentifier();
+    if (!identifier) {
+      return;
+    }
+    this.qrError.set(null);
+    this.qrDataUrl.set(null);
+    this.qrModalOpen.set(true);
+    toDataURL(identifier, { margin: 1, width: 240 })
+      .then((dataUrl) => this.qrDataUrl.set(dataUrl))
+      .catch(() => this.qrError.set(this.transloco.translate('devices.qrGenerateFailed')));
+  }
+
+  protected closeQrModal(): void {
+    this.qrModalOpen.set(false);
+    this.qrDataUrl.set(null);
+    this.qrError.set(null);
+  }
+
   protected submitForm(): void {
-    const deviceIdentifier = this.formDeviceIdentifier().trim();
     const name = this.formName().trim();
     const ownerId = this.formOwnerId().trim();
-    if (!deviceIdentifier || !name || !ownerId || this.formSaving()) {
+    if (!name || !ownerId || this.formSaving()) {
       return;
     }
     this.formSaving.set(true);
@@ -287,8 +337,8 @@ export class DevicesPage implements OnInit, OnDestroy {
     const tags = this.formTags().length > 0 ? this.formTags() : undefined;
 
     if (this.formMode() === 'add') {
+      // No deviceIdentifier — the backend generates it (see core/README.md); anything sent here would be ignored anyway.
       const device: Device = {
-        deviceIdentifier,
         name,
         ownerId,
         type: this.formType(),
@@ -310,9 +360,10 @@ export class DevicesPage implements OnInit, OnDestroy {
     }
     // Full merged object — PATCH replaces whatever fields are present in the body, so a
     // sparse partial would wipe lastKnownPoint/images/metadata that aren't part of this form.
+    // deviceIdentifier isn't user-editable here (regenerateIdentifier is the only way to change
+    // it), but original.deviceIdentifier is included via the spread so it round-trips unchanged.
     const updated: Device = {
       ...original,
-      deviceIdentifier,
       name,
       ownerId,
       type: this.formType(),

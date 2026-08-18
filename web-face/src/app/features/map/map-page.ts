@@ -359,7 +359,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
       description: this.newLocationDescription().trim() || undefined,
       categoryIds: categoryId ? [categoryId] : undefined,
       tags: this.newLocationTags().length > 0 ? this.newLocationTags() : undefined,
-      recordedAt: new Date().toISOString(),
     };
 
     this.locationService.create(location).subscribe({
@@ -696,10 +695,16 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (address) {
       fields.push({ label: this.detailLabel('map.detail.address'), value: address });
     }
+    if (location.phoneNumbers?.length) {
+      const phones = location.phoneNumbers
+        .map((phone) => [phone.countryCode, phone.number].filter(Boolean).join(' ') + (phone.extension ? ` ext. ${phone.extension}` : ''))
+        .join(', ');
+      fields.push({ label: this.detailLabel('map.detail.phone'), value: phones });
+    }
     const [lng, lat] = location.point.coordinates;
     fields.push({ label: this.detailLabel('map.detail.coordinates'), value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
-    if (location.recordedAt) {
-      fields.push({ label: this.detailLabel('map.detail.recorded'), value: new Date(location.recordedAt).toLocaleString() });
+    if (location.createdAt) {
+      fields.push({ label: this.detailLabel('map.detail.created'), value: new Date(location.createdAt).toLocaleString() });
     }
     if (location.tags?.length) {
       fields.push({ label: this.detailLabel('map.detail.tags'), value: location.tags.join(', ') });
@@ -709,7 +714,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   private deviceDetailFields(device: Device): { label: string; value: string }[] {
     const fields: { label: string; value: string }[] = [
-      { label: this.detailLabel('map.detail.identifier'), value: device.deviceIdentifier },
+      { label: this.detailLabel('map.detail.identifier'), value: device.deviceIdentifier ?? '' },
       { label: this.detailLabel('map.detail.type'), value: device.type },
     ];
     if (device.status) {

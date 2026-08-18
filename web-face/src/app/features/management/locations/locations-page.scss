@@ -474,3 +474,70 @@ th.sortable {
     background: rgba(217, 48, 37, 0.1);
   }
 }
+
+.phone-number-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+
+  select,
+  input {
+    width: auto;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text-primary, #202124);
+    border: 1px solid var(--border, #e8eaed);
+    border-radius: 4px;
+    padding: 7px 8px;
+    background: var(--surface, #fff);
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #da5050);
+    }
+  }
+
+  .icon-action-button {
+    flex: 0 0 auto;
+  }
+}
+
+.phone-number-type {
+  flex: 0 0 110px;
+}
+
+.phone-number-country-code {
+  flex: 0 0 64px;
+}
+
+.phone-number-number {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.phone-number-extension {
+  flex: 0 0 64px;
+}
+
+.add-phone-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent, #da5050);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

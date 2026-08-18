@@ -49,4 +49,8 @@ public class Review {
     private Instant createdAt;
 
     private Instant updatedAt;
+
+    private String createdBy;
+
+    private String updatedBy;
 }

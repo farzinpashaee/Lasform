@@ -115,7 +115,6 @@
                 <div class="description-cell">{{ location.description }}</div>
               }
             </td>
-            <td>{{ location.recordedAt ? (location.recordedAt | date: 'short') : '—' }}</td>
             <td>{{ location.createdAt ? (location.createdAt | date: 'short') : '—' }}</td>
             <td>{{ location.updatedAt ? (location.updatedAt | date: 'short') : '—' }}</td>
             <td>
@@ -259,6 +258,62 @@
           }
         </div>
       </label>
+      <div class="modal-field">
+        <span>{{ 'locations.phoneNumbersLabel' | transloco }}</span>
+        @for (phone of formPhoneNumbers(); track $index) {
+          <div class="phone-number-row">
+            <select
+              class="phone-number-type"
+              [ngModel]="phone.type"
+              (ngModelChange)="updateFormPhoneNumber($index, 'type', $event)"
+              [name]="'phoneType' + $index"
+            >
+              @for (type of phoneNumberTypes; track type) {
+                <option [value]="type">{{ 'locations.phoneType.' + type | transloco }}</option>
+              }
+            </select>
+            <input
+              type="text"
+              class="phone-number-country-code"
+              [ngModel]="phone.countryCode"
+              (ngModelChange)="updateFormPhoneNumber($index, 'countryCode', $event)"
+              [name]="'phoneCountryCode' + $index"
+              [placeholder]="'locations.fieldCountryCode' | transloco"
+              autocomplete="off"
+            />
+            <input
+              type="text"
+              class="phone-number-number"
+              [ngModel]="phone.number"
+              (ngModelChange)="updateFormPhoneNumber($index, 'number', $event)"
+              [name]="'phoneNumber' + $index"
+              [placeholder]="'locations.fieldNumber' | transloco"
+              autocomplete="off"
+            />
+            <input
+              type="text"
+              class="phone-number-extension"
+              [ngModel]="phone.extension"
+              (ngModelChange)="updateFormPhoneNumber($index, 'extension', $event)"
+              [name]="'phoneExtension' + $index"
+              [placeholder]="'locations.fieldExtension' | transloco"
+              autocomplete="off"
+            />
+            <button
+              type="button"
+              class="icon-action-button icon-action-button-danger"
+              [attr.aria-label]="'locations.removePhoneNumber' | transloco"
+              (click)="removeFormPhoneNumber($index)"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+          </div>
+        }
+        <button type="button" class="add-phone-button" (click)="addFormPhoneNumber()">
+          <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          <span>{{ 'locations.addPhoneNumber' | transloco }}</span>
+        </button>
+      </div>
       @if (formError()) {
         <p class="modal-error">{{ formError() }}</p>
       }

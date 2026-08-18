@@ -68,6 +68,7 @@ public class ReviewService {
                     existing.setDeletedAt(null);
                     existing.setDeletedBy(null);
                     existing.setUpdatedAt(now);
+                    existing.setUpdatedBy(userId);
                     return existing;
                 })
                 .orElseGet(() -> Review.builder()
@@ -79,6 +80,8 @@ public class ReviewService {
                         .deleted(false)
                         .createdAt(now)
                         .updatedAt(now)
+                        .createdBy(userId)
+                        .updatedBy(userId)
                         .build());
 
         Review saved = reviewRepository.save(review);
@@ -120,7 +123,7 @@ public class ReviewService {
      * {@link com.csl.lasform.review.domain.model.ReviewStatus} for why PUBLISHED/REJECTED are
      * terminal until the author resubmits (which resets status back to PENDING via {@link #upsert}).
      */
-    public Review transitionStatus(String reviewId, ReviewStatus newStatus) {
+    public Review transitionStatus(String reviewId, ReviewStatus newStatus, String moderatorId) {
         if (newStatus != ReviewStatus.PUBLISHED && newStatus != ReviewStatus.REJECTED) {
             throw new BadRequestException("error.review.invalidTargetStatus", newStatus);
         }
@@ -132,6 +135,7 @@ public class ReviewService {
 
         review.setStatus(newStatus);
         review.setUpdatedAt(Instant.now());
+        review.setUpdatedBy(moderatorId);
         Review saved = reviewRepository.save(review);
         recalculateLocationAggregate(review.getLocationId());
         return saved;
@@ -143,6 +147,7 @@ public class ReviewService {
         review.setDeletedAt(now);
         review.setDeletedBy(deletedByUserId);
         review.setUpdatedAt(now);
+        review.setUpdatedBy(deletedByUserId);
         reviewRepository.save(review);
         recalculateLocationAggregate(review.getLocationId());
     }

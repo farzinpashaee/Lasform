@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.bson.types.ObjectId;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.csl.lasform.exception.DuplicateResourceException;
 import com.csl.lasform.exception.ResourceNotFoundException;
 import com.csl.lasform.model.entity.Device;
 import com.csl.lasform.model.entity.Image;
@@ -42,13 +42,26 @@ public class DeviceServiceImpl extends AbstractCrudService<Device, String> imple
         this.mongoTemplate = mongoTemplate;
     }
 
+    /**
+     * The id is assigned here rather than left to Mongo's insert-time default specifically so
+     * deviceIdentifier — which is derived from it — can be computed and persisted in this same
+     * save, instead of a create-then-update round trip. Whatever the client sent for
+     * deviceIdentifier (there shouldn't be anything — see the field's Javadoc) is always
+     * overwritten; a client can never choose or influence this value.
+     */
     @Override
     public Device create(Device entity) {
-        if (deviceRepository.existsByDeviceIdentifier(entity.getDeviceIdentifier())) {
-            throw new DuplicateResourceException(
-                    "error.device.duplicateIdentifier", entity.getDeviceIdentifier());
-        }
+        entity.setId(new ObjectId().toHexString());
+        entity.setDeviceIdentifier(DeviceIdentifierGenerator.generate(entity.getId()));
         return super.create(entity);
+    }
+
+    /** Recomputes and persists a fresh identifier for an already-existing device — see DeviceController's regenerate endpoint. */
+    @Override
+    public Device regenerateIdentifier(String id) {
+        Device device = getById(id);
+        device.setDeviceIdentifier(DeviceIdentifierGenerator.generate(device.getId()));
+        return deviceRepository.save(device);
     }
 
     @Override

@@ -205,10 +205,34 @@
       {{ (formMode() === 'add' ? 'devices.modalAddTitle' : 'devices.modalEditTitle') | transloco }}
     </h2>
     <form (ngSubmit)="submitForm()">
-      <label class="modal-field">
-        <span>{{ 'devices.fieldDeviceIdentifier' | transloco }}</span>
-        <input type="text" [(ngModel)]="formDeviceIdentifier" name="deviceIdentifier" required autocomplete="off" />
-      </label>
+      @if (formMode() === 'edit') {
+        <label class="modal-field">
+          <span>{{ 'devices.fieldDeviceIdentifier' | transloco }}</span>
+          <div class="identifier-field-row">
+            <input type="text" [ngModel]="formDeviceIdentifier()" name="deviceIdentifier" readonly autocomplete="off" />
+            <button
+              type="button"
+              class="icon-action-button"
+              [attr.aria-label]="'devices.regenerateIdentifier' | transloco"
+              [disabled]="regeneratingIdentifier()"
+              (click)="regenerateIdentifier()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">autorenew</span>
+            </button>
+            <button
+              type="button"
+              class="icon-action-button"
+              [attr.aria-label]="'devices.showQrCode' | transloco"
+              (click)="openQrModal()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">qr_code_2</span>
+            </button>
+          </div>
+          @if (regenerateIdentifierError()) {
+            <p class="modal-error">{{ regenerateIdentifierError() }}</p>
+          }
+        </label>
+      }
       <label class="modal-field">
         <span>{{ 'common.nameLabel' | transloco }}</span>
         <input type="text" [(ngModel)]="formName" name="name" required autocomplete="off" />
@@ -294,7 +318,7 @@
         <button
           type="submit"
           class="modal-button modal-button-primary"
-          [disabled]="formSaving() || !formDeviceIdentifier().trim() || !formName().trim() || !formOwnerId().trim()"
+          [disabled]="formSaving() || !formName().trim() || !formOwnerId().trim()"
         >
           {{ (formSaving() ? 'common.saving' : formMode() === 'add' ? 'devices.addSubmit' : 'common.saveChanges') | transloco }}
         </button>
@@ -322,6 +346,28 @@
         (click)="confirmDelete()"
       >
         {{ (deletingDevice() ? 'common.deleting' : 'common.delete') | transloco }}
+      </button>
+    </div>
+  </div>
+}
+
+@if (qrModalOpen()) {
+  <div class="modal-backdrop" (click)="closeQrModal()"></div>
+  <div class="modal qr-modal">
+    <h2 class="modal-title">{{ 'devices.qrModalTitle' | transloco }}</h2>
+    <div class="qr-modal-body">
+      @if (qrError()) {
+        <p class="modal-error">{{ qrError() }}</p>
+      } @else if (qrDataUrl(); as dataUrl) {
+        <img [src]="dataUrl" [alt]="'devices.qrModalTitle' | transloco" class="qr-code-image" />
+        <p class="qr-code-value">{{ formDeviceIdentifier() }}</p>
+      } @else {
+        <p class="modal-subtitle">{{ 'devices.qrGenerating' | transloco }}</p>
+      }
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-primary" (click)="closeQrModal()">
+        {{ 'common.close' | transloco }}
       </button>
     </div>
   </div>

@@ -13,7 +13,9 @@ public record ReviewResponse(
         String reviewText,
         ReviewStatus status,
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        String createdBy,
+        String updatedBy) {
 
     public static ReviewResponse from(Review review) {
         return new ReviewResponse(
@@ -24,6 +26,8 @@ public record ReviewResponse(
                 review.getReviewText(),
                 review.getStatus(),
                 review.getCreatedAt(),
-                review.getUpdatedAt());
+                review.getUpdatedAt(),
+                review.getCreatedBy(),
+                review.getUpdatedBy());
     }
 }
