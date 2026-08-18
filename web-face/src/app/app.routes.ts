@@ -33,7 +33,7 @@ export const routes: Routes = [
     // the management shell at all. Individual children add their own permission requirement.
     canActivateChild: [permissionGuard],
     children: [
-      { path: '', redirectTo: 'settings/map-provider', pathMatch: 'full' },
+      { path: '', redirectTo: 'locations', pathMatch: 'full' },
       { path: 'settings/map-provider', component: MapProviderSettings },
       { path: 'settings/web-face-styles', component: ComingSoon, data: { titleKey: 'management.navWebFaceStyles' } },
       {

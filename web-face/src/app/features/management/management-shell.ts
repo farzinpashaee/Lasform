@@ -36,7 +36,7 @@ export class ManagementShell {
   protected readonly navGroups: NavGroup[] = [
     {
       labelKey: 'management.settingsGroup',
-      expanded: signal(true),
+      expanded: signal(false),
       children: [
         { labelKey: 'management.navMapProvider', path: 'settings/map-provider' },
         { labelKey: 'management.navWebFaceStyles', path: 'settings/web-face-styles' },
@@ -46,10 +46,10 @@ export class ManagementShell {
   ];
 
   protected readonly navLinks: NavLeaf[] = [
-    { labelKey: 'management.navUsers', path: 'users', permission: 'user:read' },
     { labelKey: 'management.navLocations', path: 'locations', permission: 'location:read' },
     { labelKey: 'management.navDevices', path: 'devices', permission: 'device:read' },
     { labelKey: 'management.navCategories', path: 'categories' },
+    { labelKey: 'management.navUsers', path: 'users', permission: 'user:read' },
     { labelKey: 'management.navGeofences', path: 'geofences', permission: 'geofence:read' },
   ];
 
