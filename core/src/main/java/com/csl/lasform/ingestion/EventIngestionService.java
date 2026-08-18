@@ -2,6 +2,7 @@ package com.csl.lasform.ingestion;
 
 import java.util.List;
 
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Service;
 
 import com.csl.lasform.model.entity.Device;
@@ -19,10 +20,12 @@ public class EventIngestionService {
 
     private final EventService eventService;
     private final DeviceRepository deviceRepository;
+    private final AuditorAware<String> auditorAware;
 
-    public EventIngestionService(EventService eventService, DeviceRepository deviceRepository) {
+    public EventIngestionService(EventService eventService, DeviceRepository deviceRepository, AuditorAware<String> auditorAware) {
         this.eventService = eventService;
         this.deviceRepository = deviceRepository;
+        this.auditorAware = auditorAware;
     }
 
     public List<Event> ingest(List<Event> events) {
@@ -44,6 +47,12 @@ public class EventIngestionService {
             device.setLastKnownPoint(event.getPoint());
             device.setLastSeenAt(event.getOccurredAt());
             batteryLevel(event, device);
+            // Spring Data's auditing only *sets* @LastModifiedBy when an auditor is present — it
+            // never clears a field for an absent one, so a device whose only prior write was an
+            // authenticated admin edit would otherwise keep that admin's id as updatedBy forever,
+            // even though this write (device telemetry, almost always anonymous) isn't theirs.
+            // Setting it explicitly here means an absent auditor actually lands as null.
+            device.setUpdatedBy(auditorAware.getCurrentAuditor().orElse(null));
             deviceRepository.save(device);
         });
     }

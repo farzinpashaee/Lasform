@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.csl.lasform.exception.BadRequestException;
+import com.csl.lasform.ingestion.EventIngestionService;
 import com.csl.lasform.model.entity.Event;
 import com.csl.lasform.model.entity.enums.EventType;
 import com.csl.lasform.service.EventService;
@@ -32,9 +33,11 @@ import jakarta.validation.Valid;
 public class EventController extends AbstractCrudController<Event> {
 
     private final EventService eventService;
+    private final EventIngestionService eventIngestionService;
 
-    public EventController(EventService eventService) {
+    public EventController(EventService eventService, EventIngestionService eventIngestionService) {
         this.eventService = eventService;
+        this.eventIngestionService = eventIngestionService;
     }
 
     @Override
@@ -77,9 +80,13 @@ public class EventController extends AbstractCrudController<Event> {
     // key for that in the given catalog, and gating it with a human permission would just break
     // real ingestion once devices are the actual caller. Left open for now; a device-credential
     // scheme is a separate piece of work.
+    //
+    // Routes through EventIngestionService (not eventService.createAll directly) so this endpoint
+    // gets the same device-state sync (lastKnownPoint/lastSeenAt/batteryLevel) as the
+    // SensorThings/GeoJSON adapters in EventIngestionController — see that class's javadoc.
     @PostMapping
     public ResponseEntity<List<Event>> create(@Valid @RequestBody List<Event> entities) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(eventService.createAll(entities));
+        return ResponseEntity.status(HttpStatus.CREATED).body(eventIngestionService.ingest(entities));
     }
 
     @GetMapping("/search")
