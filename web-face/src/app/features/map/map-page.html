@@ -95,10 +95,13 @@
           }
           <div class="details-top-actions">
             @if (canEditHit(hit)) {
-              <div class="entity-menu-wrapper">
+              <div class="entity-menu-wrapper" [class.open]="entityMenuOpen()">
+                @if (entityMenuOpen()) {
+                  <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
+                }
                 <button
                   type="button"
-                  class="icon-action-button"
+                  class="icon-action-button entity-menu-trigger"
                   [attr.aria-label]="'common.moreActions' | transloco"
                   [attr.aria-expanded]="entityMenuOpen()"
                   (click)="toggleEntityMenu()"
@@ -106,25 +109,24 @@
                   <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
                 </button>
                 @if (entityMenuOpen()) {
-                  <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
-                  <ul class="entity-menu">
-                    <li>
-                      <button type="button" class="entity-menu-item" (click)="openEditModal(hit); closeEntityMenu()">
-                        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-                        <span>{{ 'common.edit' | transloco }}</span>
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        class="entity-menu-item entity-menu-item-danger"
-                        (click)="openDeleteConfirm(hit); closeEntityMenu()"
-                      >
-                        <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-                        <span>{{ 'common.delete' | transloco }}</span>
-                      </button>
-                    </li>
-                  </ul>
+                  <div class="entity-menu">
+                    <button
+                      type="button"
+                      class="entity-menu-item"
+                      [attr.aria-label]="'common.edit' | transloco"
+                      (click)="openEditModal(hit); closeEntityMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="entity-menu-item entity-menu-item-danger"
+                      [attr.aria-label]="'common.delete' | transloco"
+                      (click)="openDeleteConfirm(hit); closeEntityMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                    </button>
+                  </div>
                 }
               </div>
             }
