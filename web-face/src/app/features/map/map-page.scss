@@ -707,6 +707,8 @@ $radius: 8px;
   inset: 0;
   z-index: 1000;
   background: var(--backdrop);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .modal {
