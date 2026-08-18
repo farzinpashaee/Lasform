@@ -237,10 +237,6 @@
         <span>{{ 'common.nameLabel' | transloco }}</span>
         <input type="text" [(ngModel)]="formName" name="name" required autocomplete="off" />
       </label>
-      <label class="modal-field">
-        <span>{{ 'devices.fieldOwnerId' | transloco }}</span>
-        <input type="text" [(ngModel)]="formOwnerId" name="ownerId" required autocomplete="off" />
-      </label>
       <div class="modal-field-row">
         <label class="modal-field">
           <span>{{ 'devices.fieldType' | transloco }}</span>
@@ -318,7 +314,7 @@
         <button
           type="submit"
           class="modal-button modal-button-primary"
-          [disabled]="formSaving() || !formName().trim() || !formOwnerId().trim()"
+          [disabled]="formSaving() || !formName().trim()"
         >
           {{ (formSaving() ? 'common.saving' : formMode() === 'add' ? 'devices.addSubmit' : 'common.saveChanges') | transloco }}
         </button>

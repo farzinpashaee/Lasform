@@ -54,10 +54,6 @@ public class Device extends Auditable implements Identifiable, Imageable {
     @NotBlank(message = "{validation.device.name.required}")
     private String name;
 
-    @Indexed
-    @NotNull(message = "{validation.device.ownerId.required}")
-    private String ownerId;
-
     @NotNull(message = "{validation.device.type.required}")
     private DeviceType type;
 

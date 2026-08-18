@@ -157,7 +157,6 @@
     "modalAddTitle": "Add new device",
     "modalEditTitle": "Edit device",
     "fieldDeviceIdentifier": "Device identifier",
-    "fieldOwnerId": "Owner ID",
     "fieldType": "Type",
     "addSubmit": "Add device",
     "deleteTitle": "Delete device?",

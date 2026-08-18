@@ -7,7 +7,6 @@ export interface Device extends Auditable {
   /** System-generated on create (see core/README.md) — never supplied by the client, only ever read back or refreshed via regenerateIdentifier. */
   deviceIdentifier?: string;
   name: string;
-  ownerId: string;
   type: DeviceType;
   status?: DeviceStatus;
   lastKnownPoint?: GeoJsonPoint;

@@ -82,7 +82,6 @@ export class DevicesPage implements OnInit, OnDestroy {
   protected readonly regeneratingIdentifier = signal(false);
   protected readonly regenerateIdentifierError = signal<string | null>(null);
   protected readonly formName = signal('');
-  protected readonly formOwnerId = signal('');
   protected readonly formType = signal<DeviceType>('GPS_TRACKER');
   protected readonly formStatus = signal<DeviceStatus>('INACTIVE');
   protected readonly formCategoryId = signal('');
@@ -245,7 +244,6 @@ export class DevicesPage implements OnInit, OnDestroy {
     this.formMode.set('add');
     this.formDeviceIdentifier.set('');
     this.formName.set('');
-    this.formOwnerId.set('');
     this.formType.set('GPS_TRACKER');
     this.formStatus.set('INACTIVE');
     this.formCategoryId.set('');
@@ -261,7 +259,6 @@ export class DevicesPage implements OnInit, OnDestroy {
     this.formMode.set('edit');
     this.formDeviceIdentifier.set(device.deviceIdentifier ?? '');
     this.formName.set(device.name);
-    this.formOwnerId.set(device.ownerId);
     this.formType.set(device.type);
     this.formStatus.set(device.status ?? 'INACTIVE');
     this.formCategoryId.set(device.categoryIds?.[0] ?? '');
@@ -325,8 +322,7 @@ export class DevicesPage implements OnInit, OnDestroy {
 
   protected submitForm(): void {
     const name = this.formName().trim();
-    const ownerId = this.formOwnerId().trim();
-    if (!name || !ownerId || this.formSaving()) {
+    if (!name || this.formSaving()) {
       return;
     }
     this.formSaving.set(true);
@@ -340,7 +336,6 @@ export class DevicesPage implements OnInit, OnDestroy {
       // No deviceIdentifier — the backend generates it (see core/README.md); anything sent here would be ignored anyway.
       const device: Device = {
         name,
-        ownerId,
         type: this.formType(),
         status: this.formStatus(),
         categoryIds,
@@ -365,7 +360,6 @@ export class DevicesPage implements OnInit, OnDestroy {
     const updated: Device = {
       ...original,
       name,
-      ownerId,
       type: this.formType(),
       status: this.formStatus(),
       categoryIds,
