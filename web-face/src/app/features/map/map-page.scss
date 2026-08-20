@@ -523,6 +523,18 @@ $radius: 8px;
   color: var(--device-icon-color);
 }
 
+/* The details panel reuses the same #entityIcon template as the results list, but at a
+   larger size — scoped by ancestor rather than a variant class since the icon itself never
+   knows which context it's rendered in. */
+.details-header .result-icon {
+  width: 64px;
+  height: 64px;
+
+  .material-symbols-outlined {
+    font-size: 32px;
+  }
+}
+
 .result-text {
   display: flex;
   flex-direction: column;
