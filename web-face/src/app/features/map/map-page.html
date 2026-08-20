@@ -84,14 +84,14 @@
       </ng-template>
 
       <ng-template #detailsBody let-hit="hit">
-        <div class="details-top-bar">
+        <div class="details-panel">
           @if (hasSearched()) {
-            <button type="button" class="back-link" (click)="closeDetails()">
-              <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-              <span>{{ 'map.backToResults' | transloco }}</span>
-            </button>
-          } @else {
-            <span></span>
+            <div class="details-top-bar">
+              <button type="button" class="back-link" (click)="closeDetails()">
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+                <span>{{ 'map.backToResults' | transloco }}</span>
+              </button>
+            </div>
           }
           <div class="details-top-actions">
             @if (canEditHit(hit)) {
@@ -134,9 +134,8 @@
               <span class="material-symbols-outlined" aria-hidden="true">close</span>
             </button>
           </div>
-        </div>
 
-        <div class="details-header">
+          <div class="details-header">
           <ng-container [ngTemplateOutlet]="entityIcon" [ngTemplateOutletContext]="{ hit }" />
           <div class="details-header-text">
             <span class="result-title">{{ resultTitle(hit) }}</span>
@@ -147,12 +146,17 @@
                 }
               </span>
             }
+            @if (resultCategoryLabel(hit); as category) {
+              <span class="details-category-label">{{ category }}</span>
+            }
           </div>
         </div>
 
-        @if (primaryCategoryLabel(hit); as tag) {
+        @if (resultTags(hit); as tags) {
           <div class="details-tag-row">
-            <span class="category-chip">{{ tag }}</span>
+            @for (tag of tags; track tag) {
+              <span class="detail-tag-chip">{{ tag }}</span>
+            }
           </div>
         }
 
@@ -220,6 +224,7 @@
             }
           </div>
         }
+        </div>
       </ng-template>
     </div>
 

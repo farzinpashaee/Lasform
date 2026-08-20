@@ -204,11 +204,15 @@ $radius: 8px;
   @include thin-scrollbar;
 }
 
+/* Position: relative anchor for .details-top-actions, which floats over this panel's
+   top-right corner instead of reserving its own row — see .details-top-actions below. */
+.details-panel {
+  position: relative;
+}
+
 .details-top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   padding: 8px 8px 0 8px;
 }
 
@@ -234,11 +238,17 @@ $radius: 8px;
   }
 }
 
+/* Floats over the panel's top-right corner rather than sitting in its own row — when there's
+   no back-link (accessed directly, not via search), reserving a whole blank row just for a
+   close button wasted a large chunk of the panel's height for nothing. */
 .details-top-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 4px;
-  flex: 0 0 auto;
 }
 
 .icon-action-button {
@@ -331,7 +341,11 @@ $radius: 8px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px 0;
+  /* Right padding clears the floating .details-top-actions pill so a long title wraps before
+     reaching it instead of rendering underneath it. Top padding keeps a bit of breathing room
+     above the title now that the old dedicated top-bar row no longer reserves any — not all
+     of that space was useless, just most of it. */
+  padding: 10px 72px 0 16px;
 }
 
 .details-header-text {
@@ -347,14 +361,23 @@ $radius: 8px;
   white-space: normal;
 }
 
+.details-category-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
 .details-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   padding: 8px 16px 0;
 }
 
-.category-chip {
+.detail-tag-chip {
   display: inline-block;
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: var(--hover);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 3px 10px;
   font-size: 12px;

@@ -72,7 +72,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private tagSuggestionTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly categories = signal<Category[]>([]);
-  protected readonly categoryMap = computed(() => {
+  private readonly categoryMap = computed(() => {
     const map = new Map<string, Category>();
     for (const category of this.categories()) {
       if (category.id) {
@@ -196,18 +196,23 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.entityMenuOpen.set(false);
   }
 
-  protected categoryLabel(categoryId: string): string {
-    const category = this.categoryMap().get(categoryId);
-    if (!category) {
-      return categoryId;
-    }
-    return category.marker ? `${category.marker} ${category.name}` : category.name;
+  /** Tag chips shown under the name in the details panel. */
+  protected resultTags(hit: SearchHit): string[] | null {
+    const tags = hit.type === 'LOCATION' ? (hit.data as Location).tags : (hit.data as Device).tags;
+    return tags && tags.length > 0 ? tags : null;
   }
 
-  /** The single tag chip shown under the name in the details panel — first category, if any. */
-  protected primaryCategoryLabel(hit: SearchHit): string | null {
+  /** Plain-text category label shown under the title — first category, if any. */
+  protected resultCategoryLabel(hit: SearchHit): string | null {
     const categoryIds = hit.type === 'LOCATION' ? (hit.data as Location).categoryIds : (hit.data as Device).categoryIds;
-    return categoryIds && categoryIds.length > 0 ? this.categoryLabel(categoryIds[0]) : null;
+    if (!categoryIds || categoryIds.length === 0) {
+      return null;
+    }
+    const category = this.categoryMap().get(categoryIds[0]);
+    if (!category) {
+      return categoryIds[0];
+    }
+    return category.marker ? `${category.marker} ${category.name}` : category.name;
   }
 
   private loadLocationMarkers(): void {
@@ -706,9 +711,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (location.createdAt) {
       fields.push({ label: this.detailLabel('map.detail.created'), value: new Date(location.createdAt).toLocaleString() });
     }
-    if (location.tags?.length) {
-      fields.push({ label: this.detailLabel('map.detail.tags'), value: location.tags.join(', ') });
-    }
     return fields;
   }
 
@@ -729,9 +731,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (device.lastKnownPoint) {
       const [lng, lat] = device.lastKnownPoint.coordinates;
       fields.push({ label: this.detailLabel('map.detail.lastLocation'), value: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
-    }
-    if (device.tags?.length) {
-      fields.push({ label: this.detailLabel('map.detail.tags'), value: device.tags.join(', ') });
     }
     return fields;
   }
