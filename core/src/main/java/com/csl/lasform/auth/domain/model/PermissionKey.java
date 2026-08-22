@@ -29,6 +29,9 @@ public enum PermissionKey {
 
     ROLE_MANAGE("role:manage", "Create, update, and delete roles and their permission bundles"),
 
+    CONFIG_READ("config:read", "List every application configuration entry"),
+    CONFIG_WRITE("config:write", "Create, update, and delete application configuration entries"),
+
     MAP_VIEW_PUBLIC("map:view_public", "View the public map without authenticating"),
 
     REVIEW_CREATE("review:create", "Create or update your own review for a location"),

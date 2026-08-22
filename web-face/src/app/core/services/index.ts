@@ -1,5 +1,6 @@
 export * from './alert.service';
 export * from './category.service';
+export * from './config.service';
 export * from './crud.service';
 export * from './device.service';
 export * from './event.service';

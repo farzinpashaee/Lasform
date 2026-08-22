@@ -113,10 +113,12 @@
   },
   "mapProviderSettings": {
     "title": "Map Providers Settings",
+    "loading": "Loading…",
     "provider": "Provider",
     "apiKeyLabel": "API Key: (if required)",
     "apiKeyPlaceholder": "Only needed for the Google provider",
     "saved": "Saved.",
+    "saveFailed": "Failed to save. Please try again.",
     "reload": "Reload to apply"
   },
   "categories": {

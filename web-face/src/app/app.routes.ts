@@ -34,7 +34,7 @@ export const routes: Routes = [
     canActivateChild: [permissionGuard],
     children: [
       { path: '', redirectTo: 'locations', pathMatch: 'full' },
-      { path: 'settings/map-provider', component: MapProviderSettings },
+      { path: 'settings/map-provider', component: MapProviderSettings, data: { permissions: 'config:write' } },
       { path: 'settings/web-face-styles', component: ComingSoon, data: { titleKey: 'management.navWebFaceStyles' } },
       {
         path: 'settings/features-management',

@@ -5,10 +5,7 @@ export const environment = {
   apiUrl: 'http://localhost:8078/api/v1',
   /** Auth endpoints (login/refresh/reset-password, users, roles) live under /api, not /api/v1. */
   authApiUrl: 'http://localhost:8078/api',
-  /** Which MapProvider implementation to use; see core/maps. */
+  /** Which MapProvider implementation to use; see core/maps. See environment.ts for why the
+   * Google Maps API key and OAuth Client ID aren't here anymore. */
   mapProvider: 'leaflet' as MapProviderKind,
-  /** Required only when mapProvider is 'google'. */
-  googleMapsApiKey: '',
-  /** See environment.ts for what this is and how to obtain one. */
-  googleClientId: '',
 };

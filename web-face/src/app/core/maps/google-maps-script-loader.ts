@@ -10,9 +10,7 @@ export function loadGoogleMaps(apiKey: string): Promise<void> {
     return Promise.resolve();
   }
   if (!apiKey) {
-    return Promise.reject(
-      new Error('googleMapsApiKey is not set in the environment; cannot load Google Maps.'),
-    );
+    return Promise.reject(new Error('map.google.api.key is not configured; cannot load Google Maps.'));
   }
   if (!loaderPromise) {
     loaderPromise = new Promise<void>((resolve, reject) => {

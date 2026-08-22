@@ -1,33 +1,42 @@
 <h1 class="page-title">{{ 'mapProviderSettings.title' | transloco }}</h1>
 
-<form class="settings-form" (ngSubmit)="save()">
-  <label class="form-field">
-    <span>{{ 'mapProviderSettings.provider' | transloco }}</span>
-    <select [(ngModel)]="provider" (ngModelChange)="onFieldChange()" name="provider">
-      <option value="leaflet">leaflet</option>
-      <option value="google">google</option>
-    </select>
-  </label>
+@if (loading()) {
+  <p class="settings-status">{{ 'mapProviderSettings.loading' | transloco }}</p>
+} @else {
+  <form class="settings-form" (ngSubmit)="save()">
+    <label class="form-field">
+      <span>{{ 'mapProviderSettings.provider' | transloco }}</span>
+      <select [(ngModel)]="provider" (ngModelChange)="onFieldChange()" name="provider">
+        <option value="leaflet">leaflet</option>
+        <option value="google">google</option>
+      </select>
+    </label>
 
-  <label class="form-field">
-    <span>{{ 'mapProviderSettings.apiKeyLabel' | transloco }}</span>
-    <input
-      type="text"
-      [(ngModel)]="apiKey"
-      (ngModelChange)="onFieldChange()"
-      name="apiKey"
-      autocomplete="off"
-      [placeholder]="'mapProviderSettings.apiKeyPlaceholder' | transloco"
-    />
-  </label>
+    <label class="form-field">
+      <span>{{ 'mapProviderSettings.apiKeyLabel' | transloco }}</span>
+      <input
+        type="text"
+        [(ngModel)]="apiKey"
+        (ngModelChange)="onFieldChange()"
+        name="apiKey"
+        autocomplete="off"
+        [placeholder]="'mapProviderSettings.apiKeyPlaceholder' | transloco"
+      />
+    </label>
 
-  <div class="form-actions">
-    <button type="submit" class="save-button">{{ 'common.save' | transloco }}</button>
-    @if (saved()) {
-      <span class="saved-note">
-        {{ 'mapProviderSettings.saved' | transloco }}
-        <button type="button" class="reload-link" (click)="reload()">{{ 'mapProviderSettings.reload' | transloco }}</button>
-      </span>
-    }
-  </div>
-</form>
+    <div class="form-actions">
+      <button type="submit" class="save-button" [disabled]="saving()">
+        {{ (saving() ? 'common.saving' : 'common.save') | transloco }}
+      </button>
+      @if (saved()) {
+        <span class="saved-note">
+          {{ 'mapProviderSettings.saved' | transloco }}
+          <button type="button" class="reload-link" (click)="reload()">{{ 'mapProviderSettings.reload' | transloco }}</button>
+        </span>
+      }
+      @if (error(); as message) {
+        <span class="settings-error">{{ message }}</span>
+      }
+    </div>
+  </form>
+}

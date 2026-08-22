@@ -46,7 +46,7 @@
           @if (group.expanded()) {
             <ul class="nav-list">
               @for (child of group.children; track child.path) {
-                <li>
+                <li *hasPermission="child.permission ? [child.permission] : []">
                   <a class="nav-link nav-link-child" [routerLink]="child.path" routerLinkActive="active">
                     {{ child.labelKey | transloco }}
                   </a>

@@ -5,8 +5,23 @@
   color: var(--text-primary, #202124);
 }
 
+.settings-status {
+  font-size: 14px;
+  color: var(--text-secondary, #5f6368);
+}
+
 .settings-form {
   max-width: 360px;
+}
+
+.save-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.settings-error {
+  font-size: 13px;
+  color: var(--danger, #d93025);
 }
 
 .form-field {
