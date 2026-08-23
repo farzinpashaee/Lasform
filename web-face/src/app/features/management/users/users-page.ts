@@ -3,11 +3,14 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
+import { UserStatus } from '../../../core/models/enums';
 import { Role } from '../../../core/models/role.model';
 import { User } from '../../../core/models/user.model';
 import { RoleService } from '../../../core/services/role.service';
 import { UserService } from '../../../core/services/user.service';
 import { HasPermissionDirective } from '../../../core/auth/has-permission.directive';
+
+const USER_STATUSES: UserStatus[] = ['ACTIVE', 'DISABLED'];
 
 /**
  * Deliberately minimal: no search/sort/pagination like Locations/Devices/Categories — there's no
@@ -41,6 +44,13 @@ export class UsersPage implements OnInit {
   protected readonly assigningRole = signal(false);
   protected readonly assignRoleError = signal<string | null>(null);
   protected readonly assignRoleSuccess = signal(false);
+
+  protected readonly userStatuses = USER_STATUSES;
+  protected readonly editTarget = signal<User | null>(null);
+  protected readonly editDisplayName = signal('');
+  protected readonly editStatus = signal<UserStatus>('ACTIVE');
+  protected readonly savingEdit = signal(false);
+  protected readonly editError = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loadUsers();
@@ -127,6 +137,40 @@ export class UsersPage implements OnInit {
       error: () => {
         this.assigningRole.set(false);
         this.assignRoleError.set(this.transloco.translate('users.assignRoleFailed'));
+      },
+    });
+  }
+
+  protected openEditModal(user: User): void {
+    this.editDisplayName.set(user.displayName ?? '');
+    this.editStatus.set(user.status);
+    this.editError.set(null);
+    this.editTarget.set(user);
+  }
+
+  protected closeEditModal(): void {
+    this.editTarget.set(null);
+    this.savingEdit.set(false);
+  }
+
+  protected submitEdit(): void {
+    const user = this.editTarget();
+    if (!user || this.savingEdit()) {
+      return;
+    }
+    this.savingEdit.set(true);
+    this.editError.set(null);
+
+    const displayName = this.editDisplayName().trim() || null;
+    this.userService.update(user.id, { displayName, status: this.editStatus() }).subscribe({
+      next: (updated) => {
+        this.savingEdit.set(false);
+        this.closeEditModal();
+        this.users.update((current) => current.map((u) => (u.id === updated.id ? updated : u)));
+      },
+      error: () => {
+        this.savingEdit.set(false);
+        this.editError.set(this.transloco.translate('users.editFailed'));
       },
     });
   }

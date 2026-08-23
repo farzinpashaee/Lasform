@@ -26,6 +26,7 @@ public enum PermissionKey {
     USER_INVITE("user:invite", "Invite new users"),
     USER_MANAGE_ROLES("user:manage_roles", "Assign or revoke roles on a user"),
     USER_DISABLE("user:disable", "Disable or re-enable a user"),
+    USER_WRITE("user:write", "Edit another user's profile information and status"),
 
     ROLE_MANAGE("role:manage", "Create, update, and delete roles and their permission bundles"),
 

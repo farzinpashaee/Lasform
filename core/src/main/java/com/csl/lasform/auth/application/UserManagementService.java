@@ -13,6 +13,7 @@ import com.csl.lasform.auth.domain.repository.OrganizationRepository;
 import com.csl.lasform.auth.domain.repository.RoleRepository;
 import com.csl.lasform.auth.domain.repository.UserRepository;
 import com.csl.lasform.auth.domain.repository.UserRoleRepository;
+import com.csl.lasform.exception.BadRequestException;
 import com.csl.lasform.exception.DuplicateResourceException;
 import com.csl.lasform.exception.ResourceNotFoundException;
 
@@ -104,6 +105,22 @@ public class UserManagementService {
     public User updateOwnProfile(String userId, String displayName) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("error.user.notFound", userId));
         user.setDisplayName(displayName);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Admin editing another user's profile info and status. {@code callerId} guards against an
+     * admin disabling their own account through this endpoint (same "never act on yourself via the
+     * broader-permission path" rule as ReviewService#deleteOthers) — self-service password/profile
+     * changes go through updateOwnProfile/resetPassword instead, disabling isn't self-service at all.
+     */
+    public User updateUser(String userId, String callerId, String displayName, UserStatus status) {
+        if (userId.equals(callerId) && status == UserStatus.DISABLED) {
+            throw new BadRequestException("error.user.cannotDisableSelf");
+        }
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("error.user.notFound", userId));
+        user.setDisplayName(displayName);
+        user.setStatus(status);
         return userRepository.save(user);
     }
 }

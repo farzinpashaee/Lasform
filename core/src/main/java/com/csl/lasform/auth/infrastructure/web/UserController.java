@@ -29,6 +29,7 @@ import com.csl.lasform.auth.infrastructure.web.dto.AssignRoleRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.CreateUserRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.SignUpRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.UpdateProfileRequest;
+import com.csl.lasform.auth.infrastructure.web.dto.UpdateUserRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.UserResponse;
 
 import jakarta.validation.Valid;
@@ -109,5 +110,15 @@ public class UserController {
         }
         User updated = userManagementService.updateOwnProfile(principal.userId(), request.displayName());
         return UserResponse.from(updated);
+    }
+
+    /** Admin editing another user's info/status — see UserManagementService#updateUser for the self-disable guard. */
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('user:write')")
+    public UserResponse update(@PathVariable String id, @Valid @RequestBody UpdateUserRequest request, Authentication authentication) {
+        JwtPrincipal principal = (JwtPrincipal) authentication.getPrincipal();
+        User updated = userManagementService.updateUser(id, principal.userId(), request.displayName(), request.status());
+        Map<String, String> roleNameById = roleRepository.findAll().stream().collect(Collectors.toMap(Role::getId, Role::getName));
+        return UserResponse.from(updated, roleNamesFor(updated.getId(), roleNameById));
     }
 }

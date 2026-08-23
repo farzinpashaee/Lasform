@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { UserStatus } from '../models/enums';
 import { User } from '../models/user.model';
 
 export interface CreateUserRequest {
@@ -14,6 +15,11 @@ export interface SignUpRequest {
   fullName: string;
   email: string;
   password: string;
+}
+
+export interface UpdateUserRequest {
+  displayName: string | null;
+  status: UserStatus;
 }
 
 /**
@@ -43,6 +49,11 @@ export class UserService {
   /** No special permission — any authenticated user may edit their own displayName. */
   updateOwnProfile(displayName: string): Observable<User> {
     return this.http.patch<User>(`${this.resourceUrl}/me`, { displayName });
+  }
+
+  /** Requires user:write. Admin editing another user's info/status; the backend rejects disabling yourself this way. */
+  update(userId: string, request: UpdateUserRequest): Observable<User> {
+    return this.http.patch<User>(`${this.resourceUrl}/${userId}`, request);
   }
 
   /**

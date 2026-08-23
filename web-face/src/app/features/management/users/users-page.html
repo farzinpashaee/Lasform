@@ -59,6 +59,15 @@
               <button
                 type="button"
                 class="icon-action-button"
+                *hasPermission="'user:write'"
+                [attr.aria-label]="'common.edit' | transloco"
+                (click)="openEditModal(user)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button"
                 *hasPermission="'user:manage_roles'"
                 [attr.aria-label]="'users.assignRole' | transloco"
                 (click)="openRoleAssignmentModal(user)"
@@ -141,5 +150,37 @@
         </div>
       </form>
     }
+  </div>
+}
+
+@if (editTarget(); as user) {
+  <div class="modal-backdrop" (click)="closeEditModal()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ 'users.editUserTitle' | transloco: { email: user.email } }}</h2>
+    <form (ngSubmit)="submitEdit()">
+      <label class="modal-field">
+        <span>{{ 'users.fieldDisplayName' | transloco }}</span>
+        <input type="text" [(ngModel)]="editDisplayName" name="editDisplayName" autocomplete="off" />
+      </label>
+      <label class="modal-field">
+        <span>{{ 'common.statusLabel' | transloco }}</span>
+        <select [(ngModel)]="editStatus" name="editStatus">
+          @for (status of userStatuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </label>
+      @if (editError()) {
+        <p class="modal-error">{{ editError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeEditModal()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button type="submit" class="modal-button modal-button-primary" [disabled]="savingEdit()">
+          {{ (savingEdit() ? 'common.saving' : 'common.saveChanges') | transloco }}
+        </button>
+      </div>
+    </form>
   </div>
 }
