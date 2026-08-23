@@ -6,16 +6,18 @@
     </button>
 
     <div class="header-actions">
-      <button
-        class="icon-button round"
-        type="button"
-        [attr.aria-label]="'common.toggleDarkMode' | transloco"
-        [class.active]="darkMode()"
-        [attr.aria-pressed]="darkMode()"
-        (click)="toggleDarkMode()"
-      >
-        <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
-      </button>
+      @if (featureFlags.isEnabled(FEATURE_FLAGS.darkMode)) {
+        <button
+          class="icon-button round"
+          type="button"
+          [attr.aria-label]="'common.toggleDarkMode' | transloco"
+          [class.active]="darkMode()"
+          [attr.aria-pressed]="darkMode()"
+          (click)="toggleDarkMode()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
+        </button>
+      }
       <app-account-menu />
     </div>
   </header>

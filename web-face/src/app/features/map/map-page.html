@@ -160,7 +160,7 @@
           </div>
         }
 
-        @if (hit.type === 'LOCATION') {
+        @if (hit.type === 'LOCATION' && featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
           <div class="details-tabs" role="tablist">
             <button
               type="button"
@@ -183,7 +183,7 @@
           </div>
         }
 
-        @if (hit.type !== 'LOCATION' || detailsTab() === 'overview') {
+        @if (hit.type !== 'LOCATION' || detailsTab() === 'overview' || !featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
           <div class="overview-panel">
             @if (locationDescription(hit); as description) {
               <p class="overview-description">{{ description }}</p>
@@ -234,16 +234,18 @@
           <span class="material-symbols-outlined" aria-hidden="true">apps</span>
         </button>
       }
-      <button
-        class="icon-button round"
-        type="button"
-        [attr.aria-label]="'common.toggleDarkMode' | transloco"
-        [class.active]="darkMode()"
-        [attr.aria-pressed]="darkMode()"
-        (click)="toggleDarkMode()"
-      >
-        <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
-      </button>
+      @if (featureFlags.isEnabled(FEATURE_FLAGS.darkMode)) {
+        <button
+          class="icon-button round"
+          type="button"
+          [attr.aria-label]="'common.toggleDarkMode' | transloco"
+          [class.active]="darkMode()"
+          [attr.aria-pressed]="darkMode()"
+          (click)="toggleDarkMode()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
+        </button>
+      }
       <app-account-menu />
     </div>
   </div>
@@ -298,16 +300,18 @@
         </ul>
       }
     </div>
-    <button
-      class="icon-button round"
-      type="button"
-      [attr.aria-label]="'map.toggleClustering' | transloco"
-      [class.active]="clusteringEnabled()"
-      [attr.aria-pressed]="clusteringEnabled()"
-      (click)="toggleClustering()"
-    >
-      <span class="material-symbols-outlined" aria-hidden="true">scatter_plot</span>
-    </button>
+    @if (featureFlags.isEnabled(FEATURE_FLAGS.mapClustering)) {
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="'map.toggleClustering' | transloco"
+        [class.active]="clusteringEnabled()"
+        [attr.aria-pressed]="clusteringEnabled()"
+        (click)="toggleClustering()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">scatter_plot</span>
+      </button>
+    }
     <div class="zoom-stack">
       <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomIn' | transloco" (click)="zoomIn()">
         <span class="material-symbols-outlined" aria-hidden="true">add</span>

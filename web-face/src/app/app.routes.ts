@@ -5,6 +5,7 @@ import { ComingSoon } from './features/management/coming-soon/coming-soon';
 import { DevicesPage } from './features/management/devices/devices-page';
 import { LocationsPage } from './features/management/locations/locations-page';
 import { ManagementShell } from './features/management/management-shell';
+import { FeatureManagementPage } from './features/management/settings/feature-management-page';
 import { MapProviderSettings } from './features/management/settings/map-provider-settings';
 import { UsersPage } from './features/management/users/users-page';
 import { MapPage } from './features/map/map-page';
@@ -38,8 +39,8 @@ export const routes: Routes = [
       { path: 'settings/web-face-styles', component: ComingSoon, data: { titleKey: 'management.navWebFaceStyles' } },
       {
         path: 'settings/features-management',
-        component: ComingSoon,
-        data: { titleKey: 'management.navFeaturesManagement' },
+        component: FeatureManagementPage,
+        data: { permissions: 'config:write' },
       },
       { path: 'users', component: UsersPage, data: { permissions: 'user:read' } },
       { path: 'locations', component: LocationsPage, data: { permissions: 'location:read' } },

@@ -9,6 +9,7 @@ import { provideMapProvider } from './core/maps';
 import { TranslocoHttpLoader } from './core/i18n/transloco-loader';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { AuthService } from './core/auth/auth.service';
+import { FeatureFlagsService } from './core/services/feature-flags.service';
 import { MapSettingsService } from './core/services/map-settings.service';
 
 export const appConfig: ApplicationConfig = {
@@ -23,6 +24,9 @@ export const appConfig: ApplicationConfig = {
     // Warms MapSettingsService's Google Maps API key cache before anything injects MAP_PROVIDER
     // (that factory reads getApiKey() synchronously) — see MapSettingsService.prefetchApiKey().
     provideAppInitializer(() => inject(MapSettingsService).prefetchApiKey()),
+    // Loads the feature-flag catalog before routes render, so the very first paint already knows
+    // whether to show dark mode/clustering/Google SSO — see FeatureFlagsService.
+    provideAppInitializer(() => firstValueFrom(inject(FeatureFlagsService).refresh())),
     provideTransloco({
       config: {
         // English is the only bundle shipped today; adding a locale is just another

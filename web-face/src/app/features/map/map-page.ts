@@ -16,6 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { FEATURE_FLAGS } from '../../core/feature-flag-keys';
 import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider, MapType } from '../../core/maps';
 import { Category } from '../../core/models/category.model';
 import { Device } from '../../core/models/device.model';
@@ -25,6 +26,7 @@ import { Review } from '../../core/models/review.model';
 import { SearchHit } from '../../core/models/search.model';
 import { CategoryService } from '../../core/services/category.service';
 import { DeviceService } from '../../core/services/device.service';
+import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { LocationService } from '../../core/services/location.service';
 import { ReviewService } from '../../core/services/review.service';
 import { SearchService } from '../../core/services/search.service';
@@ -64,6 +66,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private readonly searchService = inject(SearchService);
   private readonly reviewService = inject(ReviewService);
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
+  protected readonly featureFlags = inject(FeatureFlagsService);
+  protected readonly FEATURE_FLAGS = FEATURE_FLAGS;
 
   private readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
 
@@ -672,9 +676,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
     return device.deviceIdentifier || 'Device';
   }
 
-  /** 5 booleans (filled/empty), rounded to the nearest star — null for devices or unreviewed locations. */
+  /** 5 booleans (filled/empty), rounded to the nearest star — null for devices, unreviewed locations, or when the reviews feature is off. */
   protected resultRatingStars(hit: SearchHit): boolean[] | null {
-    if (hit.type !== 'LOCATION') {
+    if (hit.type !== 'LOCATION' || !this.featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
       return null;
     }
     const location = hit.data as Location;

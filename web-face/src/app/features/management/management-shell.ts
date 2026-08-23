@@ -3,6 +3,8 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { HasPermissionDirective } from '../../core/auth/has-permission.directive';
+import { FEATURE_FLAGS } from '../../core/feature-flag-keys';
+import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { AccountMenu } from '../../shared/account-menu/account-menu';
 
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
@@ -30,6 +32,8 @@ interface NavGroup {
 })
 export class ManagementShell {
   private readonly router = inject(Router);
+  protected readonly featureFlags = inject(FeatureFlagsService);
+  protected readonly FEATURE_FLAGS = FEATURE_FLAGS;
 
   protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
 
@@ -40,7 +44,7 @@ export class ManagementShell {
       children: [
         { labelKey: 'management.navMapProvider', path: 'settings/map-provider', permission: 'config:write' },
         { labelKey: 'management.navWebFaceStyles', path: 'settings/web-face-styles' },
-        { labelKey: 'management.navFeaturesManagement', path: 'settings/features-management' },
+        { labelKey: 'management.navFeaturesManagement', path: 'settings/features-management', permission: 'config:write' },
       ],
     },
   ];

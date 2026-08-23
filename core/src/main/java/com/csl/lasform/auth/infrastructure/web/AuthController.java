@@ -21,6 +21,9 @@ import com.csl.lasform.auth.infrastructure.web.dto.LoginRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.RefreshRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.ResetPasswordRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.TokenResponse;
+import com.csl.lasform.exception.BadRequestException;
+import com.csl.lasform.service.FeatureFlag;
+import com.csl.lasform.service.FeatureFlagService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,7 @@ public class AuthController {
 
     private final AuthenticationService authenticationService;
     private final GoogleUserInfoClient googleUserInfoClient;
+    private final FeatureFlagService featureFlagService;
 
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
@@ -66,6 +70,9 @@ public class AuthController {
      */
     @PostMapping("/google")
     public GoogleAuthResponse google(@Valid @RequestBody GoogleAuthRequest request) {
+        if (!featureFlagService.isEnabled(FeatureFlag.GOOGLE_SSO)) {
+            throw new BadRequestException("error.feature.disabled", FeatureFlag.GOOGLE_SSO.label());
+        }
         GoogleUserInfo info = googleUserInfoClient.fetchUserInfo(request.accessToken());
         GoogleAuthResult result = authenticationService.googleAuth(info);
         if (result.pendingApproval()) {

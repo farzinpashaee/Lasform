@@ -16,6 +16,8 @@ import com.csl.lasform.review.domain.model.Review;
 import com.csl.lasform.review.domain.model.ReviewAggregate;
 import com.csl.lasform.review.domain.model.ReviewStatus;
 import com.csl.lasform.review.domain.repository.ReviewRepository;
+import com.csl.lasform.service.FeatureFlag;
+import com.csl.lasform.service.FeatureFlagService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +43,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final LocationRepository locationRepository;
+    private final FeatureFlagService featureFlagService;
 
     /**
      * Upserts the caller's review for a location. Always resets {@code status} to PENDING and
@@ -48,6 +51,9 @@ public class ReviewService {
      * un-deletes it, same record either way (see the compound unique index in the infra layer).
      */
     public Review upsert(String locationId, String userId, Integer rating, String reviewText) {
+        if (!featureFlagService.isEnabled(FeatureFlag.LOCATION_REVIEWS)) {
+            throw new BadRequestException("error.feature.disabled", FeatureFlag.LOCATION_REVIEWS.label());
+        }
         if (!locationRepository.existsById(locationId)) {
             throw new ResourceNotFoundException("error.location.notFound", locationId);
         }

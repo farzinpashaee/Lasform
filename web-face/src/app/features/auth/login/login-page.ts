@@ -6,6 +6,8 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { isValidEmail } from '../../../core/auth/email.util';
 import { GoogleAuthService, GoogleSignInCancelledError } from '../../../core/auth/google-auth.service';
+import { FEATURE_FLAGS } from '../../../core/feature-flag-keys';
+import { FeatureFlagsService } from '../../../core/services/feature-flags.service';
 
 @Component({
   selector: 'app-login-page',
@@ -18,6 +20,8 @@ export class LoginPage {
   private readonly googleAuthService = inject(GoogleAuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  protected readonly featureFlags = inject(FeatureFlagsService);
+  protected readonly FEATURE_FLAGS = FEATURE_FLAGS;
   private readonly transloco = inject(TranslocoService);
 
   protected readonly email = signal('');

@@ -7,6 +7,8 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { isValidEmail } from '../../../core/auth/email.util';
 import { GoogleAuthService, GoogleSignInCancelledError } from '../../../core/auth/google-auth.service';
+import { FEATURE_FLAGS } from '../../../core/feature-flag-keys';
+import { FeatureFlagsService } from '../../../core/services/feature-flags.service';
 import { SignUpRequest, UserService } from '../../../core/services/user.service';
 
 @Component({
@@ -21,6 +23,8 @@ export class SignUpPage {
   private readonly googleAuthService = inject(GoogleAuthService);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
+  protected readonly featureFlags = inject(FeatureFlagsService);
+  protected readonly FEATURE_FLAGS = FEATURE_FLAGS;
 
   protected readonly fullName = signal('');
   protected readonly email = signal('');

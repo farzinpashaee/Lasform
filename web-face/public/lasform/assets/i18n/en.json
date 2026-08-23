@@ -121,6 +121,13 @@
     "saveFailed": "Failed to save. Please try again.",
     "reload": "Reload to apply"
   },
+  "featureManagement": {
+    "title": "Feature Management",
+    "subtitle": "Turn platform features on or off. Changes apply immediately, everywhere.",
+    "loading": "Loading features…",
+    "loadFailed": "Failed to load features. Please try again.",
+    "saveFailed": "Failed to save. Please try again."
+  },
   "categories": {
     "title": "Categories",
     "searchPlaceholder": "Search by name or description…",
@@ -250,6 +257,7 @@
     "signUp": {
       "title": "Sign Up",
       "subtitle": "Sign up with Google or your email and password",
+      "subtitleNoGoogle": "Sign up with your email and password",
       "googleSignUp": "Sign up with Google",
       "fullName": "Full Name",
       "confirmPassword": "Confirm Password",
