@@ -20,7 +20,7 @@ import com.csl.lasform.service.ConfigService;
 import jakarta.validation.Valid;
 
 /**
- * Generic key/value application settings — e.g. {@code sso.google.client.id}, {@code
+ * Generic key/value application settings — e.g. {@code lasform.security.sso.google.client.id}, {@code
  * map.google.api.key}. {@link #get} is deliberately open (no {@code @PreAuthorize}): these
  * keys are the kind of value that was previously shipped straight in the frontend bundle (a
  * Google OAuth client id, a Maps API key), so the login page and public map need to read them

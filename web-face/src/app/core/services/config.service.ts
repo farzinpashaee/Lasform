@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ConfigEntry } from '../models/config-entry.model';
 
 /**
- * Generic key/value app settings — e.g. sso.google.client.id, map.google.api.key. Not a
+ * Generic key/value app settings — e.g. lasform.security.sso.google.client.id, map.google.api.key. Not a
  * CrudService: entries are addressed by their own key, not a server-generated id.
  */
 @Injectable({ providedIn: 'root' })

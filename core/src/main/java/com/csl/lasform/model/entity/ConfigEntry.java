@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * A generic application setting, keyed by a namespaced dot-separated name (e.g. {@code
- * sso.google.client.id}, {@code map.google.api.key}) rather than a per-domain field, so new
+ * lasform.security.sso.google.client.id}, {@code map.google.api.key}) rather than a per-domain field, so new
  * settings never require a schema/migration — just a new key. The key IS the Mongo document id,
  * so uniqueness is enforced by MongoDB itself rather than a separate unique index.
  */
