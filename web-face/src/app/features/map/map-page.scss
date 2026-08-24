@@ -773,6 +773,12 @@ $radius: 8px;
   color: var(--text-secondary);
 }
 
+.modal-hint {
+  margin: -2px 0 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 .modal-field {
   display: flex;
   flex-direction: column;

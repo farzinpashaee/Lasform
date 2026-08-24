@@ -49,8 +49,10 @@ public class Geofence extends Auditable implements Identifiable {
 
     private String description;
 
+    // Not @NotNull: it's always server-set from the authenticated admin's orgId (see
+    // GeofenceController#create), so a client payload legitimately omits it — and @Valid
+    // validation runs during request binding, before the controller body can populate it.
     @Indexed
-    @NotNull(message = "{validation.geofence.ownerId.required}")
     private String ownerId;
 
     @NotNull(message = "{validation.geofence.shape.required}")

@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { CategoriesPage } from './features/management/categories/categories-page';
 import { ComingSoon } from './features/management/coming-soon/coming-soon';
 import { DevicesPage } from './features/management/devices/devices-page';
+import { GeofencesPage } from './features/management/geofences/geofences-page';
 import { LocationsPage } from './features/management/locations/locations-page';
 import { ManagementShell } from './features/management/management-shell';
 import { FeatureManagementPage } from './features/management/settings/feature-management-page';
@@ -46,7 +47,7 @@ export const routes: Routes = [
       { path: 'locations', component: LocationsPage, data: { permissions: 'location:read' } },
       { path: 'devices', component: DevicesPage, data: { permissions: 'device:read' } },
       { path: 'categories', component: CategoriesPage },
-      { path: 'geofences', component: ComingSoon, data: { titleKey: 'management.navGeofences', permissions: 'geofence:read' } },
+      { path: 'geofences', component: GeofencesPage, data: { permissions: 'geofence:read' } },
     ],
   },
 ];

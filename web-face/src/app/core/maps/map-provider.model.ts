@@ -24,6 +24,22 @@ export interface MapContextMenuEvent {
   clientY: number;
 }
 
+export type GeofenceShapeKind = 'CIRCLE' | 'POLYGON';
+
+export interface CircleShape {
+  shape: 'CIRCLE';
+  center: { lat: number; lng: number };
+  radiusMeters: number;
+}
+
+export interface PolygonShape {
+  shape: 'POLYGON';
+  /** Vertices in order; not closed (first point isn't repeated at the end). */
+  path: { lat: number; lng: number }[];
+}
+
+export type GeofenceShapeData = CircleShape | PolygonShape;
+
 /**
  * Abstraction over a map rendering library (Leaflet, Google Maps, ...), so
  * components depend on this contract instead of a specific vendor SDK.
@@ -59,6 +75,27 @@ export interface MapProvider {
 
   /** Registers the handler fired on right-click on the map surface. */
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void;
+
+  /** Arms interactive drawing of a new circle/polygon; onComplete fires once with the drawn shape, then drawing mode ends. */
+  startDrawingGeofence(kind: GeofenceShapeKind, onComplete: (shape: GeofenceShapeData) => void): void;
+
+  /** Cancels an in-progress startDrawingGeofence call, if one is active. No-op otherwise. */
+  cancelDrawingGeofence(): void;
+
+  /**
+   * Renders (or replaces) a geofence shape under the given id. When editable, drag handles are
+   * shown and onEdited fires with the updated shape on every change (drag end, vertex add/remove).
+   */
+  renderGeofence(id: string, shape: GeofenceShapeData, editable: boolean, onEdited?: (shape: GeofenceShapeData) => void): void;
+
+  /** Removes a single rendered geofence shape, if one exists under that id. No-op otherwise. */
+  removeGeofence(id: string): void;
+
+  /** Removes every rendered geofence shape. */
+  clearGeofences(): void;
+
+  /** Pans/zooms so the given shape is fully visible. */
+  fitBoundsToGeofence(shape: GeofenceShapeData): void;
 
   /** Releases the underlying map instance and any listeners/resources it holds. */
   destroy(): void;

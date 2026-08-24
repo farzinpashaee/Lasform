@@ -17,16 +17,27 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { FEATURE_FLAGS } from '../../core/feature-flag-keys';
-import { MAP_PROVIDER, MapContextMenuEvent, MapMarkerData, MapProvider, MapType } from '../../core/maps';
+import {
+  GeofenceShapeData,
+  GeofenceShapeKind,
+  MAP_PROVIDER,
+  MapContextMenuEvent,
+  MapMarkerData,
+  MapProvider,
+  MapType,
+} from '../../core/maps';
+import { geofenceToShapeData, shapeDataToGeofenceFields } from '../../core/maps/geofence-geometry';
 import { Category } from '../../core/models/category.model';
 import { Device } from '../../core/models/device.model';
-import { DeviceStatus } from '../../core/models/enums';
+import { DeviceStatus, GeofenceStatus } from '../../core/models/enums';
+import { Geofence } from '../../core/models/geofence.model';
 import { Location } from '../../core/models/location.model';
 import { Review } from '../../core/models/review.model';
 import { SearchHit } from '../../core/models/search.model';
 import { CategoryService } from '../../core/services/category.service';
 import { DeviceService } from '../../core/services/device.service';
 import { FeatureFlagsService } from '../../core/services/feature-flags.service';
+import { GeofenceService } from '../../core/services/geofence.service';
 import { LocationService } from '../../core/services/location.service';
 import { ReviewService } from '../../core/services/review.service';
 import { SearchService } from '../../core/services/search.service';
@@ -36,8 +47,16 @@ import { AccountMenu } from '../../shared/account-menu/account-menu';
 type DetailsTab = 'overview' | 'reviews';
 
 const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
+const GEOFENCE_STATUSES: GeofenceStatus[] = ['ACTIVE', 'INACTIVE'];
+/** Id used for the shape-in-progress overlay while creating a geofence, before it has a real id. */
+const DRAFT_GEOFENCE_ID = '__draft__';
 
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
+
+interface GeofenceFormTarget {
+  mode: 'create' | 'edit-shape';
+  geofenceId?: string;
+}
 
 interface MapContextMenuState {
   lat: number;
@@ -65,6 +84,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private readonly tagService = inject(TagService);
   private readonly searchService = inject(SearchService);
   private readonly reviewService = inject(ReviewService);
+  private readonly geofenceService = inject(GeofenceService);
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
   protected readonly featureFlags = inject(FeatureFlagsService);
   protected readonly FEATURE_FLAGS = FEATURE_FLAGS;
@@ -141,6 +161,40 @@ export class MapPage implements AfterViewInit, OnDestroy {
   /** Set when the marker load 401s — e.g. an admin revoked map:view_public for anonymous callers. */
   protected readonly mapAccessDenied = signal(false);
 
+  protected readonly geofenceStatuses = GEOFENCE_STATUSES;
+  protected readonly geofenceDrawMenuOpen = signal(false);
+  protected readonly geofenceDraftShape = signal<GeofenceShapeData | null>(null);
+  protected readonly geofenceFormTarget = signal<GeofenceFormTarget | null>(null);
+  protected readonly geofenceFormName = signal('');
+  protected readonly geofenceFormDescription = signal('');
+  protected readonly geofenceFormStatus = signal<GeofenceStatus>('ACTIVE');
+  protected readonly geofenceFormDeviceIds = signal<string[]>([]);
+  protected readonly geofenceDeviceInput = signal('');
+  protected readonly savingGeofence = signal(false);
+  protected readonly geofenceFormError = signal<string | null>(null);
+  protected readonly devices = signal<Device[]>([]);
+  private readonly deviceMap = computed(() => {
+    const map = new Map<string, Device>();
+    for (const device of this.devices()) {
+      if (device.id) {
+        map.set(device.id, device);
+      }
+    }
+    return map;
+  });
+  protected readonly geofenceDeviceSuggestions = computed(() => {
+    const query = this.geofenceDeviceInput().trim().toLowerCase();
+    if (!query) {
+      return [];
+    }
+    const selected = new Set(this.geofenceFormDeviceIds());
+    return this.devices()
+      .filter((device) => device.id && !selected.has(device.id) && device.name.toLowerCase().includes(query))
+      .slice(0, 8);
+  });
+  /** The geofence currently being reshaped, captured so cancelGeofenceForm can revert the map to its saved shape. */
+  private editingGeofenceOriginal: Geofence | null = null;
+
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
       center: { lat: 43.8628, lng: -79.4308 },
@@ -149,8 +203,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
     this.loadLocationMarkers();
     this.loadCategories();
+    this.loadDevices();
+    this.loadGeofences();
     this.mapProvider.onContextMenu((event) => this.openMapContextMenu(event));
     this.jumpToQueryLocation();
+    this.jumpToQueryGeofence();
+    this.jumpToDrawGeofence();
   }
 
   /** Handles ?locationId=... deep links (e.g. the "View on map" action from the Locations table). */
@@ -165,15 +223,97 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
   }
 
+  /** Handles ?geofenceId=... deep links (the "View on map"/"Edit shape" actions from the Geofences table). */
+  private jumpToQueryGeofence(): void {
+    const geofenceId = this.route.snapshot.queryParamMap.get('geofenceId');
+    if (!geofenceId) {
+      return;
+    }
+    this.geofenceService.getById(geofenceId).subscribe({
+      next: (geofence) => this.openGeofenceForEdit(geofence),
+    });
+    this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+  }
+
+  /** Renders the geofence, and — only if the caller has geofence:write — opens it in the editable draw/save panel. */
+  private openGeofenceForEdit(geofence: Geofence): void {
+    if (!geofence.id) {
+      return;
+    }
+    const shape = geofenceToShapeData(geofence);
+    if (!shape) {
+      return;
+    }
+    const editable = this.authService.hasPermission('geofence:write');
+    this.mapProvider.renderGeofence(
+      geofence.id,
+      shape,
+      editable,
+      editable ? (updated) => this.geofenceDraftShape.set(updated) : undefined,
+    );
+    this.mapProvider.fitBoundsToGeofence(shape);
+    if (!editable) {
+      return;
+    }
+    this.editingGeofenceOriginal = geofence;
+    this.geofenceDraftShape.set(shape);
+    this.geofenceFormTarget.set({ mode: 'edit-shape', geofenceId: geofence.id });
+    this.geofenceFormName.set(geofence.name ?? '');
+    this.geofenceFormDescription.set(geofence.description ?? '');
+    this.geofenceFormStatus.set(geofence.status ?? 'ACTIVE');
+    this.geofenceFormDeviceIds.set([...(geofence.deviceIds ?? [])]);
+    this.geofenceDeviceInput.set('');
+    this.geofenceFormError.set(null);
+  }
+
+  /** Handles ?drawGeofence=circle|polygon deep links (the Geofences table's "Add geofence" popover). */
+  private jumpToDrawGeofence(): void {
+    const kind = this.route.snapshot.queryParamMap.get('drawGeofence');
+    if (kind !== 'circle' && kind !== 'polygon') {
+      return;
+    }
+    this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    this.startDrawGeofence(kind === 'circle' ? 'CIRCLE' : 'POLYGON');
+  }
+
+  private loadDevices(): void {
+    this.deviceService.findAll({ size: 200 }).subscribe({
+      next: (page) => this.devices.set(page.content),
+      // Non-critical (only feeds the geofence device picker) — silently no-op on failure.
+      error: () => {},
+    });
+  }
+
+  /** Renders every active geofence as a read-only background layer, visible to anyone with geofence:read. */
+  private loadGeofences(): void {
+    this.geofenceService.search({ status: 'ACTIVE' }).subscribe({
+      next: (geofences) => {
+        this.mapProvider.clearGeofences();
+        for (const geofence of geofences) {
+          const shape = geofence.id ? geofenceToShapeData(geofence) : null;
+          if (geofence.id && shape) {
+            this.mapProvider.renderGeofence(geofence.id, shape, false);
+          }
+        }
+      },
+      // Non-critical background layer (e.g. anonymous callers without geofence:read) — silently no-op.
+      error: () => {},
+    });
+  }
+
   @HostListener('document:keydown.escape')
   protected closeOverlays(): void {
     this.mapContextMenu.set(null);
     this.mapTypeMenuOpen.set(false);
     this.entityMenuOpen.set(false);
+    this.geofenceDrawMenuOpen.set(false);
     this.closeAddCategoryModal();
     this.closeAddLocationModal();
     this.closeEditModal();
     this.closeDeleteConfirm();
+    if (this.geofenceFormTarget()) {
+      this.cancelGeofenceForm();
+    }
   }
 
   ngOnDestroy(): void {
@@ -381,6 +521,139 @@ export class MapPage implements AfterViewInit, OnDestroy {
         this.addLocationError.set(this.transloco.translate('map.addLocationFailed'));
       },
     });
+  }
+
+  protected toggleGeofenceDrawMenu(): void {
+    this.geofenceDrawMenuOpen.update((open) => !open);
+  }
+
+  protected closeGeofenceDrawMenu(): void {
+    this.geofenceDrawMenuOpen.set(false);
+  }
+
+  protected startDrawGeofence(kind: GeofenceShapeKind): void {
+    this.closeGeofenceDrawMenu();
+    this.mapProvider.startDrawingGeofence(kind, (shape) => this.onGeofenceDrawn(shape));
+  }
+
+  private onGeofenceDrawn(shape: GeofenceShapeData): void {
+    this.geofenceDraftShape.set(shape);
+    this.geofenceFormTarget.set({ mode: 'create' });
+    this.geofenceFormName.set('');
+    this.geofenceFormDescription.set('');
+    this.geofenceFormStatus.set('ACTIVE');
+    this.geofenceFormDeviceIds.set([]);
+    this.geofenceDeviceInput.set('');
+    this.geofenceFormError.set(null);
+    this.mapProvider.renderGeofence(DRAFT_GEOFENCE_ID, shape, true, (updated) => this.geofenceDraftShape.set(updated));
+    this.mapProvider.fitBoundsToGeofence(shape);
+  }
+
+  protected geofenceShapeSummary(): string {
+    const shape = this.geofenceDraftShape();
+    if (!shape) {
+      return '';
+    }
+    if (shape.shape === 'CIRCLE') {
+      return this.transloco.translate('map.geofenceCircleSummary', { radius: Math.round(shape.radiusMeters) });
+    }
+    return this.transloco.translate('map.geofencePolygonSummary', { points: shape.path.length });
+  }
+
+  protected onGeofenceDeviceInputChange(value: string): void {
+    this.geofenceDeviceInput.set(value);
+  }
+
+  protected addGeofenceDevice(deviceId: string): void {
+    if (!this.geofenceFormDeviceIds().includes(deviceId)) {
+      this.geofenceFormDeviceIds.update((ids) => [...ids, deviceId]);
+    }
+    this.geofenceDeviceInput.set('');
+  }
+
+  protected removeGeofenceDevice(deviceId: string): void {
+    this.geofenceFormDeviceIds.update((ids) => ids.filter((id) => id !== deviceId));
+  }
+
+  protected deviceLabel(deviceId: string): string {
+    return this.deviceMap().get(deviceId)?.name ?? deviceId;
+  }
+
+  protected cancelGeofenceForm(): void {
+    const target = this.geofenceFormTarget();
+    this.mapProvider.cancelDrawingGeofence();
+    if (target?.mode === 'create') {
+      this.mapProvider.removeGeofence(DRAFT_GEOFENCE_ID);
+    } else if (target?.mode === 'edit-shape' && target.geofenceId) {
+      // Revert the map to the last-saved shape rather than leaving the user's unsaved drag edits visible.
+      const shape = this.editingGeofenceOriginal ? geofenceToShapeData(this.editingGeofenceOriginal) : null;
+      if (shape) {
+        this.mapProvider.renderGeofence(target.geofenceId, shape, false);
+      } else {
+        this.mapProvider.removeGeofence(target.geofenceId);
+      }
+    }
+    this.geofenceDraftShape.set(null);
+    this.geofenceFormTarget.set(null);
+    this.geofenceFormError.set(null);
+    this.savingGeofence.set(false);
+    this.editingGeofenceOriginal = null;
+  }
+
+  protected submitGeofenceForm(): void {
+    const target = this.geofenceFormTarget();
+    const shape = this.geofenceDraftShape();
+    const name = this.geofenceFormName().trim();
+    if (!target || !shape || !name || this.savingGeofence()) {
+      return;
+    }
+    this.savingGeofence.set(true);
+    this.geofenceFormError.set(null);
+
+    const geometryFields = shapeDataToGeofenceFields(shape);
+    const description = this.geofenceFormDescription().trim() || undefined;
+    const status = this.geofenceFormStatus();
+    const deviceIds = this.geofenceFormDeviceIds();
+
+    if (target.mode === 'create') {
+      const geofence: Geofence = { name, description, status, deviceIds, ...geometryFields };
+      this.geofenceService.create(geofence).subscribe({
+        next: () => this.handleGeofenceSaveSuccess(),
+        error: () => this.handleGeofenceSaveError(),
+      });
+      return;
+    }
+
+    const geofenceId = target.geofenceId;
+    if (!geofenceId) {
+      this.savingGeofence.set(false);
+      return;
+    }
+    // Full merged object where available — PATCH replaces whatever fields are present in the
+    // body, so a sparse partial would wipe fields (e.g. version) not part of this form.
+    const original = this.editingGeofenceOriginal;
+    const updated: Partial<Geofence> = original
+      ? { ...original, name, description, status, deviceIds, ...geometryFields }
+      : { name, description, status, deviceIds, ...geometryFields };
+    this.geofenceService.update(geofenceId, updated).subscribe({
+      next: () => this.handleGeofenceSaveSuccess(),
+      error: () => this.handleGeofenceSaveError(),
+    });
+  }
+
+  private handleGeofenceSaveSuccess(): void {
+    this.savingGeofence.set(false);
+    this.geofenceDraftShape.set(null);
+    this.geofenceFormTarget.set(null);
+    this.editingGeofenceOriginal = null;
+    // Reloading clears every rendered geofence (including the draft/edited overlay) and
+    // repopulates from the authoritative server list, which now includes this save.
+    this.loadGeofences();
+  }
+
+  private handleGeofenceSaveError(): void {
+    this.savingGeofence.set(false);
+    this.geofenceFormError.set(this.transloco.translate('map.geofenceSaveFailed'));
   }
 
   protected openAddCategoryModal(): void {

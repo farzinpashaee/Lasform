@@ -68,6 +68,18 @@
     "markerEmojiPlaceholder": "e.g. 🏥",
     "addLocation": "Add location",
     "addCategory": "Add category",
+    "drawGeofence": "Draw geofence",
+    "drawCircle": "Draw circle",
+    "drawPolygon": "Draw polygon",
+    "addGeofenceTitle": "Add geofence",
+    "editGeofenceShapeTitle": "Edit geofence shape",
+    "geofenceCircleSummary": "Circle · {{radius}}m radius",
+    "geofencePolygonSummary": "Polygon · {{points}} points",
+    "geofenceDevicesLabel": "Devices",
+    "geofenceDevicesHint": "Leave empty to apply to all of this org's devices.",
+    "geofenceDevicesPlaceholder": "Type to add a device…",
+    "removeGeofenceDevice": "Remove device {{device}}",
+    "geofenceSaveFailed": "Failed to save the geofence. Please try again.",
     "account": {
       "greeting": "Hi, {{name}}!",
       "viewProfile": "Manage your profile"
@@ -220,6 +232,34 @@
       "OTHER": "Other"
     }
   },
+  "geofences": {
+    "title": "Geofences",
+    "note": "Manage geofenced zones and which devices they apply to.",
+    "addNew": "Add geofence",
+    "addCircle": "Add circle",
+    "addPolygon": "Add polygon",
+    "colShape": "Shape",
+    "colDevices": "Devices",
+    "colActions": "Actions",
+    "loading": "Loading geofences…",
+    "empty": "No geofences found.",
+    "allDevices": "All devices",
+    "viewOnMap": "View on map",
+    "editShape": "Edit shape",
+    "editDetails": "Edit details",
+    "editDetailsTitle": "Edit {{name}}",
+    "devicesHint": "Leave empty to apply to all of this org's devices.",
+    "devicesPlaceholder": "Type to add a device…",
+    "removeDevice": "Remove device {{device}}",
+    "deleteTitle": "Delete geofence?",
+    "loadFailed": "Failed to load geofences. Please try again.",
+    "saveFailed": "Failed to save the geofence. Please try again.",
+    "deleteFailed": "Failed to delete the geofence. Please try again.",
+    "shape": {
+      "CIRCLE": "Circle",
+      "POLYGON": "Polygon"
+    }
+  },
   "auth": {
     "invalidEmailFormat": "Please enter a valid email address.",
     "google": {
@@ -302,6 +342,9 @@
     "assignRole": "Assign role",
     "assignRoleTo": "Assign role to {{email}}",
     "assignRoleSuccess": "Role assigned.",
+    "currentRoles": "Current roles",
+    "removeRole": "Remove role {{role}}",
+    "removeRoleFailed": "Failed to remove role. Please try again.",
     "role": "Role",
     "selectRole": "Select a role…",
     "temporaryPassword": "Temporary password",

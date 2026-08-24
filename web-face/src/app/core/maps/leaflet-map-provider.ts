@@ -1,7 +1,25 @@
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
+import 'leaflet-draw';
 
-import { MapContextMenuEvent, MapMarkerData, MapProvider, MapType, MapViewOptions } from './map-provider.model';
+import {
+  CircleShape,
+  GeofenceShapeData,
+  GeofenceShapeKind,
+  MapContextMenuEvent,
+  MapMarkerData,
+  MapProvider,
+  MapType,
+  MapViewOptions,
+  PolygonShape,
+} from './map-provider.model';
+
+/** leaflet-draw's runtime init hooks attach this to L.Circle/L.Polygon once added to a map — @types/leaflet-draw doesn't declare it. */
+interface EditableShapeLayer extends L.Layer {
+  editing?: { enable(): void; disable(): void };
+}
+
+const GEOFENCE_SHAPE_OPTIONS: L.PathOptions = { color: '#da5050', weight: 3, fillOpacity: 0.15 };
 
 const ROADMAP_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 /** Esri's free World Imagery service — no API key required. */
@@ -31,6 +49,10 @@ private map?: L.Map;
   private roadmapLayer?: L.TileLayer;
   private satelliteLayer?: L.TileLayer;
   private terrainLayer?: L.TileLayer;
+  private geofenceLayer?: L.FeatureGroup;
+  private geofenceShapesById = new Map<string, L.Circle | L.Polygon>();
+  private activeDrawHandler?: L.Draw.Circle | L.Draw.Polygon;
+  private activeDrawCreatedListener?: L.LeafletEventHandlerFn;
 
   initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
     this.map = L.map(container, {
@@ -50,6 +72,8 @@ private map?: L.Map;
     // every layer — tiles included — renders as if the map had no visible area. A deferred
     // invalidateSize() forces a re-measure once layout has actually settled.
     setTimeout(() => this.map?.invalidateSize(), 0);
+
+    this.geofenceLayer = L.featureGroup().addTo(this.map);
 
     return Promise.resolve();
   }
@@ -203,6 +227,107 @@ private map?: L.Map;
     });
   }
 
+  startDrawingGeofence(kind: GeofenceShapeKind, onComplete: (shape: GeofenceShapeData) => void): void {
+    if (!this.map) {
+      return;
+    }
+    this.cancelDrawingGeofence();
+
+    const drawMap = this.map as unknown as L.DrawMap;
+    const handler =
+      kind === 'CIRCLE'
+        ? new L.Draw.Circle(drawMap, { shapeOptions: GEOFENCE_SHAPE_OPTIONS })
+        : new L.Draw.Polygon(drawMap, { shapeOptions: GEOFENCE_SHAPE_OPTIONS });
+    this.activeDrawHandler = handler;
+
+    // The drawn layer is transient — never added to the map. The caller is expected to
+    // immediately call renderGeofence(id, shape, true, ...) with the resulting shape, which
+    // becomes the single source of truth for what's actually rendered (avoids a duplicate
+    // untracked layer sitting underneath the one renderGeofence creates for the same shape).
+    const listener: L.LeafletEventHandlerFn = (event) => {
+      this.activeDrawHandler = undefined;
+      this.activeDrawCreatedListener = undefined;
+      const layer = (event as L.DrawEvents.Created).layer as L.Circle | L.Polygon;
+      onComplete(this.shapeFromLayer(layer));
+    };
+    this.activeDrawCreatedListener = listener;
+    this.map.once(L.Draw.Event.CREATED, listener);
+
+    handler.enable();
+  }
+
+  cancelDrawingGeofence(): void {
+    this.activeDrawHandler?.disable();
+    this.activeDrawHandler = undefined;
+    if (this.activeDrawCreatedListener) {
+      this.map?.off(L.Draw.Event.CREATED, this.activeDrawCreatedListener);
+      this.activeDrawCreatedListener = undefined;
+    }
+  }
+
+  renderGeofence(id: string, shape: GeofenceShapeData, editable: boolean, onEdited?: (shape: GeofenceShapeData) => void): void {
+    if (!this.map || !this.geofenceLayer) {
+      return;
+    }
+    this.removeGeofence(id);
+
+    const layer = this.layerFromShape(shape);
+    this.geofenceLayer.addLayer(layer);
+    this.geofenceShapesById.set(id, layer);
+
+    const editableLayer = layer as EditableShapeLayer;
+    if (editable) {
+      editableLayer.editing?.enable();
+      if (onEdited) {
+        layer.on('edit', () => onEdited(this.shapeFromLayer(layer)));
+      }
+    } else {
+      editableLayer.editing?.disable();
+    }
+  }
+
+  removeGeofence(id: string): void {
+    const layer = this.geofenceShapesById.get(id);
+    if (!layer) {
+      return;
+    }
+    this.geofenceLayer?.removeLayer(layer);
+    this.geofenceShapesById.delete(id);
+  }
+
+  clearGeofences(): void {
+    this.geofenceLayer?.clearLayers();
+    this.geofenceShapesById.clear();
+  }
+
+  fitBoundsToGeofence(shape: GeofenceShapeData): void {
+    if (!this.map) {
+      return;
+    }
+    this.map.fitBounds(this.layerFromShape(shape).getBounds());
+  }
+
+  private layerFromShape(shape: GeofenceShapeData): L.Circle | L.Polygon {
+    if (shape.shape === 'CIRCLE') {
+      return L.circle([shape.center.lat, shape.center.lng], { ...GEOFENCE_SHAPE_OPTIONS, radius: shape.radiusMeters });
+    }
+    return L.polygon(
+      shape.path.map((point) => [point.lat, point.lng] as L.LatLngTuple),
+      GEOFENCE_SHAPE_OPTIONS,
+    );
+  }
+
+  private shapeFromLayer(layer: L.Circle | L.Polygon): GeofenceShapeData {
+    if (layer instanceof L.Circle) {
+      const center = layer.getLatLng();
+      const circle: CircleShape = { shape: 'CIRCLE', center: { lat: center.lat, lng: center.lng }, radiusMeters: layer.getRadius() };
+      return circle;
+    }
+    const [ring] = layer.getLatLngs() as L.LatLng[][];
+    const polygon: PolygonShape = { shape: 'POLYGON', path: ring.map((latlng) => ({ lat: latlng.lat, lng: latlng.lng })) };
+    return polygon;
+  }
+
   destroy(): void {
     this.map?.remove();
     this.map = undefined;
@@ -214,5 +339,9 @@ private map?: L.Map;
     this.roadmapLayer = undefined;
     this.satelliteLayer = undefined;
     this.terrainLayer = undefined;
+    this.geofenceLayer = undefined;
+    this.geofenceShapesById.clear();
+    this.activeDrawHandler = undefined;
+    this.activeDrawCreatedListener = undefined;
   }
 }

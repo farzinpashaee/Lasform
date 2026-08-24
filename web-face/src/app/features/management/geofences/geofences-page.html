@@ -1,0 +1,212 @@
+<h1 class="page-title">{{ 'geofences.title' | transloco }}</h1>
+
+<div class="toolbar">
+  <span class="toolbar-note">{{ 'geofences.note' | transloco }}</span>
+  <div class="add-menu-wrapper">
+    <button type="button" class="add-button" (click)="toggleAddMenu()">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      <span>{{ 'geofences.addNew' | transloco }}</span>
+    </button>
+    @if (addMenuOpen()) {
+      <div class="context-menu-backdrop" (click)="closeAddMenu()" (contextmenu)="closeAddMenu()"></div>
+      <ul class="add-menu">
+        <li>
+          <button type="button" class="context-menu-item" (click)="addGeofenceOnMap('circle')">
+            <span class="material-symbols-outlined" aria-hidden="true">circle</span>
+            <span>{{ 'geofences.addCircle' | transloco }}</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="context-menu-item" (click)="addGeofenceOnMap('polygon')">
+            <span class="material-symbols-outlined" aria-hidden="true">pentagon</span>
+            <span>{{ 'geofences.addPolygon' | transloco }}</span>
+          </button>
+        </li>
+      </ul>
+    }
+  </div>
+</div>
+
+<div class="geofences-table-wrapper">
+  <table class="geofences-table">
+    <thead>
+      <tr>
+        <th>{{ 'common.nameColumn' | transloco }}</th>
+        <th>{{ 'geofences.colShape' | transloco }}</th>
+        <th>{{ 'common.statusLabel' | transloco }}</th>
+        <th>{{ 'geofences.colDevices' | transloco }}</th>
+        <th class="actions-column">{{ 'geofences.colActions' | transloco }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="5" class="state-cell">{{ 'geofences.loading' | transloco }}</td>
+        </tr>
+      } @else if (loadError()) {
+        <tr>
+          <td colspan="5" class="state-cell error">{{ loadError() }}</td>
+        </tr>
+      } @else if (geofences().length === 0) {
+        <tr>
+          <td colspan="5" class="state-cell">{{ 'geofences.empty' | transloco }}</td>
+        </tr>
+      } @else {
+        @for (geofence of geofences(); track geofence.id) {
+          <tr>
+            <td>
+              <div class="name-cell">{{ geofence.name }}</div>
+              @if (geofence.description) {
+                <div class="description-cell">{{ geofence.description }}</div>
+              }
+            </td>
+            <td>
+              <span class="shape-chip">{{ 'geofences.shape.' + geofence.shape | transloco }}</span>
+            </td>
+            <td>
+              <span class="status-chip" [class.status-disabled]="geofence.status === 'INACTIVE'">
+                {{ geofence.status ?? 'ACTIVE' }}
+              </span>
+            </td>
+            <td>
+              @if (geofence.deviceIds && geofence.deviceIds.length > 0) {
+                {{ geofence.deviceIds.length }}
+              } @else {
+                <span class="muted">{{ 'geofences.allDevices' | transloco }}</span>
+              }
+            </td>
+            <td class="actions-column">
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'geofences.viewOnMap' | transloco"
+                (click)="viewOnMap(geofence)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">map</span>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'geofences.editShape' | transloco"
+                (click)="viewOnMap(geofence)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">draw</span>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'geofences.editDetails' | transloco"
+                (click)="openEditModal(geofence)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button icon-action-button-danger"
+                [attr.aria-label]="'common.delete' | transloco"
+                (click)="openDeleteConfirm(geofence)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (editTarget(); as geofence) {
+  <div class="modal-backdrop" (click)="closeEditModal()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ 'geofences.editDetailsTitle' | transloco: { name: geofence.name } }}</h2>
+    <form (ngSubmit)="submitEdit()">
+      <label class="modal-field">
+        <span>{{ 'common.nameLabel' | transloco }}</span>
+        <input type="text" [(ngModel)]="editName" name="name" required autocomplete="off" />
+      </label>
+      <label class="modal-field">
+        <span>{{ 'common.descriptionLabel' | transloco }}</span>
+        <textarea [(ngModel)]="editDescription" name="description" rows="3"></textarea>
+      </label>
+      <label class="modal-field">
+        <span>{{ 'common.statusLabel' | transloco }}</span>
+        <select [(ngModel)]="editStatus" name="status">
+          @for (status of geofenceStatuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </label>
+      <label class="modal-field">
+        <span>{{ 'geofences.colDevices' | transloco }}</span>
+        <p class="modal-hint">{{ 'geofences.devicesHint' | transloco }}</p>
+        <div class="tag-input-wrapper">
+          @if (editDeviceIds().length > 0) {
+            <div class="tag-chip-list">
+              @for (deviceId of editDeviceIds(); track deviceId) {
+                <span class="tag-chip">
+                  {{ deviceLabel(deviceId) }}
+                  <button
+                    type="button"
+                    class="tag-chip-remove"
+                    [attr.aria-label]="'geofences.removeDevice' | transloco: { device: deviceLabel(deviceId) }"
+                    (click)="removeEditDevice(deviceId)"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                  </button>
+                </span>
+              }
+            </div>
+          }
+          <input
+            type="text"
+            [ngModel]="editDeviceInput()"
+            (ngModelChange)="onEditDeviceInputChange($event)"
+            name="deviceInput"
+            [placeholder]="'geofences.devicesPlaceholder' | transloco"
+            autocomplete="off"
+          />
+          @if (editDeviceSuggestions().length > 0) {
+            <ul class="tag-suggestions">
+              @for (device of editDeviceSuggestions(); track device.id) {
+                <li>
+                  <button type="button" class="tag-suggestion-item" (click)="addEditDevice(device.id!)">{{ device.name }}</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </label>
+      @if (editError()) {
+        <p class="modal-error">{{ editError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeEditModal()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button type="submit" class="modal-button modal-button-primary" [disabled]="editSaving() || !editName().trim()">
+          {{ (editSaving() ? 'common.saving' : 'common.saveChanges') | transloco }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (deleteTarget(); as geofence) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ 'geofences.deleteTitle' | transloco }}</h2>
+    <p class="modal-subtitle">"{{ geofence.name }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
+    @if (deleteError()) {
+      <p class="modal-error">{{ deleteError() }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | transloco }}
+      </button>
+      <button type="button" class="modal-button modal-button-danger" [disabled]="deletingGeofence()" (click)="confirmDelete()">
+        {{ (deletingGeofence() ? 'common.deleting' : 'common.delete') | transloco }}
+      </button>
+    </div>
+  </div>
+}
