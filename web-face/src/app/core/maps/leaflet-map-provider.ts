@@ -44,6 +44,34 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'lasform/assets/images/markers/marker-shadow.png',
 });
 
+/** Undocumented internals of leaflet-draw's shared Polyline/Polygon draw handler that the closing-click patch below needs. */
+interface DrawPolylineInternals {
+  type: string;
+  _markers: L.Marker[];
+  _mouseDownOrigin: L.Point | null;
+  _calculateFinishDistance(latlng: L.LatLng): number;
+  _finishShape(): void;
+  _endPoint(clientX: number, clientY: number, event: L.LeafletMouseEvent): void;
+}
+
+// leaflet-draw only auto-closes a polygon by clicking near its first vertex on TOUCH input —
+// see its Draw.Polyline#_endPoint, which has `else if (lastPtDistance < 10 && L.Browser.touch)`
+// with no equivalent branch for mouse. On mouse, closing relies entirely on a real DOM click
+// landing on the first vertex marker's own (tiny) icon underneath leaflet-draw's own invisible,
+// map-covering "catch every click" marker, which is unreliable — a click that misses just adds
+// a redundant vertex instead of finishing. This extends that same proximity check to mouse too.
+const drawPolylineProto = L.Draw.Polyline.prototype as unknown as DrawPolylineInternals;
+const originalEndPoint = drawPolylineProto._endPoint;
+drawPolylineProto._endPoint = function (this: DrawPolylineInternals, clientX, clientY, event) {
+  const polygonType = (L.Draw.Polygon as unknown as { TYPE: string }).TYPE;
+  if (this.type === polygonType && this._markers.length > 2 && this._calculateFinishDistance(event.latlng) < 10) {
+    this._finishShape();
+    this._mouseDownOrigin = null;
+    return;
+  }
+  originalEndPoint.call(this, clientX, clientY, event);
+};
+
 export class LeafletMapProvider implements MapProvider {
 private map?: L.Map;
   private markersLayer?: L.LayerGroup;
@@ -244,7 +272,10 @@ private map?: L.Map;
     const handler =
       kind === 'CIRCLE'
         ? new L.Draw.Circle(drawMap, { shapeOptions: GEOFENCE_SHAPE_OPTIONS })
-        : new L.Draw.Polygon(drawMap, { shapeOptions: GEOFENCE_SHAPE_OPTIONS });
+        // allowIntersection defaults to true in leaflet-draw — without this, a self-crossing
+        // polygon draws fine here but MongoDB's 2dsphere index rejects it outright on save
+        // ("Loop is not valid: Edges N and M cross"), losing the user's work at the last step.
+        : new L.Draw.Polygon(drawMap, { shapeOptions: GEOFENCE_SHAPE_OPTIONS, allowIntersection: false });
     this.activeDrawHandler = handler;
 
     // The drawn layer is transient — never added to the map. The caller is expected to
