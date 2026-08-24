@@ -239,6 +239,66 @@ $radius: 8px;
   }
 }
 
+.current-roles {
+  margin-bottom: 16px;
+}
+
+.current-roles-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+}
+
+.role-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary, #202124);
+  background: var(--hover, #f1f3f4);
+}
+
+.role-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  color: var(--text-secondary, #5f6368);
+  background: transparent;
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 14px;
+  }
+
+  &:hover:not(:disabled) {
+    color: #fff;
+    background: var(--danger, #d93025);
+  }
+
+  &:disabled {
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+  }
+}
+
 .icon-action-button {
   display: inline-flex;
   align-items: center;

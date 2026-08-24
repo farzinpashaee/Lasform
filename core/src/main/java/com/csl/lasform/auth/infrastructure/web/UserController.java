@@ -1,14 +1,15 @@
 package com.csl.lasform.auth.infrastructure.web;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.csl.lasform.auth.application.UserManagementService;
 import com.csl.lasform.auth.domain.model.Role;
 import com.csl.lasform.auth.domain.model.User;
+import com.csl.lasform.auth.domain.model.UserRole;
 import com.csl.lasform.auth.domain.repository.RoleRepository;
 import com.csl.lasform.auth.domain.repository.UserRepository;
 import com.csl.lasform.auth.domain.repository.UserRoleRepository;
@@ -51,15 +53,22 @@ public class UserController {
     public List<UserResponse> list() {
         Map<String, String> roleNameById = roleRepository.findAll().stream().collect(Collectors.toMap(Role::getId, Role::getName));
         return userRepository.findAll().stream()
-                .map(user -> UserResponse.from(user, roleNamesFor(user.getId(), roleNameById)))
+                .map(user -> toResponse(user, roleNameById))
                 .toList();
     }
 
-    private List<String> roleNamesFor(String userId, Map<String, String> roleNameById) {
-        return userRoleRepository.findByUserId(userId).stream()
-                .map(userRole -> roleNameById.get(userRole.getRoleId()))
-                .filter(Objects::nonNull)
-                .toList();
+    private UserResponse toResponse(User user, Map<String, String> roleNameById) {
+        List<String> roleIds = new ArrayList<>();
+        List<String> roleNames = new ArrayList<>();
+        for (UserRole userRole : userRoleRepository.findByUserId(user.getId())) {
+            String roleName = roleNameById.get(userRole.getRoleId());
+            // An orphaned UserRole whose role was deleted is dropped from both lists, keeping them parallel.
+            if (roleName != null) {
+                roleIds.add(userRole.getRoleId());
+                roleNames.add(roleName);
+            }
+        }
+        return UserResponse.from(user, roleIds, roleNames);
     }
 
     /** New users always belong to the creating admin's org — there's no cross-org creation surface yet (single org). */
@@ -97,6 +106,15 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Idempotent: removing a role the user doesn't have is a no-op, not an error (see UserManagementService#removeRole). */
+    @DeleteMapping("/{id}/roles/{roleId}")
+    @PreAuthorize("hasAuthority('user:manage_roles')")
+    public ResponseEntity<Void> removeRole(@PathVariable String id, @PathVariable String roleId, Authentication authentication) {
+        JwtPrincipal principal = (JwtPrincipal) authentication.getPrincipal();
+        userManagementService.removeRole(id, roleId, principal.orgId());
+        return ResponseEntity.noContent().build();
+    }
+
     /**
      * No {@code @PreAuthorize} — every authenticated user, regardless of role, can edit their own
      * profile, so there's no single permission key to gate on. The {@code instanceof} check is
@@ -119,6 +137,6 @@ public class UserController {
         JwtPrincipal principal = (JwtPrincipal) authentication.getPrincipal();
         User updated = userManagementService.updateUser(id, principal.userId(), request.displayName(), request.status());
         Map<String, String> roleNameById = roleRepository.findAll().stream().collect(Collectors.toMap(Role::getId, Role::getName));
-        return UserResponse.from(updated, roleNamesFor(updated.getId(), roleNameById));
+        return toResponse(updated, roleNameById);
     }
 }

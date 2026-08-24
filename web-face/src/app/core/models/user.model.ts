@@ -9,5 +9,7 @@ export interface User {
   status: UserStatus;
   mustResetPassword: boolean;
   createdAt: string;
+  /** Parallel to roleNames — same length, same order, so roleIds[i] is the id behind roleNames[i]. */
+  roleIds: string[];
   roleNames: string[];
 }

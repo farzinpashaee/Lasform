@@ -119,6 +119,30 @@
   <div class="modal-backdrop" (click)="closeRoleAssignmentModal()"></div>
   <div class="modal">
     <h2 class="modal-title">{{ 'users.assignRoleTo' | transloco: { email: user.email } }}</h2>
+    @if (user.roleIds.length > 0) {
+      <div class="current-roles">
+        <span class="current-roles-label">{{ 'users.currentRoles' | transloco }}</span>
+        <ul class="role-chip-list">
+          @for (roleId of user.roleIds; track roleId; let i = $index) {
+            <li class="role-chip">
+              <span>{{ user.roleNames[i] }}</span>
+              <button
+                type="button"
+                class="role-chip-remove"
+                [attr.aria-label]="'users.removeRole' | transloco: { role: user.roleNames[i] }"
+                [disabled]="removingRoleId() === roleId"
+                (click)="removeRole(user, roleId)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+              </button>
+            </li>
+          }
+        </ul>
+        @if (removeRoleError()) {
+          <p class="modal-error">{{ removeRoleError() }}</p>
+        }
+      </div>
+    }
     @if (assignRoleSuccess()) {
       <p class="modal-hint">{{ 'users.assignRoleSuccess' | transloco }}</p>
       <div class="modal-actions">

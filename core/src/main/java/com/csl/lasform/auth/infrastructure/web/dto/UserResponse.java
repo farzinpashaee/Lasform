@@ -16,14 +16,16 @@ public record UserResponse(
         UserStatus status,
         boolean mustResetPassword,
         Instant createdAt,
+        List<String> roleIds,
         List<String> roleNames) {
 
     /** For call sites that haven't looked up the user's roles (e.g. create/updateOwnProfile) — an empty list, not a lie about having none. */
     public static UserResponse from(User user) {
-        return from(user, List.of());
+        return from(user, List.of(), List.of());
     }
 
-    public static UserResponse from(User user, List<String> roleNames) {
+    /** {@code roleIds} and {@code roleNames} must be parallel — same length, same order — so the client can pair them up by index. */
+    public static UserResponse from(User user, List<String> roleIds, List<String> roleNames) {
         return new UserResponse(
                 user.getId(),
                 user.getOrgId(),
@@ -33,6 +35,7 @@ public record UserResponse(
                 user.getStatus(),
                 user.isMustResetPassword(),
                 user.getCreatedAt(),
+                roleIds,
                 roleNames);
     }
 }

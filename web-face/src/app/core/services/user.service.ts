@@ -46,6 +46,11 @@ export class UserService {
     return this.http.post<void>(`${this.resourceUrl}/${userId}/roles`, { roleId });
   }
 
+  /** Requires user:manage_roles. Idempotent — removing a role the user doesn't have is a no-op. */
+  removeRole(userId: string, roleId: string): Observable<void> {
+    return this.http.delete<void>(`${this.resourceUrl}/${userId}/roles/${roleId}`);
+  }
+
   /** No special permission — any authenticated user may edit their own displayName. */
   updateOwnProfile(displayName: string): Observable<User> {
     return this.http.patch<User>(`${this.resourceUrl}/me`, { displayName });

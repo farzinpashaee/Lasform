@@ -101,6 +101,17 @@ public class UserManagementService {
         userRoleRepository.save(UserRole.builder().userId(userId).roleId(roleId).orgId(orgId).build());
     }
 
+    /** Idempotent — removing a role the user doesn't have is a no-op (see UserRoleRepository.deleteByUserIdAndRoleIdAndOrgId). */
+    public void removeRole(String userId, String roleId, String orgId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("error.user.notFound", userId);
+        }
+        if (!roleRepository.existsById(roleId)) {
+            throw new ResourceNotFoundException("error.role.notFound", roleId);
+        }
+        userRoleRepository.deleteByUserIdAndRoleIdAndOrgId(userId, roleId, orgId);
+    }
+
     /** Self-service only — a user setting their own displayName, not an admin editing someone else's. */
     public User updateOwnProfile(String userId, String displayName) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("error.user.notFound", userId));

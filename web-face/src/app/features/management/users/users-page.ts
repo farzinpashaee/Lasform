@@ -44,6 +44,8 @@ export class UsersPage implements OnInit {
   protected readonly assigningRole = signal(false);
   protected readonly assignRoleError = signal<string | null>(null);
   protected readonly assignRoleSuccess = signal(false);
+  protected readonly removingRoleId = signal<string | null>(null);
+  protected readonly removeRoleError = signal<string | null>(null);
 
   protected readonly userStatuses = USER_STATUSES;
   protected readonly editTarget = signal<User | null>(null);
@@ -112,12 +114,14 @@ export class UsersPage implements OnInit {
     this.selectedRoleId.set('');
     this.assignRoleError.set(null);
     this.assignRoleSuccess.set(false);
+    this.removeRoleError.set(null);
     this.roleAssignmentTarget.set(user);
   }
 
   protected closeRoleAssignmentModal(): void {
     this.roleAssignmentTarget.set(null);
     this.assigningRole.set(false);
+    this.removingRoleId.set(null);
   }
 
   protected submitRoleAssignment(): void {
@@ -133,10 +137,47 @@ export class UsersPage implements OnInit {
       next: () => {
         this.assigningRole.set(false);
         this.assignRoleSuccess.set(true);
+        if (!user.roleIds.includes(roleId)) {
+          const role = this.roles().find((r) => r.id === roleId);
+          const updatedUser: User = {
+            ...user,
+            roleIds: [...user.roleIds, roleId],
+            roleNames: role ? [...user.roleNames, role.name] : user.roleNames,
+          };
+          this.users.update((current) => current.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+          this.roleAssignmentTarget.set(updatedUser);
+        }
       },
       error: () => {
         this.assigningRole.set(false);
         this.assignRoleError.set(this.transloco.translate('users.assignRoleFailed'));
+      },
+    });
+  }
+
+  protected removeRole(user: User, roleId: string): void {
+    if (this.removingRoleId()) {
+      return;
+    }
+    this.removingRoleId.set(roleId);
+    this.removeRoleError.set(null);
+    this.assignRoleSuccess.set(false);
+
+    this.userService.removeRole(user.id, roleId).subscribe({
+      next: () => {
+        this.removingRoleId.set(null);
+        const index = user.roleIds.indexOf(roleId);
+        const updatedUser: User = {
+          ...user,
+          roleIds: user.roleIds.filter((id) => id !== roleId),
+          roleNames: user.roleNames.filter((_, i) => i !== index),
+        };
+        this.users.update((current) => current.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+        this.roleAssignmentTarget.set(updatedUser);
+      },
+      error: () => {
+        this.removingRoleId.set(null);
+        this.removeRoleError.set(this.transloco.translate('users.removeRoleFailed'));
       },
     });
   }
