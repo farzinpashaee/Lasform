@@ -85,12 +85,14 @@ export interface MapProvider {
   /**
    * Renders (or replaces) a geofence shape under the given id. When editable, drag handles are
    * shown and onEdited fires with the updated shape on every change (drag end, vertex add/remove).
-   * onClick, if given, fires when the shape itself is clicked.
+   * label, if given, is shown as text centered on the shape. onClick, if given, fires when the
+   * shape itself is clicked.
    */
   renderGeofence(
     id: string,
     shape: GeofenceShapeData,
     editable: boolean,
+    label?: string,
     onEdited?: (shape: GeofenceShapeData) => void,
     onClick?: () => void,
   ): void;

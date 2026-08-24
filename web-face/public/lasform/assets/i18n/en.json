@@ -82,6 +82,8 @@
     "geofenceDevicesPlaceholder": "Type to add a device…",
     "removeGeofenceDevice": "Remove device {{device}}",
     "geofenceSaveFailed": "Failed to save the geofence. Please try again.",
+    "deleteGeofenceTitle": "Delete geofence?",
+    "deleteGeofenceFailed": "Failed to delete the geofence. Please try again.",
     "account": {
       "greeting": "Hi, {{name}}!",
       "viewProfile": "Manage your profile"

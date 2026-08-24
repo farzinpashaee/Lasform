@@ -21,6 +21,12 @@ interface EditableShapeLayer extends L.Layer {
 
 const GEOFENCE_SHAPE_OPTIONS: L.PathOptions = { color: '#da5050', weight: 3, fillOpacity: 0.15 };
 
+const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+/** label is user-supplied (the geofence's name) and gets dropped into a divIcon's raw HTML below. */
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
 const ROADMAP_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 /** Esri's free World Imagery service — no API key required. */
 const SATELLITE_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -51,6 +57,7 @@ private map?: L.Map;
   private terrainLayer?: L.TileLayer;
   private geofenceLayer?: L.FeatureGroup;
   private geofenceShapesById = new Map<string, L.Circle | L.Polygon>();
+  private geofenceLabelsById = new Map<string, L.Marker>();
   private activeDrawHandler?: L.Draw.Circle | L.Draw.Polygon;
   private activeDrawCreatedListener?: L.LeafletEventHandlerFn;
 
@@ -269,6 +276,7 @@ private map?: L.Map;
     id: string,
     shape: GeofenceShapeData,
     editable: boolean,
+    label?: string,
     onEdited?: (shape: GeofenceShapeData) => void,
     onClick?: () => void,
   ): void {
@@ -293,20 +301,35 @@ private map?: L.Map;
     if (onClick) {
       layer.on('click', () => onClick());
     }
+
+    if (label) {
+      const labelMarker = L.marker(layer.getBounds().getCenter(), {
+        icon: L.divIcon({ className: 'geofence-label-icon', html: `<div class="geofence-label">${escapeHtml(label)}</div>`, iconSize: [0, 0] }),
+        interactive: false,
+        keyboard: false,
+      });
+      this.geofenceLayer.addLayer(labelMarker);
+      this.geofenceLabelsById.set(id, labelMarker);
+    }
   }
 
   removeGeofence(id: string): void {
     const layer = this.geofenceShapesById.get(id);
-    if (!layer) {
-      return;
+    if (layer) {
+      this.geofenceLayer?.removeLayer(layer);
+      this.geofenceShapesById.delete(id);
     }
-    this.geofenceLayer?.removeLayer(layer);
-    this.geofenceShapesById.delete(id);
+    const labelMarker = this.geofenceLabelsById.get(id);
+    if (labelMarker) {
+      this.geofenceLayer?.removeLayer(labelMarker);
+      this.geofenceLabelsById.delete(id);
+    }
   }
 
   clearGeofences(): void {
     this.geofenceLayer?.clearLayers();
     this.geofenceShapesById.clear();
+    this.geofenceLabelsById.clear();
   }
 
   fitBoundsToGeofence(shape: GeofenceShapeData): void {
@@ -350,6 +373,7 @@ private map?: L.Map;
     this.terrainLayer = undefined;
     this.geofenceLayer = undefined;
     this.geofenceShapesById.clear();
+    this.geofenceLabelsById.clear();
     this.activeDrawHandler = undefined;
     this.activeDrawCreatedListener = undefined;
   }

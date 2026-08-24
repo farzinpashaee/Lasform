@@ -161,6 +161,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly deletingEntity = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
+  protected readonly geofenceDeleteTarget = signal<Geofence | null>(null);
+  protected readonly deletingGeofence = signal(false);
+  protected readonly deleteGeofenceError = signal<string | null>(null);
+
   /** Set when the marker load 401s — e.g. an admin revoked map:view_public for anonymous callers. */
   protected readonly mapAccessDenied = signal(false);
 
@@ -253,6 +257,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       geofence.id,
       shape,
       editable,
+      geofence.name,
       editable ? (updated) => this.geofenceDraftShape.set(updated) : undefined,
     );
     this.mapProvider.fitBoundsToGeofence(shape);
@@ -298,7 +303,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
           const shape = geofence.id ? geofenceToShapeData(geofence) : null;
           if (geofence.id && shape) {
             this.geofencesById.set(geofence.id, geofence);
-            this.mapProvider.renderGeofence(geofence.id, shape, false, undefined, () => this.onGeofenceClicked(geofence.id!));
+            this.mapProvider.renderGeofence(geofence.id, shape, false, geofence.name, undefined, () => this.onGeofenceClicked(geofence.id!));
           }
         }
       },
@@ -314,6 +319,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     }
     this.selectedResult.set(null);
     this.selectedGeofence.set(geofence);
+    this.entityMenuOpen.set(false);
   }
 
   @HostListener('document:keydown.escape')
@@ -327,6 +333,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.closeAddLocationModal();
     this.closeEditModal();
     this.closeDeleteConfirm();
+    this.closeDeleteConfirmGeofence();
     if (this.geofenceFormTarget()) {
       this.cancelGeofenceForm();
     }
@@ -570,7 +577,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.geofenceFormDeviceIds.set([]);
     this.geofenceDeviceInput.set('');
     this.geofenceFormError.set(null);
-    this.mapProvider.renderGeofence(DRAFT_GEOFENCE_ID, shape, true, (updated) => this.geofenceDraftShape.set(updated));
+    this.mapProvider.renderGeofence(DRAFT_GEOFENCE_ID, shape, true, undefined, (updated) => this.geofenceDraftShape.set(updated));
     this.mapProvider.fitBoundsToGeofence(shape);
   }
 
@@ -612,11 +619,46 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected closeGeofenceDetails(): void {
     this.selectedGeofence.set(null);
+    this.entityMenuOpen.set(false);
   }
 
   protected editGeofenceFromDetails(geofence: Geofence): void {
     this.closeGeofenceDetails();
     this.openGeofenceForEdit(geofence);
+  }
+
+  protected openDeleteConfirmGeofence(geofence: Geofence): void {
+    this.geofenceDeleteTarget.set(geofence);
+    this.deleteGeofenceError.set(null);
+  }
+
+  protected closeDeleteConfirmGeofence(): void {
+    this.geofenceDeleteTarget.set(null);
+    this.deletingGeofence.set(false);
+  }
+
+  protected confirmDeleteGeofence(): void {
+    const geofence = this.geofenceDeleteTarget();
+    if (!geofence?.id || this.deletingGeofence()) {
+      return;
+    }
+    this.deletingGeofence.set(true);
+    this.deleteGeofenceError.set(null);
+    const id = geofence.id;
+
+    this.geofenceService.deleteById(id).subscribe({
+      next: () => {
+        this.deletingGeofence.set(false);
+        this.closeDeleteConfirmGeofence();
+        this.closeGeofenceDetails();
+        this.mapProvider.removeGeofence(id);
+        this.geofencesById.delete(id);
+      },
+      error: () => {
+        this.deletingGeofence.set(false);
+        this.deleteGeofenceError.set(this.transloco.translate('map.deleteGeofenceFailed'));
+      },
+    });
   }
 
   protected onGeofenceDeviceInputChange(value: string): void {
@@ -647,7 +689,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       // Revert the map to the last-saved shape rather than leaving the user's unsaved drag edits visible.
       const shape = this.editingGeofenceOriginal ? geofenceToShapeData(this.editingGeofenceOriginal) : null;
       if (shape) {
-        this.mapProvider.renderGeofence(target.geofenceId, shape, false);
+        this.mapProvider.renderGeofence(target.geofenceId, shape, false, this.editingGeofenceOriginal?.name);
       } else {
         this.mapProvider.removeGeofence(target.geofenceId);
       }

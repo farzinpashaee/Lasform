@@ -235,14 +235,40 @@
         <div class="details-panel">
           <div class="details-top-actions">
             @if (authService.hasPermission('geofence:write')) {
-              <button
-                type="button"
-                class="icon-action-button"
-                [attr.aria-label]="'common.edit' | transloco"
-                (click)="editGeofenceFromDetails(geofence)"
-              >
-                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-              </button>
+              <div class="entity-menu-wrapper" [class.open]="entityMenuOpen()">
+                @if (entityMenuOpen()) {
+                  <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
+                }
+                <button
+                  type="button"
+                  class="icon-action-button entity-menu-trigger"
+                  [attr.aria-label]="'common.moreActions' | transloco"
+                  [attr.aria-expanded]="entityMenuOpen()"
+                  (click)="toggleEntityMenu()"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+                </button>
+                @if (entityMenuOpen()) {
+                  <div class="entity-menu">
+                    <button
+                      type="button"
+                      class="entity-menu-item"
+                      [attr.aria-label]="'common.edit' | transloco"
+                      (click)="editGeofenceFromDetails(geofence); closeEntityMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="entity-menu-item entity-menu-item-danger"
+                      [attr.aria-label]="'common.delete' | transloco"
+                      (click)="openDeleteConfirmGeofence(geofence); closeEntityMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                    </button>
+                  </div>
+                }
+              </div>
             }
             <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeGeofenceDetails()">
               <span class="material-symbols-outlined" aria-hidden="true">close</span>
@@ -728,6 +754,30 @@
           (click)="confirmDelete()"
         >
           {{ (deletingEntity() ? 'common.deleting' : 'common.delete') | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (geofenceDeleteTarget(); as geofence) {
+    <div class="modal-backdrop" (click)="closeDeleteConfirmGeofence()"></div>
+    <div class="modal">
+      <h2 class="modal-title">{{ 'map.deleteGeofenceTitle' | transloco }}</h2>
+      <p class="modal-subtitle">"{{ geofence.name }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
+      @if (deleteGeofenceError()) {
+        <p class="modal-error">{{ deleteGeofenceError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirmGeofence()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="modal-button modal-button-danger"
+          [disabled]="deletingGeofence()"
+          (click)="confirmDeleteGeofence()"
+        >
+          {{ (deletingGeofence() ? 'common.deleting' : 'common.delete') | transloco }}
         </button>
       </div>
     </div>

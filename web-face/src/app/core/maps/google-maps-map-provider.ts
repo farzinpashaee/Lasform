@@ -30,6 +30,7 @@ export class GoogleMapsMapProvider implements MapProvider {
   private clusteringEnabled = false;
   private userLocationMarker?: google.maps.Marker;
   private geofenceOverlaysById = new Map<string, google.maps.Circle | google.maps.Polygon>();
+  private geofenceLabelsById = new Map<string, google.maps.Marker>();
   private drawClickListener?: google.maps.MapsEventListener;
   private drawDblClickListener?: google.maps.MapsEventListener;
   /** Live preview of the in-progress polygon outline while clicking vertices. */
@@ -244,6 +245,7 @@ export class GoogleMapsMapProvider implements MapProvider {
     id: string,
     shape: GeofenceShapeData,
     editable: boolean,
+    label?: string,
     onEdited?: (shape: GeofenceShapeData) => void,
     onClick?: () => void,
   ): void {
@@ -271,20 +273,36 @@ export class GoogleMapsMapProvider implements MapProvider {
     if (onClick) {
       overlay.addListener('click', () => onClick());
     }
+
+    if (label) {
+      const labelMarker = new google.maps.Marker({
+        position: this.centerOfShape(shape),
+        map: this.map,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 },
+        label: { text: label, color: '#202124', fontSize: '12px', fontWeight: '600', className: 'geofence-label' },
+        clickable: false,
+        zIndex: google.maps.Marker.MAX_ZINDEX + 1,
+      });
+      this.geofenceLabelsById.set(id, labelMarker);
+    }
   }
 
   removeGeofence(id: string): void {
     const overlay = this.geofenceOverlaysById.get(id);
-    if (!overlay) {
-      return;
+    if (overlay) {
+      google.maps.event.clearInstanceListeners(overlay);
+      overlay.setMap(null);
+      this.geofenceOverlaysById.delete(id);
     }
-    google.maps.event.clearInstanceListeners(overlay);
-    overlay.setMap(null);
-    this.geofenceOverlaysById.delete(id);
+    const labelMarker = this.geofenceLabelsById.get(id);
+    if (labelMarker) {
+      labelMarker.setMap(null);
+      this.geofenceLabelsById.delete(id);
+    }
   }
 
   clearGeofences(): void {
-    for (const id of [...this.geofenceOverlaysById.keys()]) {
+    for (const id of [...this.geofenceOverlaysById.keys(), ...this.geofenceLabelsById.keys()]) {
       this.removeGeofence(id);
     }
   }
@@ -306,6 +324,16 @@ export class GoogleMapsMapProvider implements MapProvider {
     const bounds = new google.maps.LatLngBounds();
     shape.path.forEach((point) => bounds.extend(point));
     this.map.fitBounds(bounds);
+  }
+
+  private centerOfShape(shape: GeofenceShapeData): google.maps.LatLngLiteral {
+    if (shape.shape === 'CIRCLE') {
+      return shape.center;
+    }
+    const bounds = new google.maps.LatLngBounds();
+    shape.path.forEach((point) => bounds.extend(point));
+    const center = bounds.getCenter();
+    return { lat: center.lat(), lng: center.lng() };
   }
 
   private overlayFromShape(shape: GeofenceShapeData, editable: boolean): google.maps.Circle | google.maps.Polygon {

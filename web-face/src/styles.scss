@@ -50,3 +50,26 @@ app-root {
     'GRAD' 0,
     'opsz' 20;
 }
+
+/* Geofence name label centered on its shape — rendered by Leaflet/Google Maps outside Angular's
+   view (dynamically created DOM), so this has to live in the global stylesheet, not a component one. */
+.geofence-label {
+  /* The divIcon's 0x0 wrapper anchors at its top-left corner (the shape's center point), so
+     this child has to pull itself back by half its own size to actually sit centered on it. */
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: #202124;
+  text-shadow:
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px 1px 0 #fff,
+    1px 1px 0 #fff,
+    0 0 3px #fff;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+}
