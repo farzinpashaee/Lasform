@@ -22,9 +22,13 @@
         />
       </form>
 
-      @if (hasSearched() || selectedResult() !== null) {
+      @if (hasSearched() || selectedResult() !== null || selectedGeofence() !== null) {
         <div class="results-card">
-          @if (hasSearched()) {
+          @if (selectedGeofence(); as geofence) {
+            <div class="details-standalone">
+              <ng-container [ngTemplateOutlet]="geofenceDetailsBody" [ngTemplateOutletContext]="{ geofence }" />
+            </div>
+          } @else if (hasSearched()) {
             @if (searching()) {
               <div class="results-status">{{ 'map.searching' | transloco }}</div>
             } @else if (searchError()) {
@@ -226,6 +230,50 @@
         }
         </div>
       </ng-template>
+
+      <ng-template #geofenceDetailsBody let-geofence="geofence">
+        <div class="details-panel">
+          <div class="details-top-actions">
+            @if (authService.hasPermission('geofence:write')) {
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'common.edit' | transloco"
+                (click)="editGeofenceFromDetails(geofence)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              </button>
+            }
+            <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeGeofenceDetails()">
+              <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+          </div>
+
+          <div class="details-header">
+            <span class="result-icon result-icon-geofence" aria-hidden="true">
+              <span class="material-symbols-outlined">draw</span>
+            </span>
+            <div class="details-header-text">
+              <span class="result-title">{{ geofence.name }}</span>
+            </div>
+          </div>
+
+          @if (geofence.description) {
+            <p class="overview-description">{{ geofence.description }}</p>
+          }
+
+          <div class="overview-panel">
+            <dl class="details-fields">
+              @for (field of geofenceDetailFields(geofence); track field.label) {
+                <div class="details-field">
+                  <dt>{{ field.label }}</dt>
+                  <dd>{{ field.value }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+        </div>
+      </ng-template>
     </div>
 
     <div class="top-right">
@@ -312,37 +360,17 @@
         <span class="material-symbols-outlined" aria-hidden="true">scatter_plot</span>
       </button>
     }
-    @if (authService.hasPermission('geofence:write')) {
-      <div class="map-type-wrapper">
-        <button
-          class="icon-button round"
-          type="button"
-          [attr.aria-label]="'map.drawGeofence' | transloco"
-          [class.active]="geofenceDrawMenuOpen()"
-          [attr.aria-expanded]="geofenceDrawMenuOpen()"
-          (click)="toggleGeofenceDrawMenu()"
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">draw</span>
-        </button>
-
-        @if (geofenceDrawMenuOpen()) {
-          <div class="context-menu-backdrop" (click)="closeGeofenceDrawMenu()" (contextmenu)="closeGeofenceDrawMenu()"></div>
-          <ul class="map-type-menu">
-            <li>
-              <button type="button" class="context-menu-item" (click)="startDrawGeofence('CIRCLE')">
-                <span class="material-symbols-outlined" aria-hidden="true">circle</span>
-                <span>{{ 'map.drawCircle' | transloco }}</span>
-              </button>
-            </li>
-            <li>
-              <button type="button" class="context-menu-item" (click)="startDrawGeofence('POLYGON')">
-                <span class="material-symbols-outlined" aria-hidden="true">pentagon</span>
-                <span>{{ 'map.drawPolygon' | transloco }}</span>
-              </button>
-            </li>
-          </ul>
-        }
-      </div>
+    @if (authService.hasPermission('geofence:read')) {
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="(geofencesVisible() ? 'map.hideGeofences' : 'map.showGeofences') | transloco"
+        [class.active]="geofencesVisible()"
+        [attr.aria-pressed]="geofencesVisible()"
+        (click)="toggleGeofencesVisible()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">fence</span>
+      </button>
     }
     <div class="zoom-stack">
       <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomIn' | transloco" (click)="zoomIn()">
@@ -375,6 +403,37 @@
             <span class="material-symbols-outlined" aria-hidden="true">add_location</span>
             <span>{{ 'map.addNewLocation' | transloco }}</span>
           </button>
+        </li>
+      }
+      @if (authService.hasPermission('geofence:write')) {
+        <li class="context-submenu-wrapper">
+          <button
+            type="button"
+            class="context-menu-item"
+            [class.active]="geofenceDrawMenuOpen()"
+            [attr.aria-expanded]="geofenceDrawMenuOpen()"
+            (click)="toggleGeofenceDrawMenu()"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">draw</span>
+            <span>{{ 'map.drawGeofence' | transloco }}</span>
+            <span class="material-symbols-outlined context-submenu-caret" aria-hidden="true">chevron_right</span>
+          </button>
+          @if (geofenceDrawMenuOpen()) {
+            <ul class="context-submenu">
+              <li>
+                <button type="button" class="context-menu-item" (click)="startDrawGeofence('CIRCLE')">
+                  <span class="material-symbols-outlined" aria-hidden="true">circle</span>
+                  <span>{{ 'map.drawCircle' | transloco }}</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="context-menu-item" (click)="startDrawGeofence('POLYGON')">
+                  <span class="material-symbols-outlined" aria-hidden="true">pentagon</span>
+                  <span>{{ 'map.drawPolygon' | transloco }}</span>
+                </button>
+              </li>
+            </ul>
+          }
         </li>
       }
     </ul>

@@ -93,6 +93,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   /** All locations shown as markers before any search; looked up on marker click when hasSearched() is false. */
   private allLocationHits: SearchHit[] = [];
+  /** Geofences currently rendered read-only on the map; looked up by id when one is clicked. */
+  private geofencesById = new Map<string, Geofence>();
   private tagSuggestionTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly categories = signal<Category[]>([]);
@@ -112,6 +114,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly searchError = signal<string | null>(null);
   protected readonly hasSearched = signal(false);
   protected readonly selectedResult = signal<SearchHit | null>(null);
+  protected readonly selectedGeofence = signal<Geofence | null>(null);
   protected readonly entityMenuOpen = signal(false);
   protected readonly detailsTab = signal<DetailsTab>('overview');
   protected readonly reviews = signal<Review[]>([]);
@@ -162,6 +165,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly mapAccessDenied = signal(false);
 
   protected readonly geofenceStatuses = GEOFENCE_STATUSES;
+  protected readonly geofencesVisible = signal(true);
   protected readonly geofenceDrawMenuOpen = signal(false);
   protected readonly geofenceDraftShape = signal<GeofenceShapeData | null>(null);
   protected readonly geofenceFormTarget = signal<GeofenceFormTarget | null>(null);
@@ -289,10 +293,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.geofenceService.search({ status: 'ACTIVE' }).subscribe({
       next: (geofences) => {
         this.mapProvider.clearGeofences();
+        this.geofencesById.clear();
         for (const geofence of geofences) {
           const shape = geofence.id ? geofenceToShapeData(geofence) : null;
           if (geofence.id && shape) {
-            this.mapProvider.renderGeofence(geofence.id, shape, false);
+            this.geofencesById.set(geofence.id, geofence);
+            this.mapProvider.renderGeofence(geofence.id, shape, false, undefined, () => this.onGeofenceClicked(geofence.id!));
           }
         }
       },
@@ -301,12 +307,22 @@ export class MapPage implements AfterViewInit, OnDestroy {
     });
   }
 
+  private onGeofenceClicked(id: string): void {
+    const geofence = this.geofencesById.get(id);
+    if (!geofence) {
+      return;
+    }
+    this.selectedResult.set(null);
+    this.selectedGeofence.set(geofence);
+  }
+
   @HostListener('document:keydown.escape')
   protected closeOverlays(): void {
     this.mapContextMenu.set(null);
     this.mapTypeMenuOpen.set(false);
     this.entityMenuOpen.set(false);
     this.geofenceDrawMenuOpen.set(false);
+    this.selectedGeofence.set(null);
     this.closeAddCategoryModal();
     this.closeAddLocationModal();
     this.closeEditModal();
@@ -389,6 +405,18 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.mapProvider.setClusteringEnabled(this.clusteringEnabled());
   }
 
+  protected toggleGeofencesVisible(): void {
+    const visible = !this.geofencesVisible();
+    this.geofencesVisible.set(visible);
+    if (visible) {
+      this.loadGeofences();
+    } else {
+      this.mapProvider.clearGeofences();
+      this.geofencesById.clear();
+      this.selectedGeofence.set(null);
+    }
+  }
+
   protected toggleMapTypeMenu(): void {
     this.mapTypeMenuOpen.update((open) => !open);
   }
@@ -439,7 +467,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   private openMapContextMenu(event: MapContextMenuEvent): void {
-    const menuSize = { width: 220, height: 132 };
+    const menuSize = { width: 220, height: 176 };
     const x = Math.min(event.clientX, window.innerWidth - menuSize.width - 8);
     const y = Math.min(event.clientY, window.innerHeight - menuSize.height - 8);
     this.mapContextMenu.set({ lat: event.lat, lng: event.lng, x, y });
@@ -447,6 +475,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected closeMapContextMenu(): void {
     this.mapContextMenu.set(null);
+    this.geofenceDrawMenuOpen.set(false);
   }
 
   protected copyMapContextCoordinates(): void {
@@ -527,12 +556,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.geofenceDrawMenuOpen.update((open) => !open);
   }
 
-  protected closeGeofenceDrawMenu(): void {
-    this.geofenceDrawMenuOpen.set(false);
-  }
-
   protected startDrawGeofence(kind: GeofenceShapeKind): void {
-    this.closeGeofenceDrawMenu();
+    this.closeMapContextMenu();
     this.mapProvider.startDrawingGeofence(kind, (shape) => this.onGeofenceDrawn(shape));
   }
 
@@ -551,13 +576,47 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected geofenceShapeSummary(): string {
     const shape = this.geofenceDraftShape();
-    if (!shape) {
-      return '';
-    }
+    return shape ? this.shapeSummaryText(shape) : '';
+  }
+
+  protected geofenceShapeSummaryFor(geofence: Geofence): string {
+    const shape = geofenceToShapeData(geofence);
+    return shape ? this.shapeSummaryText(shape) : '';
+  }
+
+  private shapeSummaryText(shape: GeofenceShapeData): string {
     if (shape.shape === 'CIRCLE') {
       return this.transloco.translate('map.geofenceCircleSummary', { radius: Math.round(shape.radiusMeters) });
     }
     return this.transloco.translate('map.geofencePolygonSummary', { points: shape.path.length });
+  }
+
+  protected geofenceDeviceNames(geofence: Geofence): string {
+    if (!geofence.deviceIds || geofence.deviceIds.length === 0) {
+      return this.transloco.translate('geofences.allDevices');
+    }
+    return geofence.deviceIds.map((id) => this.deviceLabel(id)).join(', ');
+  }
+
+  protected geofenceDetailFields(geofence: Geofence): { label: string; value: string }[] {
+    const fields: { label: string; value: string }[] = [
+      { label: this.detailLabel('map.detail.shape'), value: this.geofenceShapeSummaryFor(geofence) },
+      { label: this.detailLabel('map.detail.status'), value: geofence.status ?? 'ACTIVE' },
+      { label: this.detailLabel('map.detail.devices'), value: this.geofenceDeviceNames(geofence) },
+    ];
+    if (geofence.createdAt) {
+      fields.push({ label: this.detailLabel('map.detail.created'), value: new Date(geofence.createdAt).toLocaleString() });
+    }
+    return fields;
+  }
+
+  protected closeGeofenceDetails(): void {
+    this.selectedGeofence.set(null);
+  }
+
+  protected editGeofenceFromDetails(geofence: Geofence): void {
+    this.closeGeofenceDetails();
+    this.openGeofenceForEdit(geofence);
   }
 
   protected onGeofenceDeviceInputChange(value: string): void {
@@ -751,6 +810,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.searching.set(true);
     this.searchError.set(null);
     this.selectedResult.set(null);
+    this.selectedGeofence.set(null);
 
     this.searchService.search({ q: query, size: 50 }).subscribe({
       next: (page) => {
@@ -767,6 +827,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   protected selectResult(hit: SearchHit): void {
+    this.selectedGeofence.set(null);
     this.selectedResult.set(hit);
     this.resetDetailsPanelState();
 
@@ -920,6 +981,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     const source = this.hasSearched() ? this.searchResults() : this.allLocationHits;
     const hit = source.find((candidate) => candidate.data.id === id);
     if (hit) {
+      this.selectedGeofence.set(null);
       this.selectedResult.set(hit);
       this.resetDetailsPanelState();
     }

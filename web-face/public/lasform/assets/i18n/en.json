@@ -46,6 +46,8 @@
     "terrainView": "Terrain view",
     "changeMapType": "Change map type",
     "toggleClustering": "Toggle marker clustering",
+    "showGeofences": "Show geofences",
+    "hideGeofences": "Hide geofences",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "centerHere": "Center here",
@@ -68,7 +70,7 @@
     "markerEmojiPlaceholder": "e.g. 🏥",
     "addLocation": "Add location",
     "addCategory": "Add category",
-    "drawGeofence": "Draw geofence",
+    "drawGeofence": "Add geofence",
     "drawCircle": "Draw circle",
     "drawPolygon": "Draw polygon",
     "addGeofenceTitle": "Add geofence",
@@ -105,7 +107,9 @@
       "status": "Status",
       "battery": "Battery",
       "lastSeen": "Last seen",
-      "lastLocation": "Last location"
+      "lastLocation": "Last location",
+      "shape": "Shape",
+      "devices": "Devices"
     }
   },
   "management": {

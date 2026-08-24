@@ -240,7 +240,13 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.drawPreviewPolyline = undefined;
   }
 
-  renderGeofence(id: string, shape: GeofenceShapeData, editable: boolean, onEdited?: (shape: GeofenceShapeData) => void): void {
+  renderGeofence(
+    id: string,
+    shape: GeofenceShapeData,
+    editable: boolean,
+    onEdited?: (shape: GeofenceShapeData) => void,
+    onClick?: () => void,
+  ): void {
     if (!this.map) {
       return;
     }
@@ -261,6 +267,9 @@ export class GoogleMapsMapProvider implements MapProvider {
         path.addListener('insert_at', emit);
         path.addListener('remove_at', emit);
       }
+    }
+    if (onClick) {
+      overlay.addListener('click', () => onClick());
     }
   }
 

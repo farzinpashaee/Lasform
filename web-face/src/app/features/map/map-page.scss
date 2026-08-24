@@ -16,6 +16,8 @@ $radius: 8px;
   --scrollbar-thumb-hover: #bdc1c6;
   --device-icon-bg: #e6f4ea;
   --device-icon-color: #188038;
+  --geofence-icon-bg: #e8eef9;
+  --geofence-icon-color: #1a56db;
   --backdrop: rgba(0, 0, 0, 0.35);
   --shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 
@@ -41,6 +43,8 @@ $radius: 8px;
   --scrollbar-thumb-hover: #757a80;
   --device-icon-bg: #1e3a2a;
   --device-icon-color: #81c995;
+  --geofence-icon-bg: #1f2d4a;
+  --geofence-icon-color: #8ab4f8;
   --backdrop: rgba(0, 0, 0, 0.6);
   --shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
@@ -523,6 +527,11 @@ $radius: 8px;
   color: var(--device-icon-color);
 }
 
+.result-icon-geofence {
+  background: var(--geofence-icon-bg);
+  color: var(--geofence-icon-color);
+}
+
 /* The details panel reuses the same #entityIcon template as the results list, but at a
    larger size — scoped by ancestor rather than a variant class since the icon itself never
    knows which context it's rendered in. */
@@ -654,7 +663,7 @@ $radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 9.6px;
 }
 
 .zoom-stack {
@@ -717,6 +726,28 @@ $radius: 8px;
 
 .map-type-check {
   margin-left: auto;
+}
+
+.context-submenu-wrapper {
+  position: relative;
+}
+
+.context-submenu-caret {
+  margin-left: auto;
+}
+
+.context-submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  z-index: 902;
+  width: 200px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
 }
 
 .map-type-wrapper {

@@ -265,7 +265,13 @@ private map?: L.Map;
     }
   }
 
-  renderGeofence(id: string, shape: GeofenceShapeData, editable: boolean, onEdited?: (shape: GeofenceShapeData) => void): void {
+  renderGeofence(
+    id: string,
+    shape: GeofenceShapeData,
+    editable: boolean,
+    onEdited?: (shape: GeofenceShapeData) => void,
+    onClick?: () => void,
+  ): void {
     if (!this.map || !this.geofenceLayer) {
       return;
     }
@@ -283,6 +289,9 @@ private map?: L.Map;
       }
     } else {
       editableLayer.editing?.disable();
+    }
+    if (onClick) {
+      layer.on('click', () => onClick());
     }
   }
 
