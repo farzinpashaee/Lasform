@@ -6,6 +6,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { Category } from '../../../core/models/category.model';
 import { PhoneNumberType } from '../../../core/models/enums';
+import { Image } from '../../../core/models/image.model';
 import { Location } from '../../../core/models/location.model';
 import { PhoneNumber } from '../../../core/models/phone-number.model';
 import { CategoryService } from '../../../core/services/category.service';
@@ -27,6 +28,10 @@ const SORTABLE_COLUMNS: SortableColumn[] = [
 ];
 
 const PHONE_NUMBER_TYPES: PhoneNumberType[] = ['MOBILE', 'LANDLINE', 'FAX', 'WHATSAPP', 'TOLL_FREE', 'OTHER'];
+
+/** Kept in sync with FileSystemImageStorageService's allow-list (core/.../ImageStorageProperties). */
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 @Component({
   selector: 'app-locations-page',
@@ -85,6 +90,13 @@ export class LocationsPage implements OnInit, OnDestroy {
   protected readonly formTagSuggestions = signal<string[]>([]);
   protected readonly formPhoneNumbers = signal<PhoneNumber[]>([]);
 
+  protected readonly formImages = signal<Image[]>([]);
+  protected readonly formImageUrls = signal<Map<string, string>>(new Map());
+  protected readonly imageUploading = signal(false);
+  protected readonly imageDragOver = signal(false);
+  protected readonly imageError = signal<string | null>(null);
+  private imageUploadQueue: File[] = [];
+
   protected readonly deleteTarget = signal<Location | null>(null);
   protected readonly deletingLocation = signal(false);
   protected readonly deleteError = signal<string | null>(null);
@@ -105,6 +117,7 @@ export class LocationsPage implements OnInit, OnDestroy {
     clearTimeout(this.searchDebounceTimer);
     clearTimeout(this.tagFilterDebounceTimer);
     clearTimeout(this.formTagDebounceTimer);
+    this.revokeImageUrls();
   }
 
   private loadLocations(): void {
@@ -245,6 +258,7 @@ export class LocationsPage implements OnInit, OnDestroy {
     this.formTagSuggestions.set([]);
     this.formPhoneNumbers.set([]);
     this.formError.set(null);
+    this.resetImageState();
     this.formOpen.set(true);
   }
 
@@ -262,6 +276,11 @@ export class LocationsPage implements OnInit, OnDestroy {
     this.formTagSuggestions.set([]);
     this.formPhoneNumbers.set((location.phoneNumbers ?? []).map((phone) => ({ ...phone })));
     this.formError.set(null);
+    this.resetImageState();
+    this.formImages.set([...(location.images ?? [])]);
+    for (const image of location.images ?? []) {
+      this.loadImageThumbnail(image.filename);
+    }
     this.formOpen.set(true);
   }
 
@@ -270,6 +289,7 @@ export class LocationsPage implements OnInit, OnDestroy {
     this.formSaving.set(false);
     this.formTagSuggestions.set([]);
     clearTimeout(this.formTagDebounceTimer);
+    this.revokeImageUrls();
   }
 
   protected submitForm(): void {
@@ -399,6 +419,165 @@ export class LocationsPage implements OnInit, OnDestroy {
         extension: phone.extension?.trim() || undefined,
       }));
     return phones.length > 0 ? phones : undefined;
+  }
+
+  /** File-picker `<input>` change handler. Resets the input afterward so re-picking the same file re-fires change. */
+  protected onImageInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.queueImageUploads(input.files ? Array.from(input.files) : []);
+    input.value = '';
+  }
+
+  protected onImageDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.imageDragOver.set(false);
+    this.queueImageUploads(event.dataTransfer?.files ? Array.from(event.dataTransfer.files) : []);
+  }
+
+  protected onImageDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.imageDragOver.set(true);
+  }
+
+  protected onImageDragLeave(): void {
+    this.imageDragOver.set(false);
+  }
+
+  /** Validates client-side (fast feedback), then uploads one at a time — see uploadNextQueuedImage for why. */
+  private queueImageUploads(files: File[]): void {
+    const locationId = this.editingLocation?.id;
+    if (!locationId || files.length === 0) {
+      return;
+    }
+    this.imageError.set(null);
+
+    const valid: File[] = [];
+    for (const file of files) {
+      const error = this.validateImageFile(file);
+      if (error) {
+        this.imageError.set(error);
+      } else {
+        valid.push(file);
+      }
+    }
+    if (valid.length === 0) {
+      return;
+    }
+
+    this.imageUploadQueue.push(...valid);
+    if (!this.imageUploading()) {
+      this.uploadNextQueuedImage();
+    }
+  }
+
+  private validateImageFile(file: File): string | null {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return this.transloco.translate('locations.images.invalidType');
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      return this.transloco.translate('locations.images.tooLarge');
+    }
+    return null;
+  }
+
+  /**
+   * Uploads the queue one file at a time rather than in parallel: the backend auto-marks the
+   * first image on a location as primary, and concurrent requests hitting that empty-list check
+   * at once could both win, leaving two images marked primary.
+   */
+  private uploadNextQueuedImage(): void {
+    const locationId = this.editingLocation?.id;
+    const file = this.imageUploadQueue.shift();
+    if (!locationId || !file) {
+      this.imageUploading.set(false);
+      return;
+    }
+    this.imageUploading.set(true);
+    this.locationService.uploadImage(locationId, file).subscribe({
+      next: (image) => {
+        this.onImageUploaded(image);
+        this.uploadNextQueuedImage();
+      },
+      error: () => {
+        this.imageError.set(this.transloco.translate('locations.images.uploadFailed'));
+        this.uploadNextQueuedImage();
+      },
+    });
+  }
+
+  private onImageUploaded(image: Image): void {
+    this.formImages.update((images) => [
+      ...images.map((existing) => (image.primary ? { ...existing, primary: false } : existing)),
+      image,
+    ]);
+    this.loadImageThumbnail(image.filename);
+  }
+
+  private loadImageThumbnail(filename: string): void {
+    const locationId = this.editingLocation?.id;
+    if (!locationId) {
+      return;
+    }
+    this.locationService.loadImage(locationId, filename).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        this.formImageUrls.update((urls) => new Map(urls).set(filename, url));
+      },
+      error: () => {},
+    });
+  }
+
+  protected setPrimaryImage(filename: string): void {
+    const locationId = this.editingLocation?.id;
+    if (!locationId) {
+      return;
+    }
+    this.locationService.setPrimaryImage(locationId, filename).subscribe({
+      next: () => {
+        this.formImages.update((images) =>
+          images.map((image) => ({ ...image, primary: image.filename === filename })),
+        );
+      },
+      error: () => this.imageError.set(this.transloco.translate('locations.images.updateFailed')),
+    });
+  }
+
+  protected removeImage(filename: string): void {
+    const locationId = this.editingLocation?.id;
+    if (!locationId) {
+      return;
+    }
+    this.locationService.deleteImage(locationId, filename).subscribe({
+      next: () => {
+        this.formImages.update((images) => images.filter((image) => image.filename !== filename));
+        const url = this.formImageUrls().get(filename);
+        if (url) {
+          URL.revokeObjectURL(url);
+          this.formImageUrls.update((urls) => {
+            const next = new Map(urls);
+            next.delete(filename);
+            return next;
+          });
+        }
+      },
+      error: () => this.imageError.set(this.transloco.translate('locations.images.deleteFailed')),
+    });
+  }
+
+  private resetImageState(): void {
+    this.revokeImageUrls();
+    this.imageUploadQueue = [];
+    this.imageUploading.set(false);
+    this.imageDragOver.set(false);
+    this.imageError.set(null);
+    this.formImages.set([]);
+  }
+
+  private revokeImageUrls(): void {
+    for (const url of this.formImageUrls().values()) {
+      URL.revokeObjectURL(url);
+    }
+    this.formImageUrls.set(new Map());
   }
 
   protected openDeleteConfirm(location: Location): void {

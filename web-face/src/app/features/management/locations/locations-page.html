@@ -314,6 +314,70 @@
           <span>{{ 'locations.addPhoneNumber' | transloco }}</span>
         </button>
       </div>
+      <div class="modal-field">
+        <span>{{ 'locations.images.label' | transloco }}</span>
+        @if (formMode() === 'add') {
+          <p class="images-hint">{{ 'locations.images.saveFirstHint' | transloco }}</p>
+        } @else {
+          <div
+            class="image-dropzone"
+            [class.drag-over]="imageDragOver()"
+            (dragover)="onImageDragOver($event)"
+            (dragleave)="onImageDragLeave()"
+            (drop)="onImageDrop($event)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
+            <span>{{ 'locations.images.dropHint' | transloco }}</span>
+            <label class="image-browse-button">
+              {{ 'locations.images.browse' | transloco }}
+              <input type="file" accept="image/jpeg,image/png" multiple hidden (change)="onImageInputChange($event)" />
+            </label>
+          </div>
+          <p class="images-format-hint">{{ 'locations.images.formatHint' | transloco }}</p>
+          @if (imageUploading()) {
+            <p class="images-uploading">{{ 'locations.images.uploading' | transloco }}</p>
+          }
+          @if (imageError()) {
+            <p class="modal-error">{{ imageError() }}</p>
+          }
+          @if (formImages().length > 0) {
+            <div class="image-gallery">
+              @for (image of formImages(); track image.filename) {
+                <div class="image-thumb" [class.primary]="image.primary">
+                  @if (formImageUrls().get(image.filename); as url) {
+                    <img [src]="url" [alt]="image.filename" />
+                  } @else {
+                    <div class="image-thumb-placeholder"></div>
+                  }
+                  @if (image.primary) {
+                    <span class="image-primary-badge">{{ 'locations.images.primary' | transloco }}</span>
+                  }
+                  <div class="image-thumb-actions">
+                    @if (!image.primary) {
+                      <button
+                        type="button"
+                        class="icon-action-button"
+                        [attr.aria-label]="'locations.images.makePrimary' | transloco"
+                        (click)="setPrimaryImage(image.filename)"
+                      >
+                        <span class="material-symbols-outlined" aria-hidden="true">star</span>
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="icon-action-button icon-action-button-danger"
+                      [attr.aria-label]="'common.delete' | transloco"
+                      (click)="removeImage(image.filename)"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
       @if (formError()) {
         <p class="modal-error">{{ formError() }}</p>
       }

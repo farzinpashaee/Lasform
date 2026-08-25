@@ -8,6 +8,7 @@ export * from './enums';
 export * from './event.model';
 export * from './geo.model';
 export * from './geofence.model';
+export * from './image.model';
 export * from './location.model';
 export * from './page.model';
 export * from './role.model';

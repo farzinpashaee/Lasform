@@ -39,6 +39,8 @@ lasform:
     images:
       # Root directory Location/Device images are stored under, one subfolder per entity id.
       base-path: ./data/images
+      # Per-image cap (see ImageStorageProperties) — keep at or below multipart.max-file-size above.
+      max-file-size: 5MB
 
   seed:
     # Runs AuthSeeder on startup: (re)syncs the fixed Permission catalog and the 5 system roles

@@ -1,17 +1,24 @@
 package com.csl.lasform.service.impl;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
+
+import javax.imageio.ImageIO;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.csl.lasform.config.ImageStorageProperties;
@@ -28,10 +35,23 @@ import com.csl.lasform.service.ImageStorageService;
 @Service
 public class FileSystemImageStorageService implements ImageStorageService {
 
+    /**
+     * Deliberately narrow: both formats have a built-in {@link ImageIO} reader (so
+     * {@link #validateActualImageContent} can verify them), and neither carries the risks of the
+     * formats left out — SVG can embed script content, GIF/BMP/TIFF invite oversized uploads for
+     * what's meant to be a location photo.
+     */
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE);
+
+    /** Guards against decompression-bomb style uploads (a tiny file that decodes to a huge bitmap). */
+    private static final int MAX_DIMENSION_PX = 8000;
+
     private final Path basePath;
+    private final DataSize maxFileSize;
 
     public FileSystemImageStorageService(ImageStorageProperties properties) {
         this.basePath = Paths.get(properties.getBasePath()).toAbsolutePath().normalize();
+        this.maxFileSize = properties.getMaxFileSize();
     }
 
     @Override
@@ -40,9 +60,15 @@ public class FileSystemImageStorageService implements ImageStorageService {
             throw new BadRequestException("error.image.uploadRequired");
         }
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
             throw new BadRequestException("error.image.invalidContentType", contentType);
         }
+        if (file.getSize() > maxFileSize.toBytes()) {
+            throw new BadRequestException("error.image.tooLarge", maxFileSize.toMegabytes());
+        }
+        // The declared Content-Type above is client-supplied and trivially spoofable — this
+        // decodes the actual bytes so a renamed/relabeled non-image file can't get past it.
+        validateActualImageContent(file);
 
         Path ownerDir = resolveOwnerDir(ownerId);
         String filename = sanitizeFilename(file.getOriginalFilename());
@@ -126,5 +152,20 @@ public class FileSystemImageStorageService implements ImageStorageService {
             throw new BadRequestException("error.image.invalidFilename", rawFilename);
         }
         return filename;
+    }
+
+    private static void validateActualImageContent(MultipartFile file) {
+        BufferedImage decoded;
+        try (InputStream in = file.getInputStream()) {
+            decoded = ImageIO.read(in);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read uploaded image", e);
+        }
+        if (decoded == null) {
+            throw new BadRequestException("error.image.corruptOrUnsupported");
+        }
+        if (decoded.getWidth() > MAX_DIMENSION_PX || decoded.getHeight() > MAX_DIMENSION_PX) {
+            throw new BadRequestException("error.image.dimensionsTooLarge", MAX_DIMENSION_PX);
+        }
     }
 }

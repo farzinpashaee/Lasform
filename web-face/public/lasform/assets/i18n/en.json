@@ -236,6 +236,21 @@
       "WHATSAPP": "WhatsApp",
       "TOLL_FREE": "Toll-free",
       "OTHER": "Other"
+    },
+    "images": {
+      "label": "Photos",
+      "saveFirstHint": "Save the location first to add photos.",
+      "dropHint": "Drag photos here, or",
+      "browse": "Browse files",
+      "formatHint": "JPEG or PNG, up to 5MB each.",
+      "uploading": "Uploading…",
+      "primary": "Cover",
+      "makePrimary": "Set as cover photo",
+      "invalidType": "Only JPEG or PNG images are allowed.",
+      "tooLarge": "Image is too large — the maximum size is 5MB.",
+      "uploadFailed": "Failed to upload image. Please try again.",
+      "updateFailed": "Failed to update the cover photo. Please try again.",
+      "deleteFailed": "Failed to delete the image. Please try again."
     }
   },
   "geofences": {
