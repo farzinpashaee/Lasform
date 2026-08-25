@@ -22,7 +22,89 @@
         />
       </form>
 
-      @if (hasSearched() || selectedResult() !== null || selectedGeofence() !== null) {
+      @if (geofenceFormTarget(); as target) {
+        <div class="results-card geofence-form-card">
+          <h2 class="modal-title">
+            {{ (target.mode === 'create' ? 'map.addGeofenceTitle' : 'map.editGeofenceShapeTitle') | transloco }}
+          </h2>
+          <p class="modal-subtitle">{{ geofenceShapeSummary() }}</p>
+          <form (ngSubmit)="submitGeofenceForm()">
+            <label class="modal-field">
+              <span>{{ 'common.nameLabel' | transloco }}</span>
+              <input type="text" [(ngModel)]="geofenceFormName" name="geofenceName" required autocomplete="off" />
+            </label>
+            <label class="modal-field">
+              <span>{{ 'common.descriptionLabel' | transloco }}</span>
+              <textarea [(ngModel)]="geofenceFormDescription" name="geofenceDescription" rows="2"></textarea>
+            </label>
+            <label class="modal-field">
+              <span>{{ 'common.statusLabel' | transloco }}</span>
+              <select [(ngModel)]="geofenceFormStatus" name="geofenceStatus">
+                @for (status of geofenceStatuses; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </label>
+            <label class="modal-field">
+              <span>{{ 'map.geofenceDevicesLabel' | transloco }}</span>
+              <p class="modal-hint">{{ 'map.geofenceDevicesHint' | transloco }}</p>
+              <div class="tag-input-wrapper">
+                @if (geofenceFormDeviceIds().length > 0) {
+                  <div class="tag-chip-list">
+                    @for (deviceId of geofenceFormDeviceIds(); track deviceId) {
+                      <span class="tag-chip">
+                        {{ deviceLabel(deviceId) }}
+                        <button
+                          type="button"
+                          class="tag-chip-remove"
+                          [attr.aria-label]="'map.removeGeofenceDevice' | transloco: { device: deviceLabel(deviceId) }"
+                          (click)="removeGeofenceDevice(deviceId)"
+                        >
+                          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                        </button>
+                      </span>
+                    }
+                  </div>
+                }
+                <input
+                  type="text"
+                  [ngModel]="geofenceDeviceInput()"
+                  (ngModelChange)="onGeofenceDeviceInputChange($event)"
+                  name="geofenceDeviceInput"
+                  [placeholder]="'map.geofenceDevicesPlaceholder' | transloco"
+                  autocomplete="off"
+                />
+                @if (geofenceDeviceSuggestions().length > 0) {
+                  <ul class="tag-suggestions">
+                    @for (device of geofenceDeviceSuggestions(); track device.id) {
+                      <li>
+                        <button type="button" class="tag-suggestion-item" (click)="addGeofenceDevice(device.id!)">
+                          {{ device.name }}
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            </label>
+            @if (geofenceFormError()) {
+              <p class="modal-error">{{ geofenceFormError() }}</p>
+            }
+            <div class="modal-actions">
+              <button type="button" class="modal-button modal-button-secondary" (click)="cancelGeofenceForm()">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button
+                type="submit"
+                class="modal-button modal-button-primary"
+                [disabled]="savingGeofence() || !geofenceFormName().trim()"
+              >
+                {{ (savingGeofence() ? 'common.saving' : 'common.save') | transloco }}
+              </button>
+            </div>
+          </form>
+        </div>
+      } @else if (hasSearched() || selectedResult() !== null || selectedGeofence() !== null) {
         <div class="results-card">
           @if (selectedGeofence(); as geofence) {
             <div class="details-standalone">
@@ -643,90 +725,6 @@
             [disabled]="savingEdit() || !editName().trim()"
           >
             {{ (savingEdit() ? 'common.saving' : 'common.saveChanges') | transloco }}
-          </button>
-        </div>
-      </form>
-    </div>
-  }
-
-  @if (geofenceFormTarget(); as target) {
-    <div class="modal">
-      <h2 class="modal-title">
-        {{ (target.mode === 'create' ? 'map.addGeofenceTitle' : 'map.editGeofenceShapeTitle') | transloco }}
-      </h2>
-      <p class="modal-subtitle">{{ geofenceShapeSummary() }}</p>
-      <form (ngSubmit)="submitGeofenceForm()">
-        <label class="modal-field">
-          <span>{{ 'common.nameLabel' | transloco }}</span>
-          <input type="text" [(ngModel)]="geofenceFormName" name="geofenceName" required autocomplete="off" />
-        </label>
-        <label class="modal-field">
-          <span>{{ 'common.descriptionLabel' | transloco }}</span>
-          <textarea [(ngModel)]="geofenceFormDescription" name="geofenceDescription" rows="2"></textarea>
-        </label>
-        <label class="modal-field">
-          <span>{{ 'common.statusLabel' | transloco }}</span>
-          <select [(ngModel)]="geofenceFormStatus" name="geofenceStatus">
-            @for (status of geofenceStatuses; track status) {
-              <option [value]="status">{{ status }}</option>
-            }
-          </select>
-        </label>
-        <label class="modal-field">
-          <span>{{ 'map.geofenceDevicesLabel' | transloco }}</span>
-          <p class="modal-hint">{{ 'map.geofenceDevicesHint' | transloco }}</p>
-          <div class="tag-input-wrapper">
-            @if (geofenceFormDeviceIds().length > 0) {
-              <div class="tag-chip-list">
-                @for (deviceId of geofenceFormDeviceIds(); track deviceId) {
-                  <span class="tag-chip">
-                    {{ deviceLabel(deviceId) }}
-                    <button
-                      type="button"
-                      class="tag-chip-remove"
-                      [attr.aria-label]="'map.removeGeofenceDevice' | transloco: { device: deviceLabel(deviceId) }"
-                      (click)="removeGeofenceDevice(deviceId)"
-                    >
-                      <span class="material-symbols-outlined" aria-hidden="true">close</span>
-                    </button>
-                  </span>
-                }
-              </div>
-            }
-            <input
-              type="text"
-              [ngModel]="geofenceDeviceInput()"
-              (ngModelChange)="onGeofenceDeviceInputChange($event)"
-              name="geofenceDeviceInput"
-              [placeholder]="'map.geofenceDevicesPlaceholder' | transloco"
-              autocomplete="off"
-            />
-            @if (geofenceDeviceSuggestions().length > 0) {
-              <ul class="tag-suggestions">
-                @for (device of geofenceDeviceSuggestions(); track device.id) {
-                  <li>
-                    <button type="button" class="tag-suggestion-item" (click)="addGeofenceDevice(device.id!)">
-                      {{ device.name }}
-                    </button>
-                  </li>
-                }
-              </ul>
-            }
-          </div>
-        </label>
-        @if (geofenceFormError()) {
-          <p class="modal-error">{{ geofenceFormError() }}</p>
-        }
-        <div class="modal-actions">
-          <button type="button" class="modal-button modal-button-secondary" (click)="cancelGeofenceForm()">
-            {{ 'common.cancel' | transloco }}
-          </button>
-          <button
-            type="submit"
-            class="modal-button modal-button-primary"
-            [disabled]="savingGeofence() || !geofenceFormName().trim()"
-          >
-            {{ (savingGeofence() ? 'common.saving' : 'common.save') | transloco }}
           </button>
         </div>
       </form>

@@ -138,6 +138,7 @@ $radius: 8px;
   overflow: hidden;
 }
 
+
 .results-status {
   padding: 16px;
   font-size: 14px;
@@ -204,6 +205,15 @@ $radius: 8px;
   margin: 0;
   padding: 4px 0;
   max-height: 60vh;
+  overflow-y: auto;
+  @include thin-scrollbar;
+}
+
+/* The add/edit geofence form reuses .results-card's shell but, unlike the read-only
+   panels, needs its own padding/scrolling since it's a full form, not a details list. */
+.geofence-form-card {
+  padding: 20px;
+  max-height: calc(100vh - 96px);
   overflow-y: auto;
   @include thin-scrollbar;
 }
