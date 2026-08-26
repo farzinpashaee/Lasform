@@ -510,6 +510,7 @@ export class LocationsPage implements OnInit, OnDestroy {
       ...images.map((existing) => (image.primary ? { ...existing, primary: false } : existing)),
       image,
     ]);
+    this.syncEditingLocationImages();
     this.loadImageThumbnail(image.filename);
   }
 
@@ -537,6 +538,7 @@ export class LocationsPage implements OnInit, OnDestroy {
         this.formImages.update((images) =>
           images.map((image) => ({ ...image, primary: image.filename === filename })),
         );
+        this.syncEditingLocationImages();
       },
       error: () => this.imageError.set(this.transloco.translate('locations.images.updateFailed')),
     });
@@ -550,6 +552,7 @@ export class LocationsPage implements OnInit, OnDestroy {
     this.locationService.deleteImage(locationId, filename).subscribe({
       next: () => {
         this.formImages.update((images) => images.filter((image) => image.filename !== filename));
+        this.syncEditingLocationImages();
         const url = this.formImageUrls().get(filename);
         if (url) {
           URL.revokeObjectURL(url);
@@ -562,6 +565,23 @@ export class LocationsPage implements OnInit, OnDestroy {
       },
       error: () => this.imageError.set(this.transloco.translate('locations.images.deleteFailed')),
     });
+  }
+
+  /**
+   * Keeps `editingLocation` and the row in `locations()` in step with `formImages` after every
+   * upload/delete/set-primary. Without this, `editingLocation.images` stays frozen at whatever it
+   * was when the modal opened — so re-opening the same row's edit modal would show stale photos,
+   * and worse, `submitForm`'s edit-mode PATCH spreads `{ ...editingLocation, ... }` and would send
+   * that stale `images` array right back to the server, undoing the upload on the next save.
+   */
+  private syncEditingLocationImages(): void {
+    const current = this.editingLocation;
+    if (!current?.id) {
+      return;
+    }
+    const updated: Location = { ...current, images: this.formImages() };
+    this.editingLocation = updated;
+    this.locations.update((list) => list.map((location) => (location.id === updated.id ? updated : location)));
   }
 
   private resetImageState(): void {
