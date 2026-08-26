@@ -8,50 +8,44 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.csl.lasform.config.ImageStorageProperties;
 import com.csl.lasform.exception.BadRequestException;
 import com.csl.lasform.exception.DuplicateResourceException;
 import com.csl.lasform.exception.ResourceNotFoundException;
 import com.csl.lasform.service.ImageStorageService;
+import com.csl.lasform.service.ImageStorageSettingsService;
 
 /**
  * Stores images under {@code basePath/ownerId/filename} on the local filesystem. All owner ids
  * and filenames are validated to resolve inside their expected parent directory before any I/O,
- * since both ultimately come from client input (path variables / upload metadata).
+ * since both ultimately come from client input (path variables / upload metadata). {@code
+ * basePath}/allowed extensions/max size are all resolved fresh from {@link
+ * ImageStorageSettingsService} on every call rather than cached, so an admin edit on the General
+ * Settings page applies to the very next upload — no restart.
  */
 @Service
 public class FileSystemImageStorageService implements ImageStorageService {
 
-    /**
-     * Deliberately narrow: both formats have a built-in {@link ImageIO} reader (so
-     * {@link #validateActualImageContent} can verify them), and neither carries the risks of the
-     * formats left out — SVG can embed script content, GIF/BMP/TIFF invite oversized uploads for
-     * what's meant to be a location photo.
-     */
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE);
-
     /** Guards against decompression-bomb style uploads (a tiny file that decodes to a huge bitmap). */
     private static final int MAX_DIMENSION_PX = 8000;
 
-    private final Path basePath;
-    private final DataSize maxFileSize;
+    private final ImageStorageSettingsService settings;
 
-    public FileSystemImageStorageService(ImageStorageProperties properties) {
-        this.basePath = Paths.get(properties.getBasePath()).toAbsolutePath().normalize();
-        this.maxFileSize = properties.getMaxFileSize();
+    public FileSystemImageStorageService(ImageStorageSettingsService settings) {
+        this.settings = settings;
     }
 
     @Override
@@ -59,19 +53,25 @@ public class FileSystemImageStorageService implements ImageStorageService {
         if (file == null || file.isEmpty()) {
             throw new BadRequestException("error.image.uploadRequired");
         }
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new BadRequestException("error.image.invalidContentType", contentType);
+        Set<String> allowedExtensions = settings.allowedExtensions();
+        String extension = extractExtension(file.getOriginalFilename());
+        if (extension == null || !allowedExtensions.contains(extension)) {
+            throw new BadRequestException("error.image.invalidExtension", String.join(", ", allowedExtensions));
         }
+        DataSize maxFileSize = settings.maxFileSize();
         if (file.getSize() > maxFileSize.toBytes()) {
             throw new BadRequestException("error.image.tooLarge", maxFileSize.toMegabytes());
         }
-        // The declared Content-Type above is client-supplied and trivially spoofable — this
-        // decodes the actual bytes so a renamed/relabeled non-image file can't get past it.
+        // The extension above only tells us what the client claims the file is — this decodes
+        // the actual bytes so a renamed/relabeled non-image file can't get past it.
         validateActualImageContent(file);
 
         Path ownerDir = resolveOwnerDir(ownerId);
-        String filename = sanitizeFilename(file.getOriginalFilename());
+        // Server-generated rather than derived from the client's original filename: two different
+        // photos both named "IMG_0001.jpg" (the norm for phone camera output) would otherwise
+        // collide on the second upload, and a partial failure after this point (e.g. the entity
+        // save in EntityImageService) would permanently jam every future upload of that same name.
+        String filename = generateFilename(extension);
         Path target = resolveFile(ownerDir, filename);
 
         if (Files.exists(target)) {
@@ -126,6 +126,7 @@ public class FileSystemImageStorageService implements ImageStorageService {
         if (ownerId == null || ownerId.isBlank()) {
             throw new BadRequestException("error.image.ownerIdRequired");
         }
+        Path basePath = settings.basePath();
         Path resolved = basePath.resolve(ownerId).normalize();
         if (!resolved.startsWith(basePath) || resolved.equals(basePath)) {
             throw new BadRequestException("error.image.invalidOwnerId", ownerId);
@@ -152,6 +153,23 @@ public class FileSystemImageStorageService implements ImageStorageService {
             throw new BadRequestException("error.image.invalidFilename", rawFilename);
         }
         return filename;
+    }
+
+    /** @return the lower-cased extension (no dot), or {@code null} if there isn't one. */
+    private static String extractExtension(String rawFilename) {
+        if (rawFilename == null) {
+            return null;
+        }
+        String name = StringUtils.cleanPath(rawFilename);
+        int dot = name.lastIndexOf('.');
+        if (dot < 0 || dot == name.length() - 1) {
+            return null;
+        }
+        return name.substring(dot + 1).toLowerCase(Locale.ROOT);
+    }
+
+    private static String generateFilename(String extension) {
+        return UUID.randomUUID() + "." + extension;
     }
 
     private static void validateActualImageContent(MultipartFile file) {

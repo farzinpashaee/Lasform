@@ -43,9 +43,17 @@ class EntityImageService<T extends Imageable> implements ImageAttachable {
         }
         Image image = Image.builder().filename(filename).primary(makePrimary).build();
         images.add(image);
-
         entity.setImages(images);
-        repository.save(entity);
+
+        try {
+            repository.save(entity);
+        } catch (RuntimeException e) {
+            // The file is already on disk at this point — without this, a save failure here
+            // (e.g. an optimistic-locking conflict) would leave it permanently orphaned: never
+            // referenced by the entity, but still occupying its filename forever.
+            imageStorage.delete(ownerId, filename);
+            throw e;
+        }
         return image;
     }
 

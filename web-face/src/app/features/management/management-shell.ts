@@ -42,6 +42,7 @@ export class ManagementShell {
       labelKey: 'management.settingsGroup',
       expanded: signal(false),
       children: [
+        { labelKey: 'management.navGeneralSettings', path: 'settings/general', permission: 'config:write' },
         { labelKey: 'management.navMapProvider', path: 'settings/map-provider', permission: 'config:write' },
         { labelKey: 'management.navWebFaceStyles', path: 'settings/web-face-styles' },
         { labelKey: 'management.navFeaturesManagement', path: 'settings/features-management', permission: 'config:write' },

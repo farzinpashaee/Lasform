@@ -117,6 +117,7 @@
   "management": {
     "backLabel": "Management",
     "settingsGroup": "Settings",
+    "navGeneralSettings": "General Settings",
     "navMapProvider": "Map Provider",
     "navWebFaceStyles": "Web Face Styles",
     "navFeaturesManagement": "Features Management",
@@ -128,6 +129,19 @@
   },
   "comingSoon": {
     "text": "This section is coming soon."
+  },
+  "generalSettings": {
+    "title": "General Settings",
+    "loading": "Loading…",
+    "basePathLabel": "Image upload path",
+    "basePathPlaceholder": "./data/images",
+    "basePathHelp": "Server-side directory where uploaded Location/Device images are stored. Leave blank to use the server default.",
+    "allowedExtensionsLabel": "Allowed file extensions",
+    "allowedExtensionsHelp": "Only these types can be uploaded as images. At least one must stay selected.",
+    "maxFileSizeLabel": "Max file size (MB)",
+    "maxFileSizeHelp": "Per-image limit enforced on upload.",
+    "saved": "Saved.",
+    "saveFailed": "Failed to save. Please try again."
   },
   "mapProviderSettings": {
     "title": "Map Providers Settings",

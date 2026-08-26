@@ -1,0 +1,51 @@
+<h1 class="page-title">{{ 'generalSettings.title' | transloco }}</h1>
+
+@if (loading()) {
+  <p class="settings-status">{{ 'generalSettings.loading' | transloco }}</p>
+} @else {
+  <form class="settings-form" (ngSubmit)="save()">
+    <label class="form-field">
+      <span>{{ 'generalSettings.basePathLabel' | transloco }}</span>
+      <input
+        type="text"
+        [(ngModel)]="basePath"
+        (ngModelChange)="onFieldChange()"
+        name="basePath"
+        autocomplete="off"
+        [placeholder]="'generalSettings.basePathPlaceholder' | transloco"
+      />
+      <span class="field-help">{{ 'generalSettings.basePathHelp' | transloco }}</span>
+    </label>
+
+    <div class="form-field">
+      <span>{{ 'generalSettings.allowedExtensionsLabel' | transloco }}</span>
+      <div class="checkbox-group">
+        @for (extension of SUPPORTED_EXTENSIONS; track extension) {
+          <label class="checkbox-option">
+            <input type="checkbox" [checked]="allowedExtensions().includes(extension)" (change)="toggleExtension(extension)" />
+            <span>.{{ extension }}</span>
+          </label>
+        }
+      </div>
+      <span class="field-help">{{ 'generalSettings.allowedExtensionsHelp' | transloco }}</span>
+    </div>
+
+    <label class="form-field">
+      <span>{{ 'generalSettings.maxFileSizeLabel' | transloco }}</span>
+      <input type="number" [(ngModel)]="maxFileSizeMb" (ngModelChange)="onFieldChange()" name="maxFileSizeMb" min="1" step="1" />
+      <span class="field-help">{{ 'generalSettings.maxFileSizeHelp' | transloco }}</span>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="save-button" [disabled]="!canSave()">
+        {{ (saving() ? 'common.saving' : 'common.save') | transloco }}
+      </button>
+      @if (saved()) {
+        <span class="saved-note">{{ 'generalSettings.saved' | transloco }}</span>
+      }
+      @if (error(); as message) {
+        <span class="settings-error">{{ message }}</span>
+      }
+    </div>
+  </form>
+}

@@ -37,17 +37,29 @@ spring:
 lasform:
   storage:
     images:
+      # Factory defaults only — an admin can override all three from the General Settings page
+      # (config_entries, see ImageStorageSettingsService) without a restart.
       # Root directory Location/Device images are stored under, one subfolder per entity id.
       base-path: ./data/images
       # Per-image cap (see ImageStorageProperties) — keep at or below multipart.max-file-size above.
       max-file-size: 5MB
+      # Only extensions in ImageStorageSettingsService.SUPPORTED_EXTENSIONS actually take effect.
+      allowed-extensions: jpg,jpeg,png
 
   seed:
     # Runs AuthSeeder on startup: (re)syncs the fixed Permission catalog and the 5 system roles
     # every run (idempotent — safe to leave on), and creates the single Organization + initial
-    # SUPER_ADMIN user once, only if none exist yet. Set to false for e.g. a read replica or a
-    # test profile that shouldn't write on boot.
+    # SUPER_ADMIN user once, only if none exist yet. Also gates ConfigDefaultsSeeder below. Set to
+    # false for e.g. a read replica or a test profile that shouldn't write on boot.
     enabled: true
+
+  config-defaults:
+    # Optional operator-supplied seed values for specific generic config_entries (see
+    # ConfigDefaultsSeeder) — copied in once on first startup if that key has no entry yet; the
+    # admin Settings UI owns the value from then on, even across restarts, env var changes, or
+    # removal. Blank (the default) means "don't seed, leave it for an admin to set via the UI."
+    google-maps-api-key:
+    google-sso-client-id:
 
   org:
     # Name of the single organization AuthSeeder creates on first run.

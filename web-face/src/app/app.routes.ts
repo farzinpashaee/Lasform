@@ -7,6 +7,7 @@ import { GeofencesPage } from './features/management/geofences/geofences-page';
 import { LocationsPage } from './features/management/locations/locations-page';
 import { ManagementShell } from './features/management/management-shell';
 import { FeatureManagementPage } from './features/management/settings/feature-management-page';
+import { GeneralSettings } from './features/management/settings/general-settings';
 import { MapProviderSettings } from './features/management/settings/map-provider-settings';
 import { UsersPage } from './features/management/users/users-page';
 import { MapPage } from './features/map/map-page';
@@ -36,6 +37,7 @@ export const routes: Routes = [
     canActivateChild: [permissionGuard],
     children: [
       { path: '', redirectTo: 'locations', pathMatch: 'full' },
+      { path: 'settings/general', component: GeneralSettings, data: { permissions: 'config:write' } },
       { path: 'settings/map-provider', component: MapProviderSettings, data: { permissions: 'config:write' } },
       { path: 'settings/web-face-styles', component: ComingSoon, data: { titleKey: 'management.navWebFaceStyles' } },
       {

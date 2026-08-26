@@ -72,9 +72,10 @@ POST /api/auth/google {accessToken}
 One endpoint backs both the "Sign in with Google" and "Sign up with Google" buttons — the two
 only ever differed by which case above applies, not by anything the frontend needs to decide
 ahead of time. Accounts created this way have `passwordHash = null`; `AuthenticationService.login`
-guards against calling the password encoder on that. Requires a Google OAuth2 Client ID configured
-on the **frontend** (`googleClientId` in `environment.ts`) — the backend needs no matching config
-since it doesn't check the token's audience (see the "Known gaps" note below).
+guards against calling the password encoder on that. Requires a Google OAuth2 Client ID, read by
+the **frontend** at runtime from the `lasform.security.sso.google.client.id` config entry (not a
+build-time `environment.ts` value — see the Config section below) — the backend needs no matching
+config since it doesn't check the token's audience (see the "Known gaps" note below).
 
 ### Refresh token storage: DB, not Redis
 
@@ -97,12 +98,24 @@ All in `application.yml`, overridable via env var (Spring's relaxed binding, e.g
 | `lasform.jwt.secret` | `LASFORM_JWT_SECRET` | *(none)* | HMAC-SHA256 key, 32+ chars. Unset → an ephemeral random key is generated at startup (logged as a warning) so local dev works with zero config, at the cost of invalidating every token on restart. |
 | `lasform.jwt.access-token-ttl` | `LASFORM_JWT_ACCESS_TOKEN_TTL` | `15m` | Spring's simple duration syntax. |
 | `lasform.jwt.refresh-token-ttl` | `LASFORM_JWT_REFRESH_TOKEN_TTL` | `7d` | |
-| `lasform.seed.enabled` | `LASFORM_SEED_ENABLED` | `true` | Turn off for e.g. a read replica. |
+| `lasform.seed.enabled` | `LASFORM_SEED_ENABLED` | `true` | Turn off for e.g. a read replica. Also gates `ConfigDefaultsSeeder` below. |
 | `lasform.org.name` | `LASFORM_ORG_NAME` | `Lasform` | Name of the single org created on first run. |
 | `lasform.admin.email` / `lasform.admin.password` | `LASFORM_ADMIN_EMAIL` / `LASFORM_ADMIN_PASSWORD` | *(none)* | Initial SUPER_ADMIN, created once on first run. Unset → `AuthSeeder` logs a warning and skips creating it, rather than guessing. |
+| `lasform.storage.images.base-path` | `LASFORM_STORAGE_IMAGES_BASE_PATH` | `./data/images` | Location/Device image storage root. DB-overridable (no restart) from Settings → General — see `ImageStorageSettingsService`. |
+| `lasform.storage.images.max-file-size` | `LASFORM_STORAGE_IMAGES_MAX_FILE_SIZE` | `5MB` | Same override rule as above. |
+| `lasform.storage.images.allowed-extensions` | `LASFORM_STORAGE_IMAGES_ALLOWED_EXTENSIONS` | `jpg,jpeg,png` | Same override rule as above; only extensions in `ImageStorageSettingsService.SUPPORTED_EXTENSIONS` actually take effect. |
+| `lasform.config-defaults.google-maps-api-key` | `LASFORM_CONFIG_DEFAULTS_GOOGLE_MAPS_API_KEY` | *(none)* | One-time seed for the `map.google.api.key` config entry — see below. |
+| `lasform.config-defaults.google-sso-client-id` | `LASFORM_CONFIG_DEFAULTS_GOOGLE_SSO_CLIENT_ID` | *(none)* | One-time seed for the `lasform.security.sso.google.client.id` config entry — see below. |
 
-Google sign-in has no backend config — see the "Google sign-in/sign-up" section above. The Client
-ID it needs lives entirely on the frontend (`googleClientId` in `web-face/src/environments`).
+The last two rows aren't read directly anywhere — `ConfigDefaultsSeeder` copies them into the
+generic `config_entries` store once on first startup, only if that key doesn't have an entry yet.
+From then on the value lives purely in the database, editable from Settings → General/Features
+Management, and survives independently of whatever the env var is set to on later restarts. This
+is deliberately different from the `lasform.storage.images.*` rows above, which are read fresh on
+every use (env var value is the fallback, not a one-time seed) — an API key or OAuth client id has
+no sensible non-blank default to fall back to, so there's nothing to merge on every read; either an
+operator seeded one, an admin set one, or the feature that needs it stays unconfigured. Google
+sign-in itself has no other backend config — see the "Google sign-in/sign-up" section above.
 
 ### Adding a new permission-gated endpoint
 
