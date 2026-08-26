@@ -171,6 +171,9 @@
 
       <ng-template #detailsBody let-hit="hit">
         <div class="details-panel">
+          @if (coverImageUrl(); as imageUrl) {
+            <img class="details-cover-image" [src]="imageUrl" alt="" />
+          }
           @if (hasSearched()) {
             <div class="details-top-bar">
               <button type="button" class="back-link" (click)="closeDetails()">

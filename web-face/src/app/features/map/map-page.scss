@@ -224,6 +224,16 @@ $radius: 8px;
   position: relative;
 }
 
+/* Full-bleed — .results-card's own overflow: hidden clips this to its rounded top corners,
+   so no border-radius is needed here. .details-top-actions (position: absolute, z-index: 10)
+   floats over it same as it would over any other panel content. */
+.details-cover-image {
+  display: block;
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
 .details-top-bar {
   display: flex;
   align-items: center;

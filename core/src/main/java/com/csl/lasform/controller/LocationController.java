@@ -128,8 +128,10 @@ public class LocationController extends AbstractCrudController<Location> {
                 .body(image);
     }
 
+    // Same rationale as list() above: the public map's details card shows a location's cover
+    // photo, so anonymous callers need to be able to fetch it too.
     @GetMapping("/{id}/images/{filename}")
-    @PreAuthorize("hasAuthority('location:read')")
+    @PreAuthorize("hasAuthority('location:read') or hasAuthority('map:view_public')")
     public ResponseEntity<Resource> getImage(@PathVariable String id, @PathVariable String filename) {
         Resource image = locationService.loadImage(id, filename);
         MediaType contentType = MediaTypeFactory.getMediaType(image).orElse(MediaType.APPLICATION_OCTET_STREAM);

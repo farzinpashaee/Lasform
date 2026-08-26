@@ -114,6 +114,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly searchError = signal<string | null>(null);
   protected readonly hasSearched = signal(false);
   protected readonly selectedResult = signal<SearchHit | null>(null);
+  protected readonly coverImageUrl = signal<string | null>(null);
   protected readonly selectedGeofence = signal<Geofence | null>(null);
   protected readonly entityMenuOpen = signal(false);
   protected readonly detailsTab = signal<DetailsTab>('overview');
@@ -341,6 +342,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.mapProvider.destroy();
+    this.revokeCoverImageUrl();
   }
 
   protected openManagement(): void {
@@ -872,6 +874,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.selectedGeofence.set(null);
     this.selectedResult.set(hit);
     this.resetDetailsPanelState();
+    this.loadCoverImage(hit);
 
     const point = this.hitPoint(hit);
     if (!point) {
@@ -887,6 +890,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected closeDetails(): void {
     this.selectedResult.set(null);
     this.entityMenuOpen.set(false);
+    this.revokeCoverImageUrl();
   }
 
   protected selectDetailsTab(tab: DetailsTab, hit: SearchHit): void {
@@ -1026,6 +1030,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
       this.selectedGeofence.set(null);
       this.selectedResult.set(hit);
       this.resetDetailsPanelState();
+      this.loadCoverImage(hit);
     }
   }
 
@@ -1035,6 +1040,32 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.entityMenuOpen.set(false);
     this.reviews.set([]);
     this.reviewsLoadError.set(null);
+  }
+
+  /** Loads the location's primary (cover) photo, if it has one — a normal, silent no-op otherwise. */
+  private loadCoverImage(hit: SearchHit): void {
+    this.revokeCoverImageUrl();
+    if (hit.type !== 'LOCATION') {
+      return;
+    }
+    const location = hit.data as Location;
+    const cover = location.images?.find((image) => image.primary) ?? location.images?.[0];
+    if (!location.id || !cover) {
+      return;
+    }
+    this.locationService.loadImage(location.id, cover.filename).subscribe({
+      next: (blob) => this.coverImageUrl.set(URL.createObjectURL(blob)),
+      // No/unreadable cover image is a normal state here, not an error — leave the banner blank.
+      error: () => {},
+    });
+  }
+
+  private revokeCoverImageUrl(): void {
+    const url = this.coverImageUrl();
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
+    this.coverImageUrl.set(null);
   }
 
   protected resultTitle(hit: SearchHit): string {
