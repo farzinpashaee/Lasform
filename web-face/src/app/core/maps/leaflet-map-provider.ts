@@ -180,6 +180,12 @@ private map?: L.Map;
     }
   }
 
+  moveMarker(id: string, lat: number, lng: number): void {
+    // setLatLng alone is enough even when clustered: MarkerClusterGroup binds its own 'move'
+    // handler to every child marker and re-buckets it internally — no manual remove/re-add.
+    this.markersById.get(id)?.setLatLng([lat, lng]);
+  }
+
   private rebuildMarkersLayer(): void {
     if (!this.map) {
       return;
@@ -284,6 +290,12 @@ private map?: L.Map;
         clientY: e.originalEvent.clientY,
       });
     });
+  }
+
+  onUserPanStart(handler: () => void): void {
+    // 'dragstart' fires only for an actual pointer-driven drag of the map — unlike 'movestart',
+    // it never fires for a programmatic panTo()/setView(), so no "ignore my own pans" flag is needed.
+    this.map?.on('dragstart', () => handler());
   }
 
   startDrawingGeofence(kind: GeofenceShapeKind, onComplete: (shape: GeofenceShapeData) => void): void {

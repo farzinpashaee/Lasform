@@ -54,6 +54,9 @@ export interface MapProvider {
   /** Opens the tooltip/info window for the marker with the given id, if it's currently on the map. */
   openMarkerPopup(id: string): void;
 
+  /** Moves an existing marker to a new position, if one exists under this id. Never adds a marker. */
+  moveMarker(id: string, lat: number, lng: number): void;
+
   /** Toggles grouping nearby markers into cluster badges; re-applies to whatever markers are current. */
   setClusteringEnabled(enabled: boolean): void;
 
@@ -75,6 +78,9 @@ export interface MapProvider {
 
   /** Registers the handler fired on right-click on the map surface. */
   onContextMenu(handler: (event: MapContextMenuEvent) => void): void;
+
+  /** Registers the handler fired when the user starts dragging the map — not for programmatic pans/zooms (e.g. panTo()). */
+  onUserPanStart(handler: () => void): void;
 
   /** Arms interactive drawing of a new circle/polygon; onComplete fires once with the drawn shape, then drawing mode ends. */
   startDrawingGeofence(kind: GeofenceShapeKind, onComplete: (shape: GeofenceShapeData) => void): void;

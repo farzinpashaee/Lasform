@@ -35,6 +35,7 @@ import { Location } from '../../core/models/location.model';
 import { Review } from '../../core/models/review.model';
 import { SearchHit } from '../../core/models/search.model';
 import { CategoryService } from '../../core/services/category.service';
+import { DeviceLiveService } from '../../core/services/device-live.service';
 import { DeviceService } from '../../core/services/device.service';
 import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { GeofenceService } from '../../core/services/geofence.service';
@@ -80,6 +81,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private readonly transloco = inject(TranslocoService);
   private readonly locationService = inject(LocationService);
   private readonly deviceService = inject(DeviceService);
+  private readonly deviceLiveService = inject(DeviceLiveService);
   private readonly categoryService = inject(CategoryService);
   private readonly tagService = inject(TagService);
   private readonly searchService = inject(SearchService);
@@ -95,6 +97,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private allLocationHits: SearchHit[] = [];
   /** Geofences currently rendered read-only on the map; looked up by id when one is clicked. */
   private geofencesById = new Map<string, Geofence>();
+  /** The device id behind deviceLiveActive(), if any — see stopDeviceLive() for why this isn't read off selectedResult(). */
+  private liveTrackedDeviceId: string | null = null;
+  /** Whether the map should auto-recenter on liveTrackedDeviceId's next update — see onUserPanStart wiring in ngAfterViewInit. */
+  private followingLiveDevice = false;
   private tagSuggestionTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly categories = signal<Category[]>([]);
@@ -123,6 +129,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly reviewsLoadError = signal<string | null>(null);
   protected readonly locating = signal(false);
   protected readonly clusteringEnabled = signal(false);
+  /** Map-wide "Live" toggle — live-tracks every DEVICE currently in searchResults(). */
+  protected readonly liveEnabled = signal(false);
+  /** Whether the currently-selected device (its details card) is being individually live-tracked. */
+  protected readonly deviceLiveActive = signal(false);
   protected readonly mapType = signal<MapType>('roadmap');
   protected readonly mapTypeMenuOpen = signal(false);
   protected readonly mapTypeOptions: { type: MapType; labelKey: string; icon: string }[] = [
@@ -215,6 +225,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.loadDevices();
     this.loadGeofences();
     this.mapProvider.onContextMenu((event) => this.openMapContextMenu(event));
+    this.mapProvider.onUserPanStart(() => {
+      this.followingLiveDevice = false;
+    });
     this.jumpToQueryLocation();
     this.jumpToQueryGeofence();
     this.jumpToDrawGeofence();
@@ -343,6 +356,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.mapProvider.destroy();
     this.revokeCoverImageUrl();
+    this.deviceLiveService.unsubscribeAll();
   }
 
   protected openManagement(): void {
@@ -423,6 +437,89 @@ export class MapPage implements AfterViewInit, OnDestroy {
       this.mapProvider.clearGeofences();
       this.geofencesById.clear();
       this.selectedGeofence.set(null);
+    }
+  }
+
+  protected toggleLive(): void {
+    const enabled = !this.liveEnabled();
+    this.liveEnabled.set(enabled);
+    if (enabled) {
+      this.startGlobalLive();
+    } else {
+      this.deviceLiveService.unsubscribe('global');
+    }
+  }
+
+  /** (Re)subscribes 'global' to whichever DEVICE hits are currently shown — a no-op if liveEnabled() is off. */
+  private startGlobalLive(): void {
+    if (!this.liveEnabled()) {
+      return;
+    }
+    const deviceIds = this.searchResults()
+      .filter((hit): hit is SearchHit & { type: 'DEVICE' } => hit.type === 'DEVICE' && !!hit.data.id)
+      .map((hit) => hit.data.id!);
+    this.deviceLiveService.subscribe('global', deviceIds, (device) => this.applyLiveDeviceUpdate(device));
+  }
+
+  protected toggleDeviceLive(hit: SearchHit): void {
+    if (hit.type !== 'DEVICE' || !hit.data.id) {
+      return;
+    }
+    if (this.deviceLiveActive()) {
+      this.stopDeviceLive();
+      return;
+    }
+    this.liveTrackedDeviceId = hit.data.id;
+    this.deviceLiveActive.set(true);
+    this.followingLiveDevice = true;
+    this.deviceLiveService.subscribe(`device:${hit.data.id}`, [hit.data.id], (device) => this.applyLiveDeviceUpdate(device));
+  }
+
+  /** Re-engages auto-follow for the device already being tracked — e.g. the user clicked its
+   *  marker again after a manual pan turned following off. No-op if nothing is being tracked. */
+  private resumeFollowingLiveDevice(): void {
+    if (!this.liveTrackedDeviceId) {
+      return;
+    }
+    this.followingLiveDevice = true;
+    const hit = this.searchResults().find((candidate) => candidate.type === 'DEVICE' && candidate.data.id === this.liveTrackedDeviceId);
+    const point = hit && this.hitPoint(hit);
+    if (point) {
+      const [lng, lat] = point.coordinates;
+      this.mapProvider.panTo(lat, lng);
+    }
+  }
+
+  /** Stops the single individually-tracked device, if any — tracked by id rather than reading
+   *  selectedResult(), since callers (e.g. resetDetailsPanelState) may run after it's already
+   *  been reassigned to a *different* hit. */
+  private stopDeviceLive(): void {
+    if (this.liveTrackedDeviceId) {
+      this.deviceLiveService.unsubscribe(`device:${this.liveTrackedDeviceId}`);
+      this.liveTrackedDeviceId = null;
+    }
+    this.deviceLiveActive.set(false);
+    this.followingLiveDevice = false;
+  }
+
+  /** Shared handler for both the global and per-device live subscriptions. */
+  private applyLiveDeviceUpdate(device: Device): void {
+    if (!device.id) {
+      return;
+    }
+    if (device.lastKnownPoint) {
+      const [lng, lat] = device.lastKnownPoint.coordinates;
+      this.mapProvider.moveMarker(device.id, lat, lng);
+      if (this.followingLiveDevice && device.id === this.liveTrackedDeviceId) {
+        this.mapProvider.panTo(lat, lng);
+      }
+    }
+    this.searchResults.update((results) =>
+      results.map((hit) => (hit.type === 'DEVICE' && hit.data.id === device.id ? { type: 'DEVICE' as const, data: device } : hit)),
+    );
+    const selected = this.selectedResult();
+    if (selected?.type === 'DEVICE' && selected.data.id === device.id) {
+      this.selectedResult.set({ type: 'DEVICE', data: device });
     }
   }
 
@@ -855,12 +952,14 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.searchError.set(null);
     this.selectedResult.set(null);
     this.selectedGeofence.set(null);
+    this.stopDeviceLive();
 
     this.searchService.search({ q: query, size: 50 }).subscribe({
       next: (page) => {
         this.searching.set(false);
         this.searchResults.set(page.content);
         this.showResultsOnMap(page.content);
+        this.startGlobalLive();
       },
       error: () => {
         this.searching.set(false);
@@ -873,7 +972,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected selectResult(hit: SearchHit): void {
     this.selectedGeofence.set(null);
     this.selectedResult.set(hit);
-    this.resetDetailsPanelState();
+    this.resetDetailsPanelState(hit);
     this.loadCoverImage(hit);
 
     const point = this.hitPoint(hit);
@@ -891,6 +990,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.selectedResult.set(null);
     this.entityMenuOpen.set(false);
     this.revokeCoverImageUrl();
+    this.stopDeviceLive();
   }
 
   protected selectDetailsTab(tab: DetailsTab, hit: SearchHit): void {
@@ -1021,6 +1121,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     } else {
       this.loadLocationMarkers();
     }
+    this.startGlobalLive();
   }
 
   private onMarkerClicked(id: string): void {
@@ -1029,17 +1130,24 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (hit) {
       this.selectedGeofence.set(null);
       this.selectedResult.set(hit);
-      this.resetDetailsPanelState();
+      this.resetDetailsPanelState(hit);
       this.loadCoverImage(hit);
     }
   }
 
-  /** Clears the previous selection's tab/menu/reviews state so it doesn't leak into a newly selected hit. */
-  private resetDetailsPanelState(): void {
+  /** Clears the previous selection's tab/menu/reviews state so it doesn't leak into a newly selected hit.
+   *  Re-selecting the device already being live-tracked (e.g. clicking its marker again after a
+   *  manual pan) resumes following instead of stopping it — see resumeFollowingLiveDevice(). */
+  private resetDetailsPanelState(hit: SearchHit): void {
     this.detailsTab.set('overview');
     this.entityMenuOpen.set(false);
     this.reviews.set([]);
     this.reviewsLoadError.set(null);
+    if (hit.type === 'DEVICE' && hit.data.id && hit.data.id === this.liveTrackedDeviceId) {
+      this.resumeFollowingLiveDevice();
+    } else {
+      this.stopDeviceLive();
+    }
   }
 
   /** Loads the location's primary (cover) photo, if it has one — a normal, silent no-op otherwise. */

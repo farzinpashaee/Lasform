@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.csl.lasform.model.entity.Device;
 import com.csl.lasform.model.entity.Event;
 import com.csl.lasform.repository.DeviceRepository;
+import com.csl.lasform.service.DeviceLiveUpdatesService;
 import com.csl.lasform.service.EventService;
 
 /**
@@ -21,11 +22,17 @@ public class EventIngestionService {
     private final EventService eventService;
     private final DeviceRepository deviceRepository;
     private final AuditorAware<String> auditorAware;
+    private final DeviceLiveUpdatesService deviceLiveUpdatesService;
 
-    public EventIngestionService(EventService eventService, DeviceRepository deviceRepository, AuditorAware<String> auditorAware) {
+    public EventIngestionService(
+            EventService eventService,
+            DeviceRepository deviceRepository,
+            AuditorAware<String> auditorAware,
+            DeviceLiveUpdatesService deviceLiveUpdatesService) {
         this.eventService = eventService;
         this.deviceRepository = deviceRepository;
         this.auditorAware = auditorAware;
+        this.deviceLiveUpdatesService = deviceLiveUpdatesService;
     }
 
     public List<Event> ingest(List<Event> events) {
@@ -54,6 +61,7 @@ public class EventIngestionService {
             // Setting it explicitly here means an absent auditor actually lands as null.
             device.setUpdatedBy(auditorAware.getCurrentAuditor().orElse(null));
             deviceRepository.save(device);
+            deviceLiveUpdatesService.publish(device);
         });
     }
 

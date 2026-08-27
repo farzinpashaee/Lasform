@@ -98,6 +98,17 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.infoWindow.open(this.map, entry.marker);
   }
 
+  moveMarker(id: string, lat: number, lng: number): void {
+    const entry = this.markersById.get(id);
+    if (!entry) {
+      return;
+    }
+    entry.marker.setPosition({ lat, lng });
+    // Unlike Leaflet's cluster plugin, @googlemaps/markerclusterer doesn't watch marker
+    // position on its own — render() is its documented "recalculate and redraw" call.
+    this.clusterer?.render();
+  }
+
   zoomIn(): void {
     if (!this.map) {
       return;
@@ -177,6 +188,12 @@ export class GoogleMapsMapProvider implements MapProvider {
         clientY: domEvent?.clientY ?? 0,
       });
     });
+  }
+
+  onUserPanStart(handler: () => void): void {
+    // 'dragstart' fires only for an actual pointer-driven drag of the map — unlike 'center_changed',
+    // it never fires for a programmatic panTo()/setCenter(), so no "ignore my own pans" flag is needed.
+    this.map?.addListener('dragstart', () => handler());
   }
 
   startDrawingGeofence(kind: GeofenceShapeKind, onComplete: (shape: GeofenceShapeData) => void): void {

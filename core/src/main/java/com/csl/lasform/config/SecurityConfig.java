@@ -20,6 +20,7 @@ import com.csl.lasform.auth.infrastructure.security.JsonAccessDeniedHandler;
 import com.csl.lasform.auth.infrastructure.security.JsonAuthenticationEntryPoint;
 import com.csl.lasform.auth.infrastructure.security.JwtAuthenticationFilter;
 import com.csl.lasform.auth.infrastructure.security.PasswordResetEnforcementFilter;
+import com.csl.lasform.auth.infrastructure.security.StreamTicketAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,6 +47,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final StreamTicketAuthenticationFilter streamTicketAuthenticationFilter;
     private final PasswordResetEnforcementFilter passwordResetEnforcementFilter;
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
     private final JsonAccessDeniedHandler accessDeniedHandler;
@@ -58,7 +60,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .anonymous(anon -> anon.authorities(anonymousAuthorities()))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint).accessDeniedHandler(accessDeniedHandler))
+                // jwtAuthenticationFilter's position must be registered before it can be used as
+                // a reference point below — addFilterBefore(X, SomeFilter.class) requires
+                // SomeFilter to already have a known order in this chain.
                 .addFilterBefore(jwtAuthenticationFilter, AnonymousAuthenticationFilter.class)
+                .addFilterBefore(streamTicketAuthenticationFilter, JwtAuthenticationFilter.class)
                 .addFilterAfter(passwordResetEnforcementFilter, AnonymousAuthenticationFilter.class);
         return http.build();
     }

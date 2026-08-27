@@ -219,6 +219,18 @@
                 }
               </div>
             }
+            @if (hit.type === 'DEVICE') {
+              <button
+                type="button"
+                class="icon-action-button"
+                [class.active]="deviceLiveActive()"
+                [attr.aria-pressed]="deviceLiveActive()"
+                [attr.aria-label]="(deviceLiveActive() ? 'map.stopDeviceLive' : 'map.showDeviceLive') | transloco"
+                (click)="toggleDeviceLive(hit)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">sensors</span>
+              </button>
+            }
             <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeDetails()">
               <span class="material-symbols-outlined" aria-hidden="true">close</span>
             </button>
@@ -481,6 +493,18 @@
         (click)="toggleGeofencesVisible()"
       >
         <span class="material-symbols-outlined" aria-hidden="true">fence</span>
+      </button>
+    }
+    @if (authService.hasPermission('device:read')) {
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="(liveEnabled() ? 'map.stopLive' : 'map.startLive') | transloco"
+        [class.active]="liveEnabled()"
+        [attr.aria-pressed]="liveEnabled()"
+        (click)="toggleLive()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">sensors</span>
       </button>
     }
     <div class="zoom-stack">

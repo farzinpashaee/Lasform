@@ -294,6 +294,15 @@ $radius: 8px;
   &:hover {
     background: var(--hover);
   }
+
+  &.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+
+    &:hover {
+      background: var(--accent-bg-hover);
+    }
+  }
 }
 
 .icon-action-danger {
