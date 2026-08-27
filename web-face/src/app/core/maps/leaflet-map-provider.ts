@@ -72,6 +72,30 @@ drawPolylineProto._endPoint = function (this: DrawPolylineInternals, clientX, cl
   originalEndPoint.call(this, clientX, clientY, event);
 };
 
+/** Undocumented internals of leaflet-draw's circle edit handler that the resize patch below needs. */
+interface EditCircleInternals {
+  _moveMarker: L.Marker;
+  _shape: L.Circle;
+  _map: L.Map;
+  _resize(latlng: L.LatLng): void;
+}
+
+// leaflet-draw's Edit.Circle#_resize assigns to a bare `radius` identifier that's never
+// declared with var/let. That's a silent accidental-global under old-style non-strict script
+// loading (how leaflet-draw has always been used/tested) — but ES modules are always strict
+// mode, and this file is loaded via `import 'leaflet-draw'`, so that same assignment throws
+// ReferenceError instead. Every drag of a circle's resize handle hit this immediately, so
+// setRadius() never ran — the circle's center could be moved but it could never be resized.
+// Redefines _resize with the same core logic, just with `radius` actually declared. (Skips
+// the original's live-radius tooltip update: it's gated on `this._map.editTooltip`, a plain
+// boolean that's never set anywhere — that branch was already always-dead code upstream.)
+const editCircleProto = (L as unknown as { Edit: { Circle: { prototype: EditCircleInternals } } }).Edit.Circle.prototype;
+editCircleProto._resize = function (this: EditCircleInternals, latlng: L.LatLng) {
+  const radius = this._map.distance(this._moveMarker.getLatLng(), latlng);
+  this._shape.setRadius(radius);
+  this._map.fire(L.Draw.Event.EDITRESIZE, { layer: this._shape });
+};
+
 export class LeafletMapProvider implements MapProvider {
 private map?: L.Map;
   private markersLayer?: L.LayerGroup;
@@ -365,6 +389,16 @@ private map?: L.Map;
 
   fitBoundsToGeofence(shape: GeofenceShapeData): void {
     if (!this.map) {
+      return;
+    }
+    if (shape.shape === 'CIRCLE') {
+      // L.Circle.getBounds() needs the layer attached to a map (it reads back its own
+      // projected pixel position/radius) — layerFromShape's circle is never added anywhere,
+      // so calling it here throws every time, aborting whatever ran this (e.g. silently
+      // skipping the rest of the "open geofence for edit" flow, including opening its form).
+      // LatLng.toBounds() computes the box from pure geography instead, no map needed.
+      const center = L.latLng(shape.center.lat, shape.center.lng);
+      this.map.fitBounds(center.toBounds(shape.radiusMeters * 2));
       return;
     }
     this.map.fitBounds(this.layerFromShape(shape).getBounds());
