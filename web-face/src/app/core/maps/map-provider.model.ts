@@ -27,6 +27,8 @@ export interface MapMarkerData {
   lat: number;
   lng: number;
   title?: string;
+  /** Which icon to render — defaults to the location pin when omitted. */
+  kind?: 'location' | 'device';
 }
 
 export interface MapContextMenuEvent {

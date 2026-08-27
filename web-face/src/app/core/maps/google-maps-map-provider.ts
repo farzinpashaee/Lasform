@@ -62,6 +62,7 @@ export class GoogleMapsMapProvider implements MapProvider {
       // provider itself owns adding markers to the map.
       const marker = new google.maps.Marker({
         position: { lat: markerData.lat, lng: markerData.lng },
+        icon: markerData.kind === 'device' ? this.deviceMarkerIcon() : undefined,
       });
       if (markerData.title || markerData.id) {
         marker.addListener('click', () => {
@@ -80,6 +81,16 @@ export class GoogleMapsMapProvider implements MapProvider {
       }
     }
     this.applyClustering();
+  }
+
+  // Built lazily (not a module-level constant) since google.maps.Size/Point only exist once
+  // loadGoogleMaps() has resolved — same pin size/anchor as the default red-pin icon.
+  private deviceMarkerIcon(): google.maps.Icon {
+    return {
+      url: 'lasform/assets/images/markers/device-marker-icon.png',
+      scaledSize: new google.maps.Size(25, 41),
+      anchor: new google.maps.Point(12, 41),
+    };
   }
 
   setClusteringEnabled(enabled: boolean): void {

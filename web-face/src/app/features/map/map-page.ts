@@ -1299,7 +1299,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
         continue;
       }
       const [lng, lat] = point.coordinates;
-      markers.push({ id: hit.data.id, lat, lng, title: this.resultTitle(hit) });
+      markers.push({ id: hit.data.id, lat, lng, title: this.resultTitle(hit), kind: hit.type === 'DEVICE' ? 'device' : 'location' });
     }
     this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
     return markers;

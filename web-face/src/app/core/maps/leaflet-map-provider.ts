@@ -46,6 +46,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'lasform/assets/images/markers/marker-shadow.png',
 });
 
+/** Same pin silhouette/size as the default icon, so it drops in with the same anchor/shadow. */
+const DEVICE_ICON = L.icon({
+  iconUrl: 'lasform/assets/images/markers/device-marker-icon.png',
+  shadowUrl: 'lasform/assets/images/markers/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 /** Undocumented internals of leaflet-draw's shared Polyline/Polygon draw handler that the closing-click patch below needs. */
 interface DrawPolylineInternals {
   type: string;
@@ -148,7 +158,7 @@ private map?: L.Map;
     }
     this.markersById.clear();
     this.allMarkers = markers.map((marker) => {
-      const leafletMarker = L.marker([marker.lat, marker.lng]);
+      const leafletMarker = L.marker([marker.lat, marker.lng], marker.kind === 'device' ? { icon: DEVICE_ICON } : undefined);
       if (marker.title) {
         leafletMarker.bindPopup(marker.title);
       }
