@@ -5,29 +5,34 @@
  * one a real device would call. No dependencies beyond Node's built-in `fetch`
  * (Node 18+), so it runs the same way on Windows, Linux, and macOS.
  *
- * Every `--interval` seconds it picks a random compass bearing and moves
- * `--move-meters` from its current position in that direction (a random walk),
- * then submits a LOCATION_RECEIVED event for the new position.
+ * Every `--interval` seconds it picks a compass bearing and moves `--move-meters` from its
+ * current position in that direction, then submits a LOCATION_RECEIVED event for the new
+ * position. By default each tick's bearing is fully random (a random walk); pass
+ * `--max-heading-change` to instead turn gradually — each new bearing is within that many
+ * degrees of the previous one, which reads as a much more realistic, vehicle-like path than
+ * the default's sharp direction changes.
  *
  * Usage:
  *   node scripts/simulate-device.js [options]
  *
  * Options:
- *   --base-url <url>       Backend base URL                  (default: http://localhost:8078)
- *   --device-id <id>       Device identifier to report as     (default: sim-device-1)
- *   --interval <seconds>   Seconds between updates            (default: 5)
- *   --lat <degrees>        Starting latitude                  (default: 40.7128)
- *   --lon <degrees>        Starting longitude                 (default: -74.0060)
- *   --move-meters <m>      Distance moved each tick, in meters (default: 10)
- *   --accuracy <m>         Reported GPS accuracy, in meters    (default: 5)
- *   --iterations <n>       Stop after n updates (0 = forever)  (default: 0)
- *   --event-type <type>    Event type to submit                (default: LOCATION_RECEIVED)
- *   -h, --help             Show this help and exit
+ *   --base-url <url>            Backend base URL                    (default: http://localhost:8078)
+ *   --device-id <id>            Device identifier to report as       (default: sim-device-1)
+ *   --interval <seconds>        Seconds between updates              (default: 5)
+ *   --lat <degrees>             Starting latitude                    (default: 40.7128)
+ *   --lon <degrees>             Starting longitude                   (default: -74.0060)
+ *   --move-meters <m>           Distance moved each tick, in meters   (default: 10)
+ *   --max-heading-change <deg>  Max heading change between ticks, in degrees (default: unconstrained — a fully random new bearing each tick)
+ *   --accuracy <m>              Reported GPS accuracy, in meters      (default: 5)
+ *   --iterations <n>            Stop after n updates (0 = forever)    (default: 0)
+ *   --event-type <type>         Event type to submit                  (default: LOCATION_RECEIVED)
+ *   -h, --help                  Show this help and exit
  *
  * Examples:
  *   node scripts/simulate-device.js
  *   node scripts/simulate-device.js --device-id truck-42 --lat 51.5072 --lon -0.1276 --interval 3 --move-meters 15
  *   node scripts/simulate-device.js --base-url http://localhost:8078 --iterations 20
+ *   node scripts/simulate-device.js --device-id truck-42 --max-heading-change 20
  */
 
 'use strict';
@@ -39,6 +44,8 @@ const DEFAULTS = {
   lat: 40.7128,
   lon: -74.006,
   moveMeters: 10,
+  // null = unconstrained: each tick picks a fully random new bearing (the original behavior).
+  maxHeadingChangeDegrees: null,
   accuracyMeters: 5,
   iterations: 0,
   eventType: 'LOCATION_RECEIVED',
@@ -55,6 +62,7 @@ function printHelp() {
     ['--lat <degrees>', `Starting latitude (default: ${DEFAULTS.lat})`],
     ['--lon <degrees>', `Starting longitude (default: ${DEFAULTS.lon})`],
     ['--move-meters <m>', `Distance moved each tick, in meters (default: ${DEFAULTS.moveMeters})`],
+    ['--max-heading-change <deg>', 'Max heading change between ticks, in degrees (default: unconstrained — fully random each tick)'],
     ['--accuracy <m>', `Reported GPS accuracy, in meters (default: ${DEFAULTS.accuracyMeters})`],
     ['--iterations <n>', `Stop after n updates, 0 = forever (default: ${DEFAULTS.iterations})`],
     ['--event-type <type>', `Event type to submit (default: ${DEFAULTS.eventType})`],
@@ -94,6 +102,9 @@ function parseArgs(argv) {
       case '--move-meters':
         config.moveMeters = requirePositiveNumber(takeValue(), '--move-meters');
         break;
+      case '--max-heading-change':
+        config.maxHeadingChangeDegrees = requireNonNegativeNumber(takeValue(), '--max-heading-change');
+        break;
       case '--accuracy':
         config.accuracyMeters = requirePositiveNumber(takeValue(), '--accuracy');
         break;
@@ -127,6 +138,14 @@ function requirePositiveNumber(value, flag) {
   const n = requireNumber(value, flag);
   if (n <= 0) {
     throw new Error(`${flag} must be greater than 0, got: ${n}`);
+  }
+  return n;
+}
+
+function requireNonNegativeNumber(value, flag) {
+  const n = requireNumber(value, flag);
+  if (n < 0) {
+    throw new Error(`${flag} must not be negative, got: ${n}`);
   }
   return n;
 }
@@ -171,6 +190,24 @@ function normalizeLongitude(lon) {
   return ((((lon + 180) % 360) + 360) % 360) - 180;
 }
 
+function normalizeBearing(bearing) {
+  return ((bearing % 360) + 360) % 360;
+}
+
+/**
+ * Picks the next tick's bearing. With no constraint, it's fully random (the original random-walk
+ * behavior). With maxChangeDegrees set, it's the previous bearing plus a random offset in
+ * [-maxChangeDegrees, +maxChangeDegrees] — turning gradually instead of jumping to an unrelated
+ * direction every tick.
+ */
+function nextBearing(previousBearing, maxChangeDegrees) {
+  if (maxChangeDegrees == null) {
+    return Math.random() * 360;
+  }
+  const delta = (Math.random() * 2 - 1) * maxChangeDegrees;
+  return normalizeBearing(previousBearing + delta);
+}
+
 async function postEvent(config, position, bearing, speedMps) {
   const event = {
     type: config.eventType,
@@ -213,9 +250,11 @@ async function main() {
     process.exit(1);
   }
 
+  const headingNote =
+    config.maxHeadingChangeDegrees == null ? '' : `, turning at most ${config.maxHeadingChangeDegrees}°/tick`;
   console.log(
     `Simulating device "${config.deviceId}" against ${config.baseUrl}\n` +
-      `Starting at (${config.lat}, ${config.lon}); moving ~${config.moveMeters}m every ${config.intervalSeconds}s ` +
+      `Starting at (${config.lat}, ${config.lon}); moving ~${config.moveMeters}m every ${config.intervalSeconds}s${headingNote} ` +
       `${config.iterations > 0 ? `for ${config.iterations} update(s)` : '(Ctrl+C to stop)'}.\n`,
   );
 
@@ -223,6 +262,7 @@ async function main() {
   const speedMps = config.moveMeters / config.intervalSeconds;
   let tick = 0;
   let running = true;
+  let bearing = Math.random() * 360;
 
   process.on('SIGINT', () => {
     if (!running) {
@@ -233,7 +273,7 @@ async function main() {
   });
 
   while (running && (config.iterations === 0 || tick < config.iterations)) {
-    const bearing = Math.random() * 360;
+    bearing = nextBearing(bearing, config.maxHeadingChangeDegrees);
     position = movePoint(position.lat, position.lon, bearing, config.moveMeters);
     tick++;
 

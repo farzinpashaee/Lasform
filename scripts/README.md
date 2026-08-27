@@ -16,10 +16,13 @@ Requires Node 18+ (uses the global `fetch`) and no npm dependencies.
 
 On each tick (every `--interval` seconds) the script:
 
-1. Picks a random compass bearing (0–360°).
+1. Picks a compass bearing (0–360°). By default this is fully random each tick (a random walk).
+   Pass `--max-heading-change <degrees>` to instead turn gradually — each new bearing stays
+   within that many degrees of the previous one, which reads as a realistic, vehicle-like path
+   instead of the default's sharp zig-zags.
 2. Moves `--move-meters` from its current position in that direction, using a spherical-earth
-   destination-point formula (start point + bearing + distance → new lat/lon) — a random walk,
-   not a route along real roads.
+   destination-point formula (start point + bearing + distance → new lat/lon) — not a route
+   along real roads.
 3. POSTs a single `LOCATION_RECEIVED` event for the new position, as a one-element array (the
    ingestion endpoint always takes a batch):
 
@@ -68,6 +71,7 @@ So to watch a simulated device move on the map:
 | `--lat <degrees>` | Starting latitude | `40.7128` |
 | `--lon <degrees>` | Starting longitude | `-74.0060` |
 | `--move-meters <m>` | Distance moved each tick, in meters | `10` |
+| `--max-heading-change <deg>` | Max heading change between ticks, in degrees | unconstrained (fully random each tick) |
 | `--accuracy <m>` | Reported GPS accuracy, in meters | `5` |
 | `--iterations <n>` | Stop after `n` updates (`0` = forever) | `0` |
 | `--event-type <type>` | Event type to submit (any `EventType` enum value) | `LOCATION_RECEIVED` |
@@ -100,6 +104,13 @@ Point at a non-default backend (staging, a different port, etc.):
 
 ```bash
 node scripts/simulate-device.js --base-url http://localhost:9090 --device-id truck-42
+```
+
+Move like a vehicle instead of a random walk — each tick turns by at most 15°, so the path
+curves smoothly instead of zig-zagging:
+
+```bash
+node scripts/simulate-device.js --device-id truck-42 --max-heading-change 15
 ```
 
 Run two devices at once by starting two instances with different ids/positions in separate
