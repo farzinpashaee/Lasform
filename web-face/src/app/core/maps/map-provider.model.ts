@@ -8,6 +8,19 @@ export interface MapViewOptions {
   zoom: number;
 }
 
+/** Shared styling for a live-tracked device's breadcrumb trail — kept in one place so both map providers render it identically. */
+export const DEVICE_TRAIL_COLOR = '#da5050';
+const OLDEST_TRAIL_OPACITY = 0.1;
+const NEWEST_TRAIL_OPACITY = 1;
+
+/** Linearly interpolates a trail point's opacity from OLDEST_TRAIL_OPACITY (index 0) to NEWEST_TRAIL_OPACITY (index === lastIndex). */
+export function trailPointOpacity(index: number, lastIndex: number): number {
+  if (lastIndex <= 0) {
+    return NEWEST_TRAIL_OPACITY;
+  }
+  return OLDEST_TRAIL_OPACITY + ((NEWEST_TRAIL_OPACITY - OLDEST_TRAIL_OPACITY) * index) / lastIndex;
+}
+
 export interface MapMarkerData {
   /** Stable key used to look the marker back up later, e.g. for openMarkerPopup. */
   id?: string;
@@ -56,6 +69,16 @@ export interface MapProvider {
 
   /** Moves an existing marker to a new position, if one exists under this id. Never adds a marker. */
   moveMarker(id: string, lat: number, lng: number): void;
+
+  /**
+   * Renders a live-tracked device's recent path as connected, fading dots — oldest first, newest
+   * last, newest at full opacity fading to faint for the oldest. Replaces any previous trail
+   * under this id.
+   */
+  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void;
+
+  /** Removes a device's trail, if one is currently shown. */
+  clearDeviceTrail(id: string): void;
 
   /** Toggles grouping nearby markers into cluster badges; re-applies to whatever markers are current. */
   setClusteringEnabled(enabled: boolean): void;

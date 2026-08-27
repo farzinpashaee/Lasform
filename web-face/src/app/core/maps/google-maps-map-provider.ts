@@ -2,6 +2,7 @@ import { MarkerClusterer } from '@googlemaps/markerclusterer';
 
 import {
   CircleShape,
+  DEVICE_TRAIL_COLOR,
   GeofenceShapeData,
   GeofenceShapeKind,
   MapContextMenuEvent,
@@ -10,6 +11,7 @@ import {
   MapType,
   MapViewOptions,
   PolygonShape,
+  trailPointOpacity,
 } from './map-provider.model';
 import { loadGoogleMaps } from './google-maps-script-loader';
 
@@ -31,6 +33,7 @@ export class GoogleMapsMapProvider implements MapProvider {
   private userLocationMarker?: google.maps.Marker;
   private geofenceOverlaysById = new Map<string, google.maps.Circle | google.maps.Polygon>();
   private geofenceLabelsById = new Map<string, google.maps.Marker>();
+  private deviceTrailsById = new Map<string, (google.maps.Marker | google.maps.Polyline)[]>();
   private drawClickListener?: google.maps.MapsEventListener;
   private drawDblClickListener?: google.maps.MapsEventListener;
   /** Live preview of the in-progress polygon outline while clicking vertices. */
@@ -107,6 +110,55 @@ export class GoogleMapsMapProvider implements MapProvider {
     // Unlike Leaflet's cluster plugin, @googlemaps/markerclusterer doesn't watch marker
     // position on its own — render() is its documented "recalculate and redraw" call.
     this.clusterer?.render();
+  }
+
+  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {
+    this.clearDeviceTrail(id);
+    if (!this.map || points.length === 0) {
+      return;
+    }
+    const overlays: (google.maps.Marker | google.maps.Polyline)[] = [];
+    const last = points.length - 1;
+    points.forEach((point, i) => {
+      const opacity = trailPointOpacity(i, last);
+      overlays.push(
+        new google.maps.Marker({
+          position: point,
+          map: this.map,
+          clickable: false,
+          zIndex: google.maps.Marker.MAX_ZINDEX,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 5,
+            fillColor: DEVICE_TRAIL_COLOR,
+            fillOpacity: opacity,
+            strokeColor: DEVICE_TRAIL_COLOR,
+            strokeOpacity: opacity,
+            strokeWeight: 1,
+          },
+        }),
+      );
+      if (i > 0) {
+        overlays.push(
+          new google.maps.Polyline({
+            path: [points[i - 1], point],
+            map: this.map,
+            strokeColor: DEVICE_TRAIL_COLOR,
+            strokeOpacity: opacity,
+            strokeWeight: 3,
+          }),
+        );
+      }
+    });
+    this.deviceTrailsById.set(id, overlays);
+  }
+
+  clearDeviceTrail(id: string): void {
+    const overlays = this.deviceTrailsById.get(id);
+    if (overlays) {
+      overlays.forEach((overlay) => overlay.setMap(null));
+      this.deviceTrailsById.delete(id);
+    }
   }
 
   zoomIn(): void {
@@ -386,6 +438,9 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.userLocationMarker?.setMap(null);
     this.userLocationMarker = undefined;
     this.clearGeofences();
+    for (const id of [...this.deviceTrailsById.keys()]) {
+      this.clearDeviceTrail(id);
+    }
     this.cancelDrawingGeofence();
     this.map = undefined;
   }

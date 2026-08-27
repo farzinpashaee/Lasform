@@ -4,6 +4,7 @@ import 'leaflet-draw';
 
 import {
   CircleShape,
+  DEVICE_TRAIL_COLOR,
   GeofenceShapeData,
   GeofenceShapeKind,
   MapContextMenuEvent,
@@ -12,6 +13,7 @@ import {
   MapType,
   MapViewOptions,
   PolygonShape,
+  trailPointOpacity,
 } from './map-provider.model';
 
 /** leaflet-draw's runtime init hooks attach this to L.Circle/L.Polygon once added to a map — @types/leaflet-draw doesn't declare it. */
@@ -110,6 +112,8 @@ private map?: L.Map;
   private geofenceLayer?: L.FeatureGroup;
   private geofenceShapesById = new Map<string, L.Circle | L.Polygon>();
   private geofenceLabelsById = new Map<string, L.Marker>();
+  private trailLayer?: L.FeatureGroup;
+  private deviceTrailsById = new Map<string, L.LayerGroup>();
   private activeDrawHandler?: L.Draw.Circle | L.Draw.Polygon;
   private activeDrawCreatedListener?: L.LeafletEventHandlerFn;
 
@@ -133,6 +137,7 @@ private map?: L.Map;
     setTimeout(() => this.map?.invalidateSize(), 0);
 
     this.geofenceLayer = L.featureGroup().addTo(this.map);
+    this.trailLayer = L.featureGroup().addTo(this.map);
 
     return Promise.resolve();
   }
@@ -184,6 +189,46 @@ private map?: L.Map;
     // setLatLng alone is enough even when clustered: MarkerClusterGroup binds its own 'move'
     // handler to every child marker and re-buckets it internally — no manual remove/re-add.
     this.markersById.get(id)?.setLatLng([lat, lng]);
+  }
+
+  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {
+    this.clearDeviceTrail(id);
+    if (!this.trailLayer || points.length === 0) {
+      return;
+    }
+    const group = L.layerGroup();
+    const last = points.length - 1;
+    points.forEach((point, i) => {
+      const opacity = trailPointOpacity(i, last);
+      L.circleMarker([point.lat, point.lng], {
+        radius: 5,
+        color: DEVICE_TRAIL_COLOR,
+        weight: 1,
+        fillColor: DEVICE_TRAIL_COLOR,
+        fillOpacity: opacity,
+        opacity,
+      }).addTo(group);
+      if (i > 0) {
+        const previous = points[i - 1];
+        L.polyline(
+          [
+            [previous.lat, previous.lng],
+            [point.lat, point.lng],
+          ],
+          { color: DEVICE_TRAIL_COLOR, weight: 3, opacity },
+        ).addTo(group);
+      }
+    });
+    group.addTo(this.trailLayer);
+    this.deviceTrailsById.set(id, group);
+  }
+
+  clearDeviceTrail(id: string): void {
+    const group = this.deviceTrailsById.get(id);
+    if (group) {
+      this.trailLayer?.removeLayer(group);
+      this.deviceTrailsById.delete(id);
+    }
   }
 
   private rebuildMarkersLayer(): void {
@@ -451,6 +496,8 @@ private map?: L.Map;
     this.geofenceLayer = undefined;
     this.geofenceShapesById.clear();
     this.geofenceLabelsById.clear();
+    this.trailLayer = undefined;
+    this.deviceTrailsById.clear();
     this.activeDrawHandler = undefined;
     this.activeDrawCreatedListener = undefined;
   }

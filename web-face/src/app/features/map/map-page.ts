@@ -51,6 +51,8 @@ const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINT
 const GEOFENCE_STATUSES: GeofenceStatus[] = ['ACTIVE', 'INACTIVE'];
 /** Id used for the shape-in-progress overlay while creating a geofence, before it has a real id. */
 const DRAFT_GEOFENCE_ID = '__draft__';
+/** How many of the most recent positions the individually-tracked device's breadcrumb trail keeps. */
+const MAX_DEVICE_TRAIL_POINTS = 10;
 
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
 
@@ -101,6 +103,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private liveTrackedDeviceId: string | null = null;
   /** Whether the map should auto-recenter on liveTrackedDeviceId's next update — see onUserPanStart wiring in ngAfterViewInit. */
   private followingLiveDevice = false;
+  /** liveTrackedDeviceId's last MAX_DEVICE_TRAIL_POINTS positions, oldest first — the breadcrumb trail rendered behind it. */
+  private deviceTrailPoints: { lat: number; lng: number }[] = [];
   private tagSuggestionTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly categories = signal<Category[]>([]);
@@ -472,7 +476,22 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.liveTrackedDeviceId = hit.data.id;
     this.deviceLiveActive.set(true);
     this.followingLiveDevice = true;
+    this.deviceTrailPoints = [];
+    const point = this.hitPoint(hit);
+    if (point) {
+      const [lng, lat] = point.coordinates;
+      this.pushDeviceTrailPoint(hit.data.id, lat, lng);
+    }
     this.deviceLiveService.subscribe(`device:${hit.data.id}`, [hit.data.id], (device) => this.applyLiveDeviceUpdate(device));
+  }
+
+  /** Appends a position to the tracked device's breadcrumb trail, dropping the oldest once past MAX_DEVICE_TRAIL_POINTS, and re-renders it. */
+  private pushDeviceTrailPoint(deviceId: string, lat: number, lng: number): void {
+    this.deviceTrailPoints.push({ lat, lng });
+    if (this.deviceTrailPoints.length > MAX_DEVICE_TRAIL_POINTS) {
+      this.deviceTrailPoints.shift();
+    }
+    this.mapProvider.setDeviceTrail(deviceId, this.deviceTrailPoints);
   }
 
   /** Re-engages auto-follow for the device already being tracked — e.g. the user clicked its
@@ -496,10 +515,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private stopDeviceLive(): void {
     if (this.liveTrackedDeviceId) {
       this.deviceLiveService.unsubscribe(`device:${this.liveTrackedDeviceId}`);
+      this.mapProvider.clearDeviceTrail(this.liveTrackedDeviceId);
       this.liveTrackedDeviceId = null;
     }
     this.deviceLiveActive.set(false);
     this.followingLiveDevice = false;
+    this.deviceTrailPoints = [];
   }
 
   /** Shared handler for both the global and per-device live subscriptions. */
@@ -510,6 +531,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (device.lastKnownPoint) {
       const [lng, lat] = device.lastKnownPoint.coordinates;
       this.mapProvider.moveMarker(device.id, lat, lng);
+      if (device.id === this.liveTrackedDeviceId) {
+        this.pushDeviceTrailPoint(device.id, lat, lng);
+      }
       if (this.followingLiveDevice && device.id === this.liveTrackedDeviceId) {
         this.mapProvider.panTo(lat, lng);
       }
