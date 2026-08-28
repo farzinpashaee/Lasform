@@ -219,7 +219,7 @@
                 }
               </div>
             }
-            @if (hit.type === 'DEVICE') {
+            @if (hit.type === 'DEVICE' && authService.isAuthenticated()) {
               <button
                 type="button"
                 class="icon-action-button"
