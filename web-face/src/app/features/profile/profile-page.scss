@@ -1,0 +1,142 @@
+// Standalone route (not nested under management-shell/map-page) — see login-page.scss for why
+// every var() below carries its own light-theme fallback.
+
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(135deg, #fdfbfe, #f3ecf6);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 32px;
+  background: var(--surface, #fff);
+  border-radius: 8px;
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.3));
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #5f6368);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: var(--text-primary, #202124);
+  }
+}
+
+.auth-title {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary, #202124);
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #202124);
+
+  input {
+    font: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-primary, #202124);
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #e8eaed);
+    border-radius: 4px;
+    padding: 9px 10px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #da5050);
+    }
+
+    &:disabled {
+      color: var(--text-secondary, #5f6368);
+      background: var(--hover, #f1f3f4);
+    }
+  }
+}
+
+.auth-error {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--danger, #d93025);
+}
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-submit {
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent, #da5050);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    opacity: 0.92;
+  }
+
+  &:disabled {
+    background: var(--disabled-bg, #dadce0);
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+  }
+}
+
+.auth-saved-note {
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+}
+
+.sign-out-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 24px 0 0;
+  border: none;
+  border-top: 1px solid var(--border, #e8eaed);
+  background: transparent;
+  padding: 16px 0 0;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #5f6368);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: var(--danger, #d93025);
+  }
+}

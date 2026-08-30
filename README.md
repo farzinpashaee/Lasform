@@ -16,8 +16,7 @@ This module is actually a combination of management and user web interface which
 
 MobileFace is a native android mobile application which provides a baseline for mobile end point tier.
 
-
-
+Update
 ![General Look](https://raw.githubusercontent.com/farzinpashaee/Lasform/master/documents/images/lasform-infog.png)
 
 ## API documentation
@@ -35,3 +34,14 @@ Lasform is currently availble in 0.0.1-SNAPSHOT version
 ## Authors
 
 * **Farzin Pashaee** - *Initial work* - [Lasform](https://github.com/farzinpashaee/Lasform/)
+
+## License
+
+Lasform is dual-licensed:
+
+* **Noncommercial use** is free under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+* **Commercial use** by companies — or any use where you need to keep your own
+  integration code private without the noncommercial restriction — requires a
+  paid [Lasform Commercial License](COMMERCIAL-LICENSE.md).
+
+See [LICENSE](LICENSE) and [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) for full details.

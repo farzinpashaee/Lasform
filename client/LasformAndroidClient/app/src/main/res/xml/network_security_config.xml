@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The LASTFORM Server field accepts a user-provided plain HTTP endpoint
+  (e.g. a local dev server), so cleartext traffic must be allowed here.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

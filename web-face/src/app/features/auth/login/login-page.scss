@@ -1,0 +1,251 @@
+// Standalone route (not nested under management-shell/map-page), so the --text-primary etc.
+// custom properties those define aren't in scope here — every var() below carries its own
+// light-theme fallback instead, matching the rest of the app's default palette.
+
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: #eeeeee;
+}
+
+.auth-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 700px;
+  min-height: 500px;
+  background: var(--surface, #fff);
+  border-radius: 8px;
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.3));
+  overflow: hidden;
+}
+
+.auth-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary, #5f6368);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  &:hover {
+    background: var(--hover, #f1f3f4);
+    color: var(--text-primary, #202124);
+  }
+}
+
+.auth-panel {
+  flex: 0 0 45%;
+  background: #da5050 url('/lasform/assets/images/login-card-left-01.jpg') center / cover no-repeat;
+}
+
+.auth-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary, #202124);
+  text-align: center;
+}
+
+.auth-subtitle {
+  margin: 0 0 20px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary, #5f6368);
+  text-align: center;
+}
+
+.google-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #202124);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--hover, #f8f8f8);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+}
+
+.google-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-size: 12px;
+  color: var(--text-secondary, #5f6368);
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--border, #e8eaed);
+  }
+}
+
+.auth-field {
+  position: relative;
+  margin-bottom: 14px;
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: 14px;
+    color: var(--text-primary, #202124);
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #e8eaed);
+    border-radius: 4px;
+    padding: 10px 12px;
+
+    &::placeholder {
+      color: var(--text-secondary, #9aa0a6);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #da5050;
+    }
+
+    &.input-error {
+      border-color: var(--danger, #d93025);
+    }
+  }
+}
+
+.field-error {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--danger, #d93025);
+}
+
+.auth-field-password input {
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #5f6368);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: var(--text-primary, #202124);
+  }
+}
+
+.auth-forgot {
+  margin: -4px 0 16px;
+  font-size: 12px;
+  color: var(--text-secondary, #5f6368);
+}
+
+.inline-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: inherit;
+  color: #da5050;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.auth-error {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--danger, #d93025);
+}
+
+.auth-submit {
+  width: 100%;
+  border: none;
+  border-radius: 4px;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: #da5050;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #c23f3f;
+  }
+
+  &:disabled {
+    background: var(--disabled-bg, #dadce0);
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+  }
+}
+
+.auth-register {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary, #5f6368);
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .auth-panel {
+    display: none;
+  }
+}

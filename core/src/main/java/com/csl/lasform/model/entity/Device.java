@@ -1,0 +1,89 @@
+package com.csl.lasform.model.entity;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
+import com.csl.lasform.model.entity.enums.DeviceStatus;
+import com.csl.lasform.model.entity.enums.DeviceType;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@Document(collection = "devices")
+public class Device extends Auditable implements Identifiable, Imageable {
+
+    @Id
+    private String id;
+
+    /**
+     * System-generated (md5 of this device's id + the UTC timestamp it was assigned), never
+     * client-supplied — see DeviceServiceImpl#create / #regenerateIdentifier. Not {@code @NotBlank}:
+     * a create request never needs to (and can't meaningfully) supply this itself.
+     */
+    @Indexed(unique = true)
+    @Field("device_identifier")
+    private String deviceIdentifier;
+
+    @NotBlank(message = "{validation.device.name.required}")
+    private String name;
+
+    @NotNull(message = "{validation.device.type.required}")
+    private DeviceType type;
+
+    @Indexed
+    @Builder.Default
+    private DeviceStatus status = DeviceStatus.INACTIVE;
+
+    /** Denormalized last-known position, kept in sync from the Location stream for fast map rendering. */
+    private GeoJsonPoint lastKnownPoint;
+
+    private Instant lastSeenAt;
+
+    private Integer batteryLevel;
+
+    /** {@link Category} ids this device is classified under; a device may have several. */
+    @Builder.Default
+    private Set<String> categoryIds = new HashSet<>();
+
+    /** Free-form labels for search/filtering, independent of {@link #categoryIds}. */
+    @Indexed
+    @Builder.Default
+    private List<String> tags = new ArrayList<>();
+
+    /** Images stored on disk under {@code ImageStorageProperties.basePath}/{@link #id}/{filename}. */
+    @Builder.Default
+    private List<Image> images = new ArrayList<>();
+
+    @Builder.Default
+    private Map<String, String> metadata = new HashMap<>();
+
+    @Version
+    private Long version;
+}

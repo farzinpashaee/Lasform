@@ -1,0 +1,147 @@
+$radius: 8px;
+
+.account-wrapper {
+  position: relative;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #da5050;
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
+.account-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.account-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 901;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  padding: 20px;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.account-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--hover);
+    color: var(--text-primary);
+  }
+}
+
+.account-menu-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.account-menu-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #da5050;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.account-menu-info {
+  min-width: 0;
+}
+
+.account-menu-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-email {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.account-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.account-logout-button {
+  flex: 1 1 auto;
+}

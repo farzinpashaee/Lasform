@@ -1,0 +1,370 @@
+<h1 class="page-title">{{ 'devices.title' | transloco }}</h1>
+
+<div class="toolbar">
+  <div class="toolbar-filters">
+    <input
+      type="search"
+      class="search-input"
+      [placeholder]="'devices.searchPlaceholder' | transloco"
+      [ngModel]="searchTerm()"
+      (ngModelChange)="onSearchInputChange($event)"
+      name="search"
+      autocomplete="off"
+    />
+
+    <select
+      class="filter-select"
+      [ngModel]="selectedCategoryId()"
+      (ngModelChange)="selectedCategoryId.set($event); onCategoryFilterChange()"
+      name="categoryFilter"
+    >
+      <option value="">{{ 'common.allCategories' | transloco }}</option>
+      @for (category of categories(); track category.id) {
+        <option [value]="category.id">{{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}</option>
+      }
+    </select>
+
+    <select
+      class="filter-select"
+      [ngModel]="selectedStatus()"
+      (ngModelChange)="selectedStatus.set($event); onStatusFilterChange()"
+      name="statusFilter"
+    >
+      <option value="">{{ 'devices.allStatuses' | transloco }}</option>
+      @for (status of deviceStatuses; track status) {
+        <option [value]="status">{{ status }}</option>
+      }
+    </select>
+
+    <div class="tag-filter">
+      <div class="tag-input-wrapper">
+        @if (selectedTags().length > 0) {
+          <div class="tag-chip-list">
+            @for (tag of selectedTags(); track tag) {
+              <span class="tag-chip">
+                {{ tag }}
+                <button
+                  type="button"
+                  class="tag-chip-remove"
+                  [attr.aria-label]="'common.removeTagFilter' | transloco: { tag: tag }"
+                  (click)="removeTagFilter(tag)"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                </button>
+              </span>
+            }
+          </div>
+        }
+        <input
+          type="text"
+          class="tag-filter-input"
+          [ngModel]="tagFilterInput()"
+          (ngModelChange)="onTagFilterInputChange($event)"
+          (keydown)="onTagFilterInputKeydown($event)"
+          name="tagFilterInput"
+          [placeholder]="'devices.filterByTagPlaceholder' | transloco"
+          autocomplete="off"
+        />
+        @if (tagFilterSuggestions().length > 0) {
+          <ul class="tag-suggestions">
+            @for (suggestion of tagFilterSuggestions(); track suggestion) {
+              <li>
+                <button type="button" class="tag-suggestion-item" (click)="addTagFilter(suggestion)">{{ suggestion }}</button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="add-button" (click)="openAddModal()">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    <span>{{ 'devices.addNew' | transloco }}</span>
+  </button>
+</div>
+
+<div class="devices-table-wrapper">
+  <table class="devices-table">
+    <thead>
+      <tr>
+        @for (column of sortableColumns; track column.field) {
+          <th class="sortable" (click)="sortBy(column.field)">
+            <button type="button" class="sort-header">
+              {{ column.labelKey | transloco }}
+              @if (sortField() === column.field) {
+                <span class="sort-arrow material-symbols-outlined" aria-hidden="true">
+                  {{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+              }
+            </button>
+          </th>
+        }
+        <th>{{ 'devices.colIdentifier' | transloco }}</th>
+        <th>{{ 'devices.colType' | transloco }}</th>
+        <th>{{ 'devices.colStatus' | transloco }}</th>
+        <th>{{ 'devices.colCategory' | transloco }}</th>
+        <th>{{ 'devices.colTags' | transloco }}</th>
+        <th class="actions-column">{{ 'devices.colActions' | transloco }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell">{{ 'devices.loading' | transloco }}</td>
+        </tr>
+      } @else if (loadError()) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell error">{{ loadError() }}</td>
+        </tr>
+      } @else if (devices().length === 0) {
+        <tr>
+          <td [attr.colspan]="sortableColumns.length + 6" class="state-cell">{{ 'devices.empty' | transloco }}</td>
+        </tr>
+      } @else {
+        @for (device of devices(); track device.id) {
+          <tr>
+            <td>
+              <div class="name-cell">{{ device.name || ('devices.unnamed' | transloco) }}</div>
+            </td>
+            <td>{{ device.lastSeenAt ? (device.lastSeenAt | date: 'short') : '—' }}</td>
+            <td>{{ device.createdAt ? (device.createdAt | date: 'short') : '—' }}</td>
+            <td>{{ device.updatedAt ? (device.updatedAt | date: 'short') : '—' }}</td>
+            <td>{{ device.deviceIdentifier }}</td>
+            <td>{{ device.type }}</td>
+            <td>
+              @if (device.status) {
+                <span class="status-chip" [class]="'status-' + device.status.toLowerCase()">{{ device.status }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td>
+              @if (device.categoryIds && device.categoryIds.length > 0) {
+                <span class="category-chip">{{ categoryLabel(device.categoryIds[0]) }}</span>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td>
+              @if (device.tags && device.tags.length > 0) {
+                <div class="tag-chip-list inline">
+                  @for (tag of device.tags; track tag) {
+                    <span class="tag-chip static">{{ tag }}</span>
+                  }
+                </div>
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+            <td class="actions-column">
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'common.edit' | transloco"
+                (click)="openEditModal(device)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button icon-action-button-danger"
+                [attr.aria-label]="'common.delete' | transloco"
+                (click)="openDeleteConfirm(device)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (!loading() && !loadError() && totalElements() > 0) {
+  <div class="pagination-bar">
+    <span class="pagination-summary">
+      {{ 'common.pageSummary' | transloco: { page: page() + 1, totalPages: totalPages(), total: totalElements() } }}
+    </span>
+    <div class="pagination-controls">
+      <button type="button" class="pagination-button" [disabled]="page() === 0" (click)="goToPage(page() - 1)">
+        {{ 'common.previous' | transloco }}
+      </button>
+      <button type="button" class="pagination-button" [disabled]="page() >= totalPages() - 1" (click)="goToPage(page() + 1)">
+        {{ 'common.next' | transloco }}
+      </button>
+    </div>
+  </div>
+}
+
+@if (formOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">
+      {{ (formMode() === 'add' ? 'devices.modalAddTitle' : 'devices.modalEditTitle') | transloco }}
+    </h2>
+    <form (ngSubmit)="submitForm()">
+      @if (formMode() === 'edit') {
+        <label class="modal-field">
+          <span>{{ 'devices.fieldDeviceIdentifier' | transloco }}</span>
+          <div class="identifier-field-row">
+            <input type="text" [ngModel]="formDeviceIdentifier()" name="deviceIdentifier" readonly autocomplete="off" />
+            <button
+              type="button"
+              class="icon-action-button"
+              [attr.aria-label]="'devices.regenerateIdentifier' | transloco"
+              [disabled]="regeneratingIdentifier()"
+              (click)="regenerateIdentifier()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">autorenew</span>
+            </button>
+            <button
+              type="button"
+              class="icon-action-button"
+              [attr.aria-label]="'devices.showQrCode' | transloco"
+              (click)="openQrModal()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">qr_code_2</span>
+            </button>
+          </div>
+          @if (regenerateIdentifierError()) {
+            <p class="modal-error">{{ regenerateIdentifierError() }}</p>
+          }
+        </label>
+      }
+      <label class="modal-field">
+        <span>{{ 'common.nameLabel' | transloco }}</span>
+        <input type="text" [(ngModel)]="formName" name="name" required autocomplete="off" />
+      </label>
+      <div class="modal-field-row">
+        <label class="modal-field">
+          <span>{{ 'devices.fieldType' | transloco }}</span>
+          <select [(ngModel)]="formType" name="type" required>
+            @for (type of deviceTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </label>
+        <label class="modal-field">
+          <span>{{ 'common.statusLabel' | transloco }}</span>
+          <select [(ngModel)]="formStatus" name="status">
+            @for (status of deviceStatuses; track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <label class="modal-field">
+        <span>{{ 'common.categoryLabel' | transloco }}</span>
+        <select [(ngModel)]="formCategoryId" name="category">
+          <option value="">{{ 'common.noCategory' | transloco }}</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.id">{{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="modal-field">
+        <span>{{ 'common.tagsLabel' | transloco }}</span>
+        <div class="tag-input-wrapper">
+          @if (formTags().length > 0) {
+            <div class="tag-chip-list">
+              @for (tag of formTags(); track tag) {
+                <span class="tag-chip">
+                  {{ tag }}
+                  <button
+                    type="button"
+                    class="tag-chip-remove"
+                    [attr.aria-label]="'common.removeTag' | transloco: { tag: tag }"
+                    (click)="removeFormTag(tag)"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                  </button>
+                </span>
+              }
+            </div>
+          }
+          <input
+            type="text"
+            [ngModel]="formTagInput()"
+            (ngModelChange)="onFormTagInputChange($event)"
+            (keydown)="onFormTagInputKeydown($event)"
+            name="tagInput"
+            [placeholder]="'common.tagsInputPlaceholder' | transloco"
+            autocomplete="off"
+          />
+          @if (formTagSuggestions().length > 0) {
+            <ul class="tag-suggestions">
+              @for (suggestion of formTagSuggestions(); track suggestion) {
+                <li>
+                  <button type="button" class="tag-suggestion-item" (click)="addFormTag(suggestion)">{{ suggestion }}</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </label>
+      @if (formError()) {
+        <p class="modal-error">{{ formError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeForm()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button
+          type="submit"
+          class="modal-button modal-button-primary"
+          [disabled]="formSaving() || !formName().trim()"
+        >
+          {{ (formSaving() ? 'common.saving' : formMode() === 'add' ? 'devices.addSubmit' : 'common.saveChanges') | transloco }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (deleteTarget(); as device) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ 'devices.deleteTitle' | transloco }}</h2>
+    <p class="modal-subtitle">"{{ device.name || ('devices.unnamed' | transloco) }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
+    @if (deleteError()) {
+      <p class="modal-error">{{ deleteError() }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="modal-button modal-button-danger"
+        [disabled]="deletingDevice()"
+        (click)="confirmDelete()"
+      >
+        {{ (deletingDevice() ? 'common.deleting' : 'common.delete') | transloco }}
+      </button>
+    </div>
+  </div>
+}
+
+@if (qrModalOpen()) {
+  <div class="modal-backdrop" (click)="closeQrModal()"></div>
+  <div class="modal qr-modal">
+    <h2 class="modal-title">{{ 'devices.qrModalTitle' | transloco }}</h2>
+    <div class="qr-modal-body">
+      @if (qrError()) {
+        <p class="modal-error">{{ qrError() }}</p>
+      } @else if (qrDataUrl(); as dataUrl) {
+        <img [src]="dataUrl" [alt]="'devices.qrModalTitle' | transloco" class="qr-code-image" />
+        <p class="qr-code-value">{{ formDeviceIdentifier() }}</p>
+      } @else {
+        <p class="modal-subtitle">{{ 'devices.qrGenerating' | transloco }}</p>
+      }
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-primary" (click)="closeQrModal()">
+        {{ 'common.close' | transloco }}
+      </button>
+    </div>
+  </div>
+}

@@ -1,0 +1,11 @@
+@if (authService.forbiddenNotice(); as message) {
+  <div class="forbidden-banner" role="alert">
+    <span class="material-symbols-outlined" aria-hidden="true">block</span>
+    <span class="forbidden-message">{{ message }}</span>
+    <button type="button" class="forbidden-dismiss" (click)="dismissForbiddenNotice()" aria-label="Dismiss">
+      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    </button>
+  </div>
+}
+
+<router-outlet />

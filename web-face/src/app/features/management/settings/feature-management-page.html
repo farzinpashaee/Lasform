@@ -1,0 +1,85 @@
+<h1 class="page-title">{{ 'featureManagement.title' | transloco }}</h1>
+<p class="page-subtitle">{{ 'featureManagement.subtitle' | transloco }}</p>
+
+@if (loading()) {
+  <p class="settings-status">{{ 'featureManagement.loading' | transloco }}</p>
+} @else if (loadError()) {
+  <p class="settings-status settings-error">{{ loadError() }}</p>
+} @else {
+  @for (group of groups(); track group.category) {
+    <section class="flag-group">
+      <h2 class="flag-group-title">{{ group.category }}</h2>
+      <ul class="flag-list">
+        @for (flag of group.flags; track flag.key) {
+          <li class="flag-row">
+            <div class="flag-info">
+              <span class="flag-label">{{ flag.label }}</span>
+              @if (flag.description) {
+                <span class="flag-description">{{ flag.description }}</span>
+              }
+            </div>
+            <button
+              type="button"
+              class="toggle-switch"
+              role="switch"
+              [attr.aria-checked]="flag.enabled"
+              [attr.aria-label]="flag.label"
+              [class.on]="flag.enabled"
+              [disabled]="savingKey() === flag.key"
+              (click)="toggle(flag)"
+            >
+              <span class="toggle-thumb"></span>
+            </button>
+          </li>
+          @if (flag.key === FEATURE_FLAGS.googleSso && flag.enabled) {
+            <li class="flag-config-row">
+              <label class="config-field">
+                <span>{{ 'featureManagement.googleClientIdLabel' | transloco }}</span>
+                <div class="config-field-input-wrapper">
+                  <input
+                    [type]="showGoogleClientId() ? 'text' : 'password'"
+                    [(ngModel)]="googleClientId"
+                    (ngModelChange)="onGoogleClientIdChange()"
+                    name="googleClientId"
+                    autocomplete="off"
+                    [placeholder]="'featureManagement.googleClientIdPlaceholder' | transloco"
+                  />
+                  <button
+                    type="button"
+                    class="config-field-visibility-toggle"
+                    (click)="toggleGoogleClientIdVisibility()"
+                    [attr.aria-label]="'featureManagement.toggleClientIdVisibility' | transloco"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">{{
+                      showGoogleClientId() ? 'visibility_off' : 'visibility'
+                    }}</span>
+                  </button>
+                </div>
+                <span class="config-field-help">{{ 'featureManagement.googleClientIdHelp' | transloco }}</span>
+              </label>
+              <div class="config-field-actions">
+                <button
+                  type="button"
+                  class="save-button"
+                  [disabled]="googleClientIdSaving() || !googleClientId().trim()"
+                  (click)="saveGoogleClientId()"
+                >
+                  {{ (googleClientIdSaving() ? 'common.saving' : 'common.save') | transloco }}
+                </button>
+                @if (googleClientIdSaved()) {
+                  <span class="saved-note">{{ 'featureManagement.googleClientIdSaved' | transloco }}</span>
+                }
+                @if (googleClientIdError()) {
+                  <span class="settings-error">{{ googleClientIdError() }}</span>
+                }
+              </div>
+            </li>
+          }
+        }
+      </ul>
+    </section>
+  }
+  @if (saveError()) {
+    <p class="settings-error">{{ saveError() }}</p>
+  }
+}

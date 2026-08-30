@@ -1,0 +1,810 @@
+<div class="map-page" [class.dark-theme]="darkMode()" [class.imagery-view]="mapType() !== 'roadmap'">
+  <div #mapContainer class="map-container"></div>
+
+  @if (mapAccessDenied()) {
+    <div class="map-access-denied">
+      <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+      <p>{{ 'map.accessDenied' | transloco }}</p>
+      <button type="button" class="sign-in-button" (click)="goToLogin()">{{ 'map.signInToView' | transloco }}</button>
+    </div>
+  }
+
+  <div class="top-bar">
+    <div class="search-column">
+      <form class="search-bar" (ngSubmit)="onSearchSubmit()">
+        <span class="icon search-icon material-symbols-outlined" aria-hidden="true">search</span>
+        <input
+          class="search-input"
+          type="text"
+          [placeholder]="'map.searchPlaceholder' | transloco"
+          [(ngModel)]="searchQuery"
+          name="search"
+        />
+      </form>
+
+      @if (geofenceFormTarget(); as target) {
+        <div class="results-card geofence-form-card">
+          <h2 class="modal-title">
+            {{ (target.mode === 'create' ? 'map.addGeofenceTitle' : 'map.editGeofenceShapeTitle') | transloco }}
+          </h2>
+          <p class="modal-subtitle">{{ geofenceShapeSummary() }}</p>
+          <form (ngSubmit)="submitGeofenceForm()">
+            <label class="modal-field">
+              <span>{{ 'common.nameLabel' | transloco }}</span>
+              <input type="text" [(ngModel)]="geofenceFormName" name="geofenceName" required autocomplete="off" />
+            </label>
+            <label class="modal-field">
+              <span>{{ 'common.descriptionLabel' | transloco }}</span>
+              <textarea [(ngModel)]="geofenceFormDescription" name="geofenceDescription" rows="2"></textarea>
+            </label>
+            <label class="modal-field">
+              <span>{{ 'common.statusLabel' | transloco }}</span>
+              <select [(ngModel)]="geofenceFormStatus" name="geofenceStatus">
+                @for (status of geofenceStatuses; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </label>
+            <label class="modal-field">
+              <span>{{ 'map.geofenceDevicesLabel' | transloco }}</span>
+              <p class="modal-hint">{{ 'map.geofenceDevicesHint' | transloco }}</p>
+              <div class="tag-input-wrapper">
+                @if (geofenceFormDeviceIds().length > 0) {
+                  <div class="tag-chip-list">
+                    @for (deviceId of geofenceFormDeviceIds(); track deviceId) {
+                      <span class="tag-chip">
+                        {{ deviceLabel(deviceId) }}
+                        <button
+                          type="button"
+                          class="tag-chip-remove"
+                          [attr.aria-label]="'map.removeGeofenceDevice' | transloco: { device: deviceLabel(deviceId) }"
+                          (click)="removeGeofenceDevice(deviceId)"
+                        >
+                          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                        </button>
+                      </span>
+                    }
+                  </div>
+                }
+                <input
+                  type="text"
+                  [ngModel]="geofenceDeviceInput()"
+                  (ngModelChange)="onGeofenceDeviceInputChange($event)"
+                  name="geofenceDeviceInput"
+                  [placeholder]="'map.geofenceDevicesPlaceholder' | transloco"
+                  autocomplete="off"
+                />
+                @if (geofenceDeviceSuggestions().length > 0) {
+                  <ul class="tag-suggestions">
+                    @for (device of geofenceDeviceSuggestions(); track device.id) {
+                      <li>
+                        <button type="button" class="tag-suggestion-item" (click)="addGeofenceDevice(device.id!)">
+                          {{ device.name }}
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            </label>
+            @if (geofenceFormError()) {
+              <p class="modal-error">{{ geofenceFormError() }}</p>
+            }
+            <div class="modal-actions">
+              <button type="button" class="modal-button modal-button-secondary" (click)="cancelGeofenceForm()">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button
+                type="submit"
+                class="modal-button modal-button-primary"
+                [disabled]="savingGeofence() || !geofenceFormName().trim()"
+              >
+                {{ (savingGeofence() ? 'common.saving' : 'common.save') | transloco }}
+              </button>
+            </div>
+          </form>
+        </div>
+      } @else if (hasSearched() || selectedResult() !== null || selectedGeofence() !== null) {
+        <div class="results-card">
+          @if (selectedGeofence(); as geofence) {
+            <div class="details-standalone">
+              <ng-container [ngTemplateOutlet]="geofenceDetailsBody" [ngTemplateOutletContext]="{ geofence }" />
+            </div>
+          } @else if (hasSearched()) {
+            @if (searching()) {
+              <div class="results-status">{{ 'map.searching' | transloco }}</div>
+            } @else if (searchError()) {
+              <div class="results-status results-error">{{ searchError() }}</div>
+            } @else if (searchResults().length === 0) {
+              <div class="results-status">{{ 'map.noResults' | transloco: { query: searchQuery() } }}</div>
+            } @else {
+              <div class="results-slider" [class.showing-details]="selectedResult() !== null">
+                <div class="results-slide">
+                  <ul class="results-list">
+                    @for (hit of searchResults(); track $index) {
+                      <li>
+                        <button type="button" class="result-item" (click)="selectResult(hit)">
+                          <ng-container [ngTemplateOutlet]="entityIcon" [ngTemplateOutletContext]="{ hit }" />
+                          <span class="result-text">
+                            <span class="result-title">{{ resultTitle(hit) }}</span>
+                            @if (resultRatingStars(hit); as stars) {
+                              <span class="result-rating">
+                                @for (filled of stars; track $index) {
+                                  <span class="material-symbols-outlined rating-star" [class.filled]="filled" aria-hidden="true">
+                                    star
+                                  </span>
+                                }
+                              </span>
+                            }
+                            <span class="result-subtitle">{{ resultSubtitle(hit) }}</span>
+                          </span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </div>
+
+                <div class="results-slide details-slide">
+                  @if (selectedResult(); as hit) {
+                    <ng-container [ngTemplateOutlet]="detailsBody" [ngTemplateOutletContext]="{ hit }" />
+                  }
+                </div>
+              </div>
+            }
+          } @else if (selectedResult(); as hit) {
+            <div class="details-standalone">
+              <ng-container [ngTemplateOutlet]="detailsBody" [ngTemplateOutletContext]="{ hit }" />
+            </div>
+          }
+        </div>
+      }
+
+      <ng-template #entityIcon let-hit="hit">
+        <span class="result-icon" [class.result-icon-device]="hit.type === 'DEVICE'" aria-hidden="true">
+          @if (hit.type === 'DEVICE') {
+            <span class="material-symbols-outlined">smartphone</span>
+          } @else {
+            <span class="material-symbols-outlined">location_on</span>
+          }
+        </span>
+      </ng-template>
+
+      <ng-template #detailsBody let-hit="hit">
+        <div class="details-panel">
+          @if (coverImageUrl(); as imageUrl) {
+            <img class="details-cover-image" [src]="imageUrl" alt="" />
+          }
+          @if (hasSearched()) {
+            <div class="details-top-bar">
+              <button type="button" class="back-link" (click)="closeDetails()">
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+                <span>{{ 'map.backToResults' | transloco }}</span>
+              </button>
+            </div>
+          }
+          <div class="details-top-actions">
+            @if (canEditHit(hit)) {
+              <div class="entity-menu-wrapper" [class.open]="entityMenuOpen()">
+                @if (entityMenuOpen()) {
+                  <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
+                }
+                <button
+                  type="button"
+                  class="icon-action-button entity-menu-trigger"
+                  [attr.aria-label]="'common.moreActions' | transloco"
+                  [attr.aria-expanded]="entityMenuOpen()"
+                  (click)="toggleEntityMenu()"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+                </button>
+                @if (entityMenuOpen()) {
+                  <div class="entity-menu">
+                    <button
+                      type="button"
+                      class="entity-menu-item"
+                      [attr.aria-label]="'common.edit' | transloco"
+                      (click)="openEditModal(hit); closeEntityMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="entity-menu-item entity-menu-item-danger"
+                      [attr.aria-label]="'common.delete' | transloco"
+                      (click)="openDeleteConfirm(hit); closeEntityMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+            @if (hit.type === 'DEVICE' && authService.isAuthenticated()) {
+              <button
+                type="button"
+                class="icon-action-button"
+                [class.active]="deviceLiveActive()"
+                [attr.aria-pressed]="deviceLiveActive()"
+                [attr.aria-label]="(deviceLiveActive() ? 'map.stopDeviceLive' : 'map.showDeviceLive') | transloco"
+                (click)="toggleDeviceLive(hit)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">sensors</span>
+              </button>
+            }
+            <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeDetails()">
+              <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+          </div>
+
+          <div class="details-header">
+          <ng-container [ngTemplateOutlet]="entityIcon" [ngTemplateOutletContext]="{ hit }" />
+          <div class="details-header-text">
+            <span class="result-title">{{ resultTitle(hit) }}</span>
+            @if (resultRatingStars(hit); as stars) {
+              <span class="result-rating">
+                @for (filled of stars; track $index) {
+                  <span class="material-symbols-outlined rating-star" [class.filled]="filled" aria-hidden="true">star</span>
+                }
+              </span>
+            }
+            @if (resultCategoryLabel(hit); as category) {
+              <span class="details-category-label">{{ category }}</span>
+            }
+          </div>
+        </div>
+
+        @if (resultTags(hit); as tags) {
+          <div class="details-tag-row">
+            @for (tag of tags; track tag) {
+              <span class="detail-tag-chip">{{ tag }}</span>
+            }
+          </div>
+        }
+
+        @if (hit.type === 'LOCATION' && featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
+          <div class="details-tabs" role="tablist">
+            <button
+              type="button"
+              class="details-tab"
+              role="tab"
+              [class.active]="detailsTab() === 'overview'"
+              (click)="selectDetailsTab('overview', hit)"
+            >
+              {{ 'map.tabs.overview' | transloco }}
+            </button>
+            <button
+              type="button"
+              class="details-tab"
+              role="tab"
+              [class.active]="detailsTab() === 'reviews'"
+              (click)="selectDetailsTab('reviews', hit)"
+            >
+              {{ 'map.tabs.reviews' | transloco }}
+            </button>
+          </div>
+        }
+
+        @if (hit.type !== 'LOCATION' || detailsTab() === 'overview' || !featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
+          <div class="overview-panel">
+            @if (locationDescription(hit); as description) {
+              <p class="overview-description">{{ description }}</p>
+            }
+            <dl class="details-fields">
+              @for (field of resultDetailFields(hit); track field.label) {
+                <div class="details-field">
+                  <dt>{{ field.label }}</dt>
+                  <dd>{{ field.value }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+        } @else {
+          <div class="reviews-panel">
+            @if (loadingReviews()) {
+              <div class="results-status">{{ 'map.reviews.loading' | transloco }}</div>
+            } @else if (reviewsLoadError()) {
+              <div class="results-status results-error">{{ reviewsLoadError() }}</div>
+            } @else if (reviews().length === 0) {
+              <div class="results-status">{{ 'map.reviews.empty' | transloco }}</div>
+            } @else {
+              <ul class="reviews-list">
+                @for (review of reviews(); track review.id) {
+                  <li class="review-item">
+                    <span class="result-rating">
+                      @for (filled of starsForRating(review.rating); track $index) {
+                        <span class="material-symbols-outlined rating-star" [class.filled]="filled" aria-hidden="true">star</span>
+                      }
+                    </span>
+                    @if (review.reviewText) {
+                      <p class="review-text">{{ review.reviewText }}</p>
+                    }
+                    <span class="review-date">{{ review.createdAt | date: 'mediumDate' }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+        </div>
+      </ng-template>
+
+      <ng-template #geofenceDetailsBody let-geofence="geofence">
+        <div class="details-panel">
+          <div class="details-top-actions">
+            @if (authService.hasPermission('geofence:write')) {
+              <div class="entity-menu-wrapper" [class.open]="entityMenuOpen()">
+                @if (entityMenuOpen()) {
+                  <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
+                }
+                <button
+                  type="button"
+                  class="icon-action-button entity-menu-trigger"
+                  [attr.aria-label]="'common.moreActions' | transloco"
+                  [attr.aria-expanded]="entityMenuOpen()"
+                  (click)="toggleEntityMenu()"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+                </button>
+                @if (entityMenuOpen()) {
+                  <div class="entity-menu">
+                    <button
+                      type="button"
+                      class="entity-menu-item"
+                      [attr.aria-label]="'common.edit' | transloco"
+                      (click)="editGeofenceFromDetails(geofence); closeEntityMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="entity-menu-item entity-menu-item-danger"
+                      [attr.aria-label]="'common.delete' | transloco"
+                      (click)="openDeleteConfirmGeofence(geofence); closeEntityMenu()"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+            <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeGeofenceDetails()">
+              <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+          </div>
+
+          <div class="details-header">
+            <span class="result-icon result-icon-geofence" aria-hidden="true">
+              <span class="material-symbols-outlined">draw</span>
+            </span>
+            <div class="details-header-text">
+              <span class="result-title">{{ geofence.name }}</span>
+            </div>
+          </div>
+
+          @if (geofence.description) {
+            <p class="overview-description">{{ geofence.description }}</p>
+          }
+
+          <div class="overview-panel">
+            <dl class="details-fields">
+              @for (field of geofenceDetailFields(geofence); track field.label) {
+                <div class="details-field">
+                  <dt>{{ field.label }}</dt>
+                  <dd>{{ field.value }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="top-right">
+      @if (authService.hasPermission('location:write')) {
+        <button class="icon-button round" type="button" [attr.aria-label]="'common.settings' | transloco" (click)="openManagement()">
+          <span class="material-symbols-outlined" aria-hidden="true">apps</span>
+        </button>
+      }
+      @if (featureFlags.isEnabled(FEATURE_FLAGS.darkMode)) {
+        <button
+          class="icon-button round"
+          type="button"
+          [attr.aria-label]="'common.toggleDarkMode' | transloco"
+          [class.active]="darkMode()"
+          [attr.aria-pressed]="darkMode()"
+          (click)="toggleDarkMode()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
+        </button>
+      }
+      <app-account-menu />
+    </div>
+  </div>
+
+  <div class="bottom-right controls">
+    <button
+      class="icon-button round"
+      type="button"
+      [attr.aria-label]="'map.myLocation' | transloco"
+      [disabled]="locating()"
+      (click)="locateMe()"
+    >
+      @if (locating()) {
+        <svg class="spinner" viewBox="0 0 24 24" width="20" height="20">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="40 100" />
+        </svg>
+      } @else {
+        <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
+      }
+    </button>
+    <div class="map-type-wrapper">
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="'map.changeMapType' | transloco"
+        [class.active]="mapTypeMenuOpen()"
+        [attr.aria-expanded]="mapTypeMenuOpen()"
+        (click)="toggleMapTypeMenu()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">layers</span>
+      </button>
+
+      @if (mapTypeMenuOpen()) {
+        <div class="context-menu-backdrop" (click)="closeMapTypeMenu()" (contextmenu)="closeMapTypeMenu()"></div>
+        <ul class="map-type-menu">
+          @for (option of mapTypeOptions; track option.type) {
+            <li>
+              <button
+                type="button"
+                class="context-menu-item"
+                [class.active]="mapType() === option.type"
+                (click)="selectMapType(option.type)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">{{ option.icon }}</span>
+                <span>{{ option.labelKey | transloco }}</span>
+                @if (mapType() === option.type) {
+                  <span class="material-symbols-outlined map-type-check" aria-hidden="true">check</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+    @if (featureFlags.isEnabled(FEATURE_FLAGS.mapClustering)) {
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="'map.toggleClustering' | transloco"
+        [class.active]="clusteringEnabled()"
+        [attr.aria-pressed]="clusteringEnabled()"
+        (click)="toggleClustering()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">scatter_plot</span>
+      </button>
+    }
+    @if (authService.hasPermission('geofence:read')) {
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="(geofencesVisible() ? 'map.hideGeofences' : 'map.showGeofences') | transloco"
+        [class.active]="geofencesVisible()"
+        [attr.aria-pressed]="geofencesVisible()"
+        (click)="toggleGeofencesVisible()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">fence</span>
+      </button>
+    }
+    @if (authService.hasPermission('device:read')) {
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="(liveEnabled() ? 'map.stopLive' : 'map.startLive') | transloco"
+        [class.active]="liveEnabled()"
+        [attr.aria-pressed]="liveEnabled()"
+        (click)="toggleLive()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">sensors</span>
+      </button>
+    }
+    <div class="zoom-stack">
+      <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomIn' | transloco" (click)="zoomIn()">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      </button>
+      <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomOut' | transloco" (click)="zoomOut()">
+        <span class="material-symbols-outlined" aria-hidden="true">remove</span>
+      </button>
+    </div>
+  </div>
+
+  @if (mapContextMenu(); as menu) {
+    <div class="context-menu-backdrop" (click)="closeMapContextMenu()" (contextmenu)="closeMapContextMenu()"></div>
+    <ul class="context-menu" [style.left.px]="menu.x" [style.top.px]="menu.y">
+      <li>
+        <button type="button" class="context-menu-item" (click)="copyMapContextCoordinates()">
+          <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+          <span>{{ menu.lat.toFixed(5) }}, {{ menu.lng.toFixed(5) }}</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="context-menu-item" (click)="centerMapContextMenuHere()">
+          <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
+          <span>{{ 'map.centerHere' | transloco }}</span>
+        </button>
+      </li>
+      @if (authService.hasPermission('location:write')) {
+        <li>
+          <button type="button" class="context-menu-item" (click)="openAddLocationModal()">
+            <span class="material-symbols-outlined" aria-hidden="true">add_location</span>
+            <span>{{ 'map.addNewLocation' | transloco }}</span>
+          </button>
+        </li>
+      }
+      @if (authService.hasPermission('geofence:write')) {
+        <li class="context-submenu-wrapper">
+          <button
+            type="button"
+            class="context-menu-item"
+            [class.active]="geofenceDrawMenuOpen()"
+            [attr.aria-expanded]="geofenceDrawMenuOpen()"
+            (click)="toggleGeofenceDrawMenu()"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">draw</span>
+            <span>{{ 'map.drawGeofence' | transloco }}</span>
+            <span class="material-symbols-outlined context-submenu-caret" aria-hidden="true">chevron_right</span>
+          </button>
+          @if (geofenceDrawMenuOpen()) {
+            <ul class="context-submenu">
+              <li>
+                <button type="button" class="context-menu-item" (click)="startDrawGeofence('CIRCLE')">
+                  <span class="material-symbols-outlined" aria-hidden="true">circle</span>
+                  <span>{{ 'map.drawCircle' | transloco }}</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="context-menu-item" (click)="startDrawGeofence('POLYGON')">
+                  <span class="material-symbols-outlined" aria-hidden="true">pentagon</span>
+                  <span>{{ 'map.drawPolygon' | transloco }}</span>
+                </button>
+              </li>
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (newLocationTarget(); as target) {
+    <div class="modal-backdrop" (click)="closeAddLocationModal()"></div>
+    <div class="modal">
+      <h2 class="modal-title">{{ 'map.addNewLocation' | transloco }}</h2>
+      <p class="modal-subtitle">{{ target.lat.toFixed(5) }}, {{ target.lng.toFixed(5) }}</p>
+      <form (ngSubmit)="submitAddLocation()">
+        <label class="modal-field">
+          <span>{{ 'common.nameLabel' | transloco }}</span>
+          <input type="text" [(ngModel)]="newLocationName" name="name" required autocomplete="off" />
+        </label>
+        <label class="modal-field">
+          <span>{{ 'common.descriptionLabel' | transloco }}</span>
+          <textarea [(ngModel)]="newLocationDescription" name="description" rows="3"></textarea>
+        </label>
+        <label class="modal-field">
+          <span>{{ 'common.categoryLabel' | transloco }}</span>
+          <div class="modal-field-row">
+            <select [(ngModel)]="newLocationCategoryId" name="category">
+              <option value="">{{ 'common.noCategory' | transloco }}</option>
+              @for (category of categories(); track category.id) {
+                <option [value]="category.id">
+                  {{ category.marker ? category.marker + ' ' : '' }}{{ category.name }}
+                </option>
+              }
+            </select>
+            <button
+              type="button"
+              class="icon-action-button modal-add-category-button"
+              [attr.aria-label]="'map.addNewCategory' | transloco"
+              (click)="openAddCategoryModal()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            </button>
+          </div>
+        </label>
+        <label class="modal-field">
+          <span>{{ 'common.tagsLabel' | transloco }}</span>
+          <div class="tag-input-wrapper">
+            @if (newLocationTags().length > 0) {
+              <div class="tag-chip-list">
+                @for (tag of newLocationTags(); track tag) {
+                  <span class="tag-chip">
+                    {{ tag }}
+                    <button
+                      type="button"
+                      class="tag-chip-remove"
+                      [attr.aria-label]="'common.removeTag' | transloco: { tag: tag }"
+                      (click)="removeTag(tag)"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+            <input
+              type="text"
+              [ngModel]="newLocationTagInput()"
+              (ngModelChange)="onTagInputChange($event)"
+              (keydown)="onTagInputKeydown($event)"
+              name="tagInput"
+              [placeholder]="'common.tagsInputPlaceholder' | transloco"
+              autocomplete="off"
+            />
+            @if (tagSuggestions().length > 0) {
+              <ul class="tag-suggestions">
+                @for (suggestion of tagSuggestions(); track suggestion) {
+                  <li>
+                    <button type="button" class="tag-suggestion-item" (click)="addTag(suggestion)">
+                      {{ suggestion }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </label>
+        @if (addLocationError()) {
+          <p class="modal-error">{{ addLocationError() }}</p>
+        }
+        <div class="modal-actions">
+          <button type="button" class="modal-button modal-button-secondary" (click)="closeAddLocationModal()">
+            {{ 'common.cancel' | transloco }}
+          </button>
+          <button
+            type="submit"
+            class="modal-button modal-button-primary"
+            [disabled]="addingLocation() || !newLocationName().trim()"
+          >
+            {{ (addingLocation() ? 'common.adding' : 'map.addLocation') | transloco }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (addCategoryModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddCategoryModal()"></div>
+    <div class="modal">
+      <h2 class="modal-title">{{ 'map.addNewCategory' | transloco }}</h2>
+      <form (ngSubmit)="submitAddCategory()">
+        <label class="modal-field">
+          <span>{{ 'common.nameLabel' | transloco }}</span>
+          <input type="text" [(ngModel)]="newCategoryName" name="categoryName" required autocomplete="off" />
+        </label>
+        <label class="modal-field">
+          <span>{{ 'common.descriptionLabel' | transloco }}</span>
+          <textarea [(ngModel)]="newCategoryDescription" name="categoryDescription" rows="2"></textarea>
+        </label>
+        <label class="modal-field">
+          <span>{{ 'map.markerEmojiLabel' | transloco }}</span>
+          <input
+            type="text"
+            [(ngModel)]="newCategoryMarker"
+            name="categoryMarker"
+            maxlength="4"
+            [placeholder]="'map.markerEmojiPlaceholder' | transloco"
+            autocomplete="off"
+          />
+        </label>
+        @if (addCategoryError()) {
+          <p class="modal-error">{{ addCategoryError() }}</p>
+        }
+        <div class="modal-actions">
+          <button type="button" class="modal-button modal-button-secondary" (click)="closeAddCategoryModal()">
+            {{ 'common.cancel' | transloco }}
+          </button>
+          <button
+            type="submit"
+            class="modal-button modal-button-primary"
+            [disabled]="addingCategory() || !newCategoryName().trim()"
+          >
+            {{ (addingCategory() ? 'common.adding' : 'map.addCategory') | transloco }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (editingTarget(); as hit) {
+    <div class="modal-backdrop" (click)="closeEditModal()"></div>
+    <div class="modal">
+      <h2 class="modal-title">
+        {{ (hit.type === 'DEVICE' ? 'map.editDeviceTitle' : 'map.editLocationTitle') | transloco }}
+      </h2>
+      <form (ngSubmit)="submitEdit()">
+        <label class="modal-field">
+          <span>{{ 'common.nameLabel' | transloco }}</span>
+          <input type="text" [(ngModel)]="editName" name="editName" required autocomplete="off" />
+        </label>
+        @if (hit.type === 'LOCATION') {
+          <label class="modal-field">
+            <span>{{ 'common.descriptionLabel' | transloco }}</span>
+            <textarea [(ngModel)]="editDescription" name="editDescription" rows="3"></textarea>
+          </label>
+        } @else {
+          <label class="modal-field">
+            <span>{{ 'common.statusLabel' | transloco }}</span>
+            <select [(ngModel)]="editStatus" name="editStatus">
+              @for (status of deviceStatuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </label>
+        }
+        @if (editError()) {
+          <p class="modal-error">{{ editError() }}</p>
+        }
+        <div class="modal-actions">
+          <button type="button" class="modal-button modal-button-secondary" (click)="closeEditModal()">
+            {{ 'common.cancel' | transloco }}
+          </button>
+          <button
+            type="submit"
+            class="modal-button modal-button-primary"
+            [disabled]="savingEdit() || !editName().trim()"
+          >
+            {{ (savingEdit() ? 'common.saving' : 'common.saveChanges') | transloco }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (deleteTarget(); as hit) {
+    <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+    <div class="modal">
+      <h2 class="modal-title">
+        {{ (hit.type === 'DEVICE' ? 'map.deleteDeviceTitle' : 'map.deleteLocationTitle') | transloco }}
+      </h2>
+      <p class="modal-subtitle">"{{ resultTitle(hit) }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
+      @if (deleteError()) {
+        <p class="modal-error">{{ deleteError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="modal-button modal-button-danger"
+          [disabled]="deletingEntity()"
+          (click)="confirmDelete()"
+        >
+          {{ (deletingEntity() ? 'common.deleting' : 'common.delete') | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (geofenceDeleteTarget(); as geofence) {
+    <div class="modal-backdrop" (click)="closeDeleteConfirmGeofence()"></div>
+    <div class="modal">
+      <h2 class="modal-title">{{ 'map.deleteGeofenceTitle' | transloco }}</h2>
+      <p class="modal-subtitle">"{{ geofence.name }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
+      @if (deleteGeofenceError()) {
+        <p class="modal-error">{{ deleteGeofenceError() }}</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirmGeofence()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="modal-button modal-button-danger"
+          [disabled]="deletingGeofence()"
+          (click)="confirmDeleteGeofence()"
+        >
+          {{ (deletingGeofence() ? 'common.deleting' : 'common.delete') | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

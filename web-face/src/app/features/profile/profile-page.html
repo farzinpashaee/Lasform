@@ -1,0 +1,48 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <button type="button" class="back-link" (click)="backToMap()">
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      <span>{{ 'profile.backToMap' | transloco }}</span>
+    </button>
+
+    <h1 class="auth-title">{{ 'profile.title' | transloco }}</h1>
+
+    <label class="auth-field">
+      <span>{{ 'common.email' | transloco }}</span>
+      <input type="email" [value]="email()" disabled />
+    </label>
+
+    <form (ngSubmit)="save()">
+      <label class="auth-field">
+        <span>{{ 'profile.displayName' | transloco }}</span>
+        <input
+          type="text"
+          [(ngModel)]="displayName"
+          (ngModelChange)="onFieldChange()"
+          name="displayName"
+          required
+          autocomplete="name"
+          [placeholder]="'profile.displayNamePlaceholder' | transloco"
+        />
+      </label>
+
+      @if (error()) {
+        <p class="auth-error">{{ error() }}</p>
+      }
+
+      <div class="auth-actions">
+        <button type="submit" class="auth-submit" [disabled]="saving() || !displayName().trim()">
+          {{ (saving() ? 'common.saving' : 'common.save') | transloco }}
+        </button>
+        @if (saved()) {
+          <span class="auth-saved-note">{{ 'profile.saved' | transloco }}</span>
+        }
+      </div>
+    </form>
+
+    <button type="button" class="sign-out-link" (click)="signOut()">
+      <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+      <span>{{ 'common.logout' | transloco }}</span>
+    </button>
+  </div>
+</div>

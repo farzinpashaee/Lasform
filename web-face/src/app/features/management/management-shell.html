@@ -1,0 +1,67 @@
+<div class="management-page" [class.dark-theme]="darkMode()">
+  <header class="management-header">
+    <button type="button" class="back-button" (click)="backToMap()">
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      <span>{{ 'management.backLabel' | transloco }}</span>
+    </button>
+
+    <div class="header-actions">
+      @if (featureFlags.isEnabled(FEATURE_FLAGS.darkMode)) {
+        <button
+          class="icon-button round"
+          type="button"
+          [attr.aria-label]="'common.toggleDarkMode' | transloco"
+          [class.active]="darkMode()"
+          [attr.aria-pressed]="darkMode()"
+          (click)="toggleDarkMode()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
+        </button>
+      }
+      <app-account-menu />
+    </div>
+  </header>
+
+  <div class="management-body">
+    <nav class="management-sidebar">
+      <ul class="nav-list">
+        @for (link of navLinks; track link.path) {
+          <li *hasPermission="link.permission ? [link.permission] : []">
+            <a class="nav-link" [routerLink]="link.path" routerLinkActive="active">{{ link.labelKey | transloco }}</a>
+          </li>
+        }
+      </ul>
+
+      @for (group of navGroups; track group.labelKey) {
+        <div class="nav-group">
+          <button
+            type="button"
+            class="nav-group-label"
+            [attr.aria-expanded]="group.expanded()"
+            (click)="toggleGroup(group)"
+          >
+            <span>{{ group.labelKey | transloco }}</span>
+            <span class="material-symbols-outlined nav-group-chevron" [class.collapsed]="!group.expanded()" aria-hidden="true">
+              expand_more
+            </span>
+          </button>
+          @if (group.expanded()) {
+            <ul class="nav-list">
+              @for (child of group.children; track child.path) {
+                <li *hasPermission="child.permission ? [child.permission] : []">
+                  <a class="nav-link nav-link-child" [routerLink]="child.path" routerLinkActive="active">
+                    {{ child.labelKey | transloco }}
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </nav>
+
+    <main class="management-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
