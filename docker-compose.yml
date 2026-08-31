@@ -1,0 +1,46 @@
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      # Mongo's normal in-container port — application.yml's local-dev default of 27018 exists only
+      # to dodge a system-wide Mongo on a dev machine and doesn't apply inside this isolated network.
+      SPRING_MONGODB_URI: mongodb://mongo:27017/lasform
+      LASFORM_JWT_SECRET: ${LASFORM_JWT_SECRET:?LASFORM_JWT_SECRET must be set - see .env.example}
+      LASFORM_ORG_NAME: ${LASFORM_ORG_NAME:-Lasform}
+      # Optional: bootstrap the initial SUPER_ADMIN on first boot. Leave both blank to use the
+      # in-app /setup wizard instead (see .env.example / DOCKER.md).
+      LASFORM_ADMIN_EMAIL: ${LASFORM_ADMIN_EMAIL:-}
+      LASFORM_ADMIN_PASSWORD: ${LASFORM_ADMIN_PASSWORD:-}
+      LASFORM_CONFIG_DEFAULTS_GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      LASFORM_CONFIG_DEFAULTS_GOOGLE_SSO_CLIENT_ID: ${GOOGLE_SSO_CLIENT_ID:-}
+      LASFORM_STORAGE_IMAGES_BASE_PATH: /app/data/images
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx768m}
+    ports:
+      - "${APP_PORT:-8078}:8078"
+    volumes:
+      - lasform-images:/app/data/images
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1g
+
+volumes:
+  mongo-data:
+  lasform-images:
