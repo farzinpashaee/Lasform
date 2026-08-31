@@ -172,8 +172,33 @@
                                 <echo file="${project.build.directory}/starter.sh">#!/bin/bash
 cd "$(dirname "$0")"
 
+# The port the app listens on by default (application.yml's server.port) -- used below only
+# as a fallback for locating a still-running previous instance when starter.pid isn't there
+# to read. Override with APP_PORT=... in the environment if this instance actually runs on
+# a different port (e.g. via a --config override further down).
+if [ -z "$APP_PORT" ]; then
+  APP_PORT=8087
+fi
+
+OLD_PID=
 if [ -f starter.pid ]; then
   OLD_PID=$(cat starter.pid)
+else
+  # `mvn clean` wipes target/ (starter.pid included) before every rebuild, so a pipeline
+  # that always runs `mvn clean install` never finds the previous run's PID file here even
+  # though that previous instance may still be running. Fall back to asking the OS what's
+  # actually bound to the app's port instead, trying whichever lookup tool is available.
+  if command -v lsof > /dev/null 2>&amp;1; then
+    OLD_PID=$(lsof -t -i TCP:"$APP_PORT" -sTCP:LISTEN 2>/dev/null | head -n 1)
+  elif command -v ss > /dev/null 2>&amp;1; then
+    OLD_PID=$(ss -ltnp 2>/dev/null | grep ":$APP_PORT " | grep -oP 'pid=\K[0-9]+' | head -n 1)
+  fi
+  if [ -n "$OLD_PID" ]; then
+    echo "No starter.pid found; found PID $OLD_PID listening on port $APP_PORT instead."
+  fi
+fi
+
+if [ -n "$OLD_PID" ]; then
   if ps -p "$OLD_PID" > /dev/null 2>&amp;1; then
     echo "Existing process running with PID $OLD_PID. Stopping it..."
     kill "$OLD_PID"
@@ -183,10 +208,10 @@ if [ -f starter.pid ]; then
       kill -9 "$OLD_PID"
     fi
   else
-    echo "PID file found but process $OLD_PID is not running. Cleaning up."
+    echo "PID $OLD_PID is not running. Nothing to stop."
   fi
-  rm -f starter.pid
 fi
+rm -f starter.pid
 
 # Optional: ./starter.sh --config /path/to/override.yml
 # The file's values layer on top of (not instead of) the packaged application.yml via
