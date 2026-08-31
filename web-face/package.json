@@ -4,8 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "build": "node node_modules/@angular/cli/bin/ng.js build",
+    "watch": "node node_modules/@angular/cli/bin/ng.js build --watch --configuration development",
     "test": "ng test"
   },
   "private": true,
