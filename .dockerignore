@@ -1,0 +1,23 @@
+# Version control / tooling
+.git
+.gitignore
+.claude
+
+# Backend build output (rebuilt inside the image)
+core/target
+core/data
+
+# Frontend build output / deps (rebuilt inside the image via the with-frontend Maven profile)
+web-face/node_modules
+web-face/dist
+web-face/.angular
+
+# Not part of the deployable app
+UIUX
+client
+documents
+scripts
+
+# Editor/OS cruft
+**/.DS_Store
+**/*.log

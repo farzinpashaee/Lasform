@@ -86,6 +86,21 @@ export class AuthService {
   }
 
   /**
+   * Adopts tokens obtained from somewhere other than /auth/login — currently just the setup
+   * wizard's POST /api/setup/admin, which returns the same TokenResponse shape a login would, so
+   * there's no need for the wizard to log in a second time after creating the admin.
+   */
+  establishSession(response: TokenResponse): CurrentUser {
+    this.applyTokenResponse(response);
+    const user = this.currentUser();
+    if (!user) {
+      // Unreachable in practice — applyTokenResponse always sets claims from a well-formed TokenResponse.
+      throw new Error('Session could not be established.');
+    }
+    return user;
+  }
+
+  /**
    * Backs both "Sign in with Google" and "Sign up with Google" — same endpoint, same response
    * shape either way (see core/README.md's "Google sign-in/sign-up" section for why). `accessToken`
    * is the Google OAuth2 token from GoogleAuthService, not a Lasform token. Resolves `true` when

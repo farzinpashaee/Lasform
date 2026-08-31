@@ -1,6 +1,31 @@
 import * as L from 'leaflet';
-import 'leaflet.markercluster';
-import 'leaflet-draw';
+
+// leaflet.markercluster and leaflet-draw are both still shipped as pre-ESM plugins that mutate a
+// global `L` rather than requiring/importing 'leaflet' themselves (neither's UMD factory actually
+// takes a Leaflet reference as an argument — see their dist files). Expose one explicitly so their
+// side effects land on this exact module instance: a second `import * as L from 'leaflet'`
+// elsewhere in the bundle would get re-wrapped into a genuinely separate object by the bundler's
+// own CommonJS-interop helper, which is exactly what leaflet.markercluster/leaflet-draw would
+// otherwise mutate instead of the `L` this file (and the rest of the app) actually uses.
+(window as unknown as { L: typeof L }).L = L;
+
+let leafletPluginsReady: Promise<unknown> | undefined;
+
+/**
+ * Loads leaflet.markercluster/leaflet-draw dynamically rather than via a static
+ * `import 'leaflet.markercluster'` / `import 'leaflet-draw'` declaration. Static side-effect
+ * imports in this file would all resolve — in file order, but strictly before any of this file's
+ * own body code — meaning the `window.L = L` assignment above would run AFTER them, too late for
+ * either plugin to see it. A dynamic `import()` is a plain expression, evaluated exactly where
+ * it's written and asynchronously, so awaiting it here is guaranteed to happen after that
+ * assignment. Memoized so repeated calls (e.g. re-initializing the map) don't reload either
+ * plugin. Only the initial `Promise.all` needs awaiting anywhere — this must have resolved before
+ * anything touches `L.Draw`/`L.MarkerClusterGroup`, which is why `initialize()` awaits it first.
+ */
+function ensureLeafletPluginsLoaded(): Promise<unknown> {
+  leafletPluginsReady ??= Promise.all([import('leaflet.markercluster'), import('leaflet-draw')]);
+  return leafletPluginsReady;
+}
 
 import {
   CircleShape,
@@ -66,24 +91,6 @@ interface DrawPolylineInternals {
   _endPoint(clientX: number, clientY: number, event: L.LeafletMouseEvent): void;
 }
 
-// leaflet-draw only auto-closes a polygon by clicking near its first vertex on TOUCH input —
-// see its Draw.Polyline#_endPoint, which has `else if (lastPtDistance < 10 && L.Browser.touch)`
-// with no equivalent branch for mouse. On mouse, closing relies entirely on a real DOM click
-// landing on the first vertex marker's own (tiny) icon underneath leaflet-draw's own invisible,
-// map-covering "catch every click" marker, which is unreliable — a click that misses just adds
-// a redundant vertex instead of finishing. This extends that same proximity check to mouse too.
-const drawPolylineProto = L.Draw.Polyline.prototype as unknown as DrawPolylineInternals;
-const originalEndPoint = drawPolylineProto._endPoint;
-drawPolylineProto._endPoint = function (this: DrawPolylineInternals, clientX, clientY, event) {
-  const polygonType = (L.Draw.Polygon as unknown as { TYPE: string }).TYPE;
-  if (this.type === polygonType && this._markers.length > 2 && this._calculateFinishDistance(event.latlng) < 10) {
-    this._finishShape();
-    this._mouseDownOrigin = null;
-    return;
-  }
-  originalEndPoint.call(this, clientX, clientY, event);
-};
-
 /** Undocumented internals of leaflet-draw's circle edit handler that the resize patch below needs. */
 interface EditCircleInternals {
   _moveMarker: L.Marker;
@@ -92,21 +99,57 @@ interface EditCircleInternals {
   _resize(latlng: L.LatLng): void;
 }
 
-// leaflet-draw's Edit.Circle#_resize assigns to a bare `radius` identifier that's never
-// declared with var/let. That's a silent accidental-global under old-style non-strict script
-// loading (how leaflet-draw has always been used/tested) — but ES modules are always strict
-// mode, and this file is loaded via `import 'leaflet-draw'`, so that same assignment throws
-// ReferenceError instead. Every drag of a circle's resize handle hit this immediately, so
-// setRadius() never ran — the circle's center could be moved but it could never be resized.
-// Redefines _resize with the same core logic, just with `radius` actually declared. (Skips
-// the original's live-radius tooltip update: it's gated on `this._map.editTooltip`, a plain
-// boolean that's never set anywhere — that branch was already always-dead code upstream.)
-const editCircleProto = (L as unknown as { Edit: { Circle: { prototype: EditCircleInternals } } }).Edit.Circle.prototype;
-editCircleProto._resize = function (this: EditCircleInternals, latlng: L.LatLng) {
-  const radius = this._map.distance(this._moveMarker.getLatLng(), latlng);
-  this._shape.setRadius(radius);
-  this._map.fire(L.Draw.Event.EDITRESIZE, { layer: this._shape });
-};
+let leafletDrawPatched = false;
+
+/**
+ * Patches leaflet-draw's prototypes — see the two patches below for what/why. Deliberately NOT
+ * run at module top level: leaflet-draw is CommonJS, bundled inline rather than as a real ES
+ * module (see angular.json's allowedCommonJsDependencies), and in an optimized production build
+ * its own L.Draw-attaching side effects aren't reliably guaranteed to have already run by the
+ * time this module's top-level code executes — L.Draw came back undefined in practice. Called
+ * lazily instead, from LeafletMapProvider#initialize, by which point the whole bundle has
+ * necessarily finished loading regardless of any intra-bundle ordering quirk.
+ */
+function patchLeafletDraw(): void {
+  if (leafletDrawPatched) {
+    return;
+  }
+  leafletDrawPatched = true;
+
+  // leaflet-draw only auto-closes a polygon by clicking near its first vertex on TOUCH input —
+  // see its Draw.Polyline#_endPoint, which has `else if (lastPtDistance < 10 && L.Browser.touch)`
+  // with no equivalent branch for mouse. On mouse, closing relies entirely on a real DOM click
+  // landing on the first vertex marker's own (tiny) icon underneath leaflet-draw's own invisible,
+  // map-covering "catch every click" marker, which is unreliable — a click that misses just adds
+  // a redundant vertex instead of finishing. This extends that same proximity check to mouse too.
+  const drawPolylineProto = L.Draw.Polyline.prototype as unknown as DrawPolylineInternals;
+  const originalEndPoint = drawPolylineProto._endPoint;
+  drawPolylineProto._endPoint = function (this: DrawPolylineInternals, clientX, clientY, event) {
+    const polygonType = (L.Draw.Polygon as unknown as { TYPE: string }).TYPE;
+    if (this.type === polygonType && this._markers.length > 2 && this._calculateFinishDistance(event.latlng) < 10) {
+      this._finishShape();
+      this._mouseDownOrigin = null;
+      return;
+    }
+    originalEndPoint.call(this, clientX, clientY, event);
+  };
+
+  // leaflet-draw's Edit.Circle#_resize assigns to a bare `radius` identifier that's never
+  // declared with var/let. That's a silent accidental-global under old-style non-strict script
+  // loading (how leaflet-draw has always been used/tested) — but ES modules are always strict
+  // mode, and this file is loaded via `import 'leaflet-draw'`, so that same assignment throws
+  // ReferenceError instead. Every drag of a circle's resize handle hit this immediately, so
+  // setRadius() never ran — the circle's center could be moved but it could never be resized.
+  // Redefines _resize with the same core logic, just with `radius` actually declared. (Skips
+  // the original's live-radius tooltip update: it's gated on `this._map.editTooltip`, a plain
+  // boolean that's never set anywhere — that branch was already always-dead code upstream.)
+  const editCircleProto = (L as unknown as { Edit: { Circle: { prototype: EditCircleInternals } } }).Edit.Circle.prototype;
+  editCircleProto._resize = function (this: EditCircleInternals, latlng: L.LatLng) {
+    const radius = this._map.distance(this._moveMarker.getLatLng(), latlng);
+    this._shape.setRadius(radius);
+    this._map.fire(L.Draw.Event.EDITRESIZE, { layer: this._shape });
+  };
+}
 
 export class LeafletMapProvider implements MapProvider {
 private map?: L.Map;
@@ -127,7 +170,10 @@ private map?: L.Map;
   private activeDrawHandler?: L.Draw.Circle | L.Draw.Polygon;
   private activeDrawCreatedListener?: L.LeafletEventHandlerFn;
 
-  initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
+  async initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
+    await ensureLeafletPluginsLoaded();
+    patchLeafletDraw();
+
     this.map = L.map(container, {
       center: [options.center.lat, options.center.lng],
       zoom: options.zoom,

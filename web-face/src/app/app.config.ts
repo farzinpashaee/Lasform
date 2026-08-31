@@ -11,6 +11,7 @@ import { authInterceptor } from './core/auth/auth.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { FeatureFlagsService } from './core/services/feature-flags.service';
 import { MapSettingsService } from './core/services/map-settings.service';
+import { SetupService } from './core/services/setup.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,6 +28,8 @@ export const appConfig: ApplicationConfig = {
     // Loads the feature-flag catalog before routes render, so the very first paint already knows
     // whether to show dark mode/clustering/Google SSO — see FeatureFlagsService.
     provideAppInitializer(() => firstValueFrom(inject(FeatureFlagsService).refresh())),
+    // Warms setupGuard's needsSetup signal before routes/guards evaluate — see SetupService.
+    provideAppInitializer(() => firstValueFrom(inject(SetupService).refreshStatus())),
     provideTransloco({
       config: {
         // English is the only bundle shipped today; adding a locale is just another

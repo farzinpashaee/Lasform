@@ -77,6 +77,28 @@ the **frontend** at runtime from the `lasform.security.sso.google.client.id` con
 build-time `environment.ts` value — see the Config section below) — the backend needs no matching
 config since it doesn't check the token's audience (see the "Known gaps" note below).
 
+### First-run setup wizard
+
+```
+GET  /api/setup/status        → { needsSetup: boolean }   — true iff userRepository.findAll().isEmpty()
+POST /api/setup/admin {displayName, email, password}
+  → 400 (error.setup.alreadyCompleted) once needsSetup() is false
+  → otherwise creates a SUPER_ADMIN (mustResetPassword=false — this password was chosen by the
+    admin themselves, unlike the env-var/admin-invited paths) and logs them in via
+    AuthenticationService#login, returning the same TokenResponse shape as POST /api/auth/login
+```
+
+This is a second, interactive way to satisfy the same "create the first SUPER_ADMIN" invariant
+`AuthSeeder#seedSuperAdmin` already enforces via `LASFORM_ADMIN_EMAIL`/`LASFORM_ADMIN_PASSWORD` at
+startup — the two coexist rather than one replacing the other. If those env vars are set, the admin
+already exists by the time any request is served, `needsSetup()` is false immediately, and the
+frontend wizard (`web-face`'s `/setup` route) never shows. If they're unset, `/setup` is how a fresh
+install gets its first admin through the UI instead of a redeploy. Once logged in this way, the
+wizard's remaining (optional) steps — map provider, feature flags, Google SSO client id — are just
+the normal authenticated `config`/`feature-flags` endpoints using the session this establishes; no
+separate "setup mode" write path exists for them, `SUPER_ADMIN` already holds every `PermissionKey`.
+See `SetupService`/`SetupController` (`auth/application`, `auth/infrastructure/web`).
+
 ### Refresh token storage: DB, not Redis
 
 Refresh tokens are stored in Mongo (`refresh_tokens` collection) rather than Redis. Tradeoff: Mongo
