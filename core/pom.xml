@@ -188,7 +188,26 @@ if [ -f starter.pid ]; then
   rm -f starter.pid
 fi
 
-nohup java -jar ${project.build.finalName}.jar "$@" > starter.log 2>&amp;1 &amp;
+# Optional: ./starter.sh --config /path/to/override.yml
+# The file's values layer on top of (not instead of) the packaged application.yml via
+# Spring's additional-location mechanism, so it only needs to list what it's actually
+# overriding for this instance. Anything else on the command line is still forwarded to
+# java untouched, same as before this option existed.
+CONFIG_ARG=
+if [ "$1" = "--config" ]; then
+  if [ -z "$2" ] || [ ! -f "$2" ]; then
+    echo "--config requires a path to an existing file (got: '$2')" >&amp;2
+    exit 1
+  fi
+  CONFIG_ARG="--spring.config.additional-location=file:$2"
+  shift 2
+fi
+
+if [ -n "$CONFIG_ARG" ]; then
+  nohup java -jar ${project.build.finalName}.jar "$CONFIG_ARG" "$@" > starter.log 2>&amp;1 &amp;
+else
+  nohup java -jar ${project.build.finalName}.jar "$@" > starter.log 2>&amp;1 &amp;
+fi
 echo $! > starter.pid
 echo "Started with PID $(cat starter.pid)"
                                 </echo>
