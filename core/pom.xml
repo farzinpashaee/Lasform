@@ -242,7 +242,13 @@ echo "Started with PID $(cat starter.pid)"
 									<goal>npm</goal>
 								</goals>
 								<configuration>
-									<arguments>ci</arguments>
+									<!-- The include=dev flag overrides npm's own default of skipping
+									     devDependencies when NODE_ENV=production is set in the environment
+									     (common on deploy/CI boxes). angular/cli and the rest of the actual
+									     build toolchain live in devDependencies, so without this the install
+									     silently succeeds with only the runtime deps present, and ng build
+									     then fails with MODULE_NOT_FOUND. -->
+									<arguments>ci --include=dev</arguments>
 								</configuration>
 							</execution>
 							<execution>
