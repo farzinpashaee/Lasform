@@ -123,7 +123,6 @@
     "settingsGroup": "Settings",
     "navGeneralSettings": "General Settings",
     "navMapProvider": "Map Provider",
-    "navWebFaceStyles": "Web Face Styles",
     "navFeaturesManagement": "Features Management",
     "navUsers": "Users",
     "navLocations": "Locations",
@@ -355,6 +354,24 @@
       "successTitle": "Account created",
       "successMessage": "Your account has been created and is pending admin approval. You'll be able to sign in once it's activated.",
       "backToSignIn": "Back to sign in"
+    }
+  },
+  "setup": {
+    "stepIndicator": "Step {{step}} of {{total}}",
+    "skip": "Skip",
+    "finish": "Finish",
+    "admin": {
+      "title": "Create your admin account",
+      "subtitle": "You're the first person here — create the super admin account to get started.",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "failed": "Failed to create the admin account. Please try again."
+    },
+    "mapProvider": {
+      "subtitle": "Optional — pick a map provider and API key now, or set this up later from Settings."
+    },
+    "features": {
+      "subtitle": "Optional — turn features on or off and set up Google Sign-In now, or do this later from Settings."
     }
   },
   "profile": {
