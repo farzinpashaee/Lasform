@@ -29,7 +29,7 @@ public abstract class AbstractCrudService<T, ID> implements CrudService<T, ID> {
     @Override
     public T getById(ID id) {
         return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(entityName() + " not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(notFoundMessageCode(), id));
     }
 
     @Override
@@ -47,9 +47,10 @@ public abstract class AbstractCrudService<T, ID> implements CrudService<T, ID> {
     @Override
     public void deleteById(ID id) {
         if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException(entityName() + " not found: " + id);
+            throw new ResourceNotFoundException(notFoundMessageCode(), id);
         }
         repository.deleteById(id);
+        afterDelete(id);
     }
 
     @Override
@@ -60,5 +61,10 @@ public abstract class AbstractCrudService<T, ID> implements CrudService<T, ID> {
     /** Copy the mutable fields of {@code incoming} onto {@code existing}. */
     protected abstract void applyUpdate(T existing, T incoming);
 
-    protected abstract String entityName();
+    /** The {@code error.<entity>.notFound} message code this entity's not-found errors resolve through. */
+    protected abstract String notFoundMessageCode();
+
+    /** Hook for subclasses to clean up resources tied to a deleted entity (e.g. files on disk). No-op by default. */
+    protected void afterDelete(ID id) {
+    }
 }

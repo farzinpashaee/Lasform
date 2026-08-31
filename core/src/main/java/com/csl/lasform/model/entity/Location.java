@@ -1,14 +1,7 @@
 package com.csl.lasform.model.entity;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.springframework.data.annotation.CreatedDate;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
@@ -16,14 +9,7 @@ import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import java.util.*;
 
 /**
  * A named place/waypoint, independent of any single device. Per-device position
@@ -36,13 +22,13 @@ import lombok.ToString;
 @Builder
 @ToString
 @Document(collection = "locations")
-public class Location extends Auditable implements Identifiable {
+public class Location extends Auditable implements Identifiable, Imageable {
 
     @Id
     private String id;
 
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
-    @NotNull
+    @NotNull(message = "{validation.location.point.required}")
     private GeoJsonPoint point;
 
     private String name;
@@ -54,6 +40,9 @@ public class Location extends Auditable implements Identifiable {
     /** Reverse-geocoded address, cached to avoid repeated lookups. */
     private Address address;
 
+    @Builder.Default
+    private List<PhoneNumber> phoneNumbers = new ArrayList<>();
+
     /** {@link Category} ids this location is classified under; a location may have several. */
     @Builder.Default
     private Set<String> categoryIds = new HashSet<>();
@@ -63,13 +52,21 @@ public class Location extends Auditable implements Identifiable {
     @Builder.Default
     private List<String> tags = new ArrayList<>();
 
-    @Indexed
-    @NotNull
-    private Instant recordedAt;
-
-    @CreatedDate
-    private Instant receivedAt;
+    /** Images stored on disk under {@code ImageStorageProperties.basePath}/{@link #id}/{filename}. */
+    @Builder.Default
+    private List<Image> images = new ArrayList<>();
 
     @Builder.Default
     private Map<String, Object> metadata = new HashMap<>();
+
+    /**
+     * Denormalized from the {@code reviews} collection — recalculated by {@code ReviewService}
+     * whenever a review is created, updated, moderated, or (soft-)deleted. Never written directly
+     * from client input; raw computed value (not rounded — rounding for display is a UI concern).
+     */
+    @Builder.Default
+    private Double averageRating = 0.0;
+
+    @Builder.Default
+    private Integer reviewCount = 0;
 }

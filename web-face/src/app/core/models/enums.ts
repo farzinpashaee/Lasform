@@ -1,6 +1,4 @@
-export type UserRole = 'ADMIN' | 'MANAGER' | 'OPERATOR' | 'VIEWER';
-
-export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING_VERIFICATION';
+export type UserStatus = 'ACTIVE' | 'DISABLED';
 
 export type DeviceType = 'GPS_TRACKER' | 'MOBILE_PHONE' | 'VEHICLE_UNIT' | 'WEARABLE' | 'IOT_SENSOR' | 'OTHER';
 
@@ -43,3 +41,5 @@ export type EventType =
   | 'OTHER';
 
 export type EventSource = 'DEVICE' | 'USER' | 'SYSTEM';
+
+export type PhoneNumberType = 'MOBILE' | 'LANDLINE' | 'FAX' | 'WHATSAPP' | 'TOLL_FREE' | 'OTHER';

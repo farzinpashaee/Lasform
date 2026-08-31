@@ -41,13 +41,13 @@ public class Alert extends Auditable implements Identifiable {
     private String id;
 
     @Indexed
-    @NotBlank
+    @NotBlank(message = "{validation.alert.deviceId.required}")
     private String deviceId;
 
     /** Set only for geofence-triggered alerts. */
     private String geofenceId;
 
-    @NotNull
+    @NotNull(message = "{validation.alert.type.required}")
     private AlertType type;
 
     @Builder.Default
@@ -63,7 +63,7 @@ public class Alert extends Auditable implements Identifiable {
     private GeoJsonPoint triggerPoint;
 
     @Indexed
-    @NotNull
+    @NotNull(message = "{validation.alert.triggeredAt.required}")
     private Instant triggeredAt;
 
     private Instant acknowledgedAt;

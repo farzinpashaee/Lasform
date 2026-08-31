@@ -1,0 +1,49 @@
+<div class="account-wrapper">
+  <button
+    class="avatar"
+    type="button"
+    [attr.aria-label]="(authService.isAuthenticated() ? 'common.account' : 'map.signIn') | transloco"
+    [attr.aria-expanded]="authService.isAuthenticated() ? menuOpen() : null"
+    (click)="onAvatarClick()"
+  >
+    @if (authService.isAuthenticated()) {
+      {{ accountLetter() }}
+    } @else {
+      <span class="material-symbols-outlined" aria-hidden="true">person</span>
+    }
+  </button>
+
+  @if (menuOpen()) {
+    <div class="account-menu-backdrop" (click)="closeMenu()" (contextmenu)="closeMenu()"></div>
+    <div class="account-menu">
+      <button type="button" class="account-close" [attr.aria-label]="'common.close' | transloco" (click)="closeMenu()">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <div class="account-menu-body">
+        <div class="account-menu-avatar">{{ accountLetter() }}</div>
+        <div class="account-menu-info">
+          <p class="account-menu-name">{{ authService.currentUser()?.displayName || authService.currentUser()?.email }}</p>
+          @if (authService.currentUser()?.displayName) {
+            <p class="account-menu-email">{{ authService.currentUser()?.email }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="account-menu-actions">
+        <button
+          type="button"
+          class="account-action-button"
+          [attr.aria-label]="'map.account.viewProfile' | transloco"
+          (click)="goToProfile()"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+        </button>
+        <button type="button" class="account-action-button account-logout-button" (click)="signOut()">
+          <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+          <span>{{ 'common.logout' | transloco }}</span>
+        </button>
+      </div>
+    </div>
+  }
+</div>

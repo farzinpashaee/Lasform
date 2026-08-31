@@ -55,7 +55,7 @@ public class AlertServiceImpl extends AbstractCrudService<Alert, String> impleme
     }
 
     @Override
-    protected String entityName() {
-        return "Alert";
+    protected String notFoundMessageCode() {
+        return "error.alert.notFound";
     }
 }

@@ -13,7 +13,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-/** A tag a {@link Location} can be classified under; a location may carry several. */
+/** A tag a {@link Location} or {@link Device} can be classified under; either may carry several. */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,8 +28,11 @@ public class Category extends Auditable implements Identifiable {
     private String id;
 
     @Indexed(unique = true)
-    @NotBlank
+    @NotBlank(message = "{validation.category.name.required}")
     private String name;
 
     private String description;
+
+    /** A short emoji/symbol representing this category on the map (e.g. "🏥", "🌳"). */
+    private String marker;
 }

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web-face",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "web-face", "start"],
+      "url": "http://localhost:4200",
+      "port": 4200
+    }
+  ]
+}

@@ -1,0 +1,360 @@
+$radius: 8px;
+
+.page-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary, #202124);
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.toolbar-filters {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-primary, #202124);
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  padding: 9px 10px;
+  width: 260px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent, #da5050);
+  }
+}
+
+.add-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 4px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent, #da5050);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    opacity: 0.92;
+  }
+}
+
+.categories-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: $radius;
+  background: var(--surface, #fff);
+}
+
+.categories-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border, #e8eaed);
+    white-space: nowrap;
+  }
+
+  td {
+    color: var(--text-primary, #202124);
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--text-secondary, #5f6368);
+    background: var(--hover, #f1f3f4);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: var(--hover, #f1f3f4);
+  }
+}
+
+.sort-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+}
+
+th.sortable {
+  cursor: pointer;
+}
+
+.sort-arrow {
+  font-size: 14px;
+}
+
+.actions-column {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.marker-column {
+  text-align: center;
+  width: 1%;
+}
+
+.marker-cell {
+  font-size: 18px;
+}
+
+.name-cell {
+  font-weight: 500;
+  color: var(--text-primary, #202124);
+  white-space: normal;
+}
+
+.description-cell {
+  color: var(--text-secondary, #5f6368);
+  white-space: normal;
+}
+
+.muted {
+  color: var(--text-secondary, #5f6368);
+}
+
+.state-cell {
+  text-align: center;
+  padding: 32px 14px;
+  color: var(--text-secondary, #5f6368);
+  white-space: normal;
+
+  &.error {
+    color: var(--danger, #d93025);
+  }
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.pagination-button {
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #202124);
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--hover, #f1f3f4);
+  }
+
+  &:disabled {
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+  }
+}
+
+/* Modal — mirrors the add-location modal on the map page. */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--backdrop, rgba(0, 0, 0, 0.35));
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--surface, #fff);
+  border-radius: $radius;
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.3));
+  padding: 20px;
+}
+
+.modal-title {
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary, #202124);
+}
+
+.modal-subtitle {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+  flex: 1;
+  min-width: 0;
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: 14px;
+    color: var(--text-primary, #202124);
+    border: 1px solid var(--border, #e8eaed);
+    border-radius: 4px;
+    padding: 8px 10px;
+    resize: vertical;
+    background: var(--surface, #fff);
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #da5050);
+    }
+  }
+}
+
+.modal-error {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--danger, #d93025);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modal-button {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-button-secondary {
+  background: transparent;
+  color: var(--text-secondary, #5f6368);
+
+  &:hover {
+    background: var(--hover, #f1f3f4);
+  }
+}
+
+.modal-button-primary {
+  background: var(--accent, #da5050);
+  color: #fff;
+
+  &:hover {
+    opacity: 0.92;
+  }
+
+  &:disabled {
+    background: var(--disabled-bg, #dadce0);
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+    opacity: 1;
+  }
+}
+
+.modal-button-danger {
+  background: var(--danger, #d93025);
+  color: #fff;
+
+  &:hover {
+    opacity: 0.92;
+  }
+
+  &:disabled {
+    background: var(--disabled-bg, #dadce0);
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+    opacity: 1;
+  }
+}
+
+.icon-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #202124);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  & + & {
+    margin-left: 6px;
+  }
+
+  &:hover {
+    color: var(--accent, #da5050);
+    background: var(--accent-bg, #fbeaea);
+  }
+}
+
+.icon-action-button-danger {
+  &:hover {
+    color: var(--danger, #d93025);
+    background: rgba(217, 48, 37, 0.1);
+  }
+}

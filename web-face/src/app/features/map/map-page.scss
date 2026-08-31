@@ -1,0 +1,1072 @@
+$radius: 8px;
+
+.map-page {
+  --surface: #fff;
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --border: #e8eaed;
+  --hover: #f1f3f4;
+  --accent: #da5050;
+  --accent-bg: #fbeaea;
+  --accent-bg-hover: #f6d6d6;
+  --danger: #d93025;
+  --disabled-bg: #dadce0;
+  --disabled-text: #80868b;
+  --scrollbar-thumb: #dadce0;
+  --scrollbar-thumb-hover: #bdc1c6;
+  --device-icon-bg: #e6f4ea;
+  --device-icon-color: #188038;
+  --geofence-icon-bg: #e8eef9;
+  --geofence-icon-color: #1a56db;
+  --backdrop: rgba(0, 0, 0, 0.35);
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.map-page.dark-theme {
+  --surface: #2d2e30;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --border: #3c4043;
+  --hover: #3c4043;
+  --accent: #e8908f;
+  --accent-bg: #3a2626;
+  --accent-bg-hover: #4a2e2e;
+  --danger: #f28b82;
+  --disabled-bg: #3c4043;
+  --disabled-text: #6b6f73;
+  --scrollbar-thumb: #5f6368;
+  --scrollbar-thumb-hover: #757a80;
+  --device-icon-bg: #1e3a2a;
+  --device-icon-color: #81c995;
+  --geofence-icon-bg: #1f2d4a;
+  --geofence-icon-color: #8ab4f8;
+  --backdrop: rgba(0, 0, 0, 0.6);
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.map-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.map-page.dark-theme .map-container {
+  /* Standard "poor man's dark map" trick — invert the OSM tiles' luminance rather than
+     switching tile providers. Markers get inverted too; accepted trade-off for now. */
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+.map-page.dark-theme.imagery-view .map-container {
+  /* Inverting satellite photography or terrain's colored shading/contours looks broken
+     (photo-negative), unlike line-drawn roadmap tiles — leave imagery untouched regardless of
+     theme, same as every other map product does. */
+  filter: none;
+}
+
+.top-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 500;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: nowrap;
+  /* Stretched full-width so children can lay out, but most of that area is empty —
+     let clicks/drags fall through to the map except where content actually is. */
+  pointer-events: none;
+}
+
+.search-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Shrinks below its 384px preferred width once the top-right buttons need the room,
+     instead of running underneath them; .search-input's own min-width is the floor. */
+  flex: 1 1 384px;
+  min-width: 0;
+  max-width: 384px;
+  pointer-events: auto;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+  padding: 0 8px 0 16px;
+  height: 48px;
+  width: 100%;
+}
+
+.search-icon {
+  color: var(--text-secondary);
+  display: flex;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: transparent;
+  min-width: 160px;
+
+  &::placeholder {
+    color: var(--text-secondary);
+  }
+}
+
+.results-card {
+  /* Fixed width, independent of .search-column's shrinking — only the search bar
+     itself should narrow to avoid the top-right buttons; the card stays full size. */
+  width: 384px;
+  max-width: calc(100vw - 24px);
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+
+.results-status {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.results-error {
+  color: var(--danger);
+}
+
+.results-slider {
+  display: flex;
+  width: 200%;
+  transition: transform 0.25s ease;
+  transform: translateX(0);
+}
+
+.results-slider.showing-details {
+  transform: translateX(-50%);
+}
+
+.results-slide {
+  flex: 0 0 50%;
+  min-width: 0;
+}
+
+@mixin thin-scrollbar {
+  // Deliberately *not* setting scrollbar-width/scrollbar-color here: on current
+  // Chromium/Windows, an element with those standard properties set renders via the
+  // new unified scrollbar model and ignores the ::-webkit-scrollbar-* pseudo-elements
+  // below entirely — which flattens the thumb to a plain flush bar with no radius or
+  // inset gap. Firefox (which only honors the standard properties) falls back to its
+  // default scrollbar; an accepted trade-off for the floating-pill look everywhere else.
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    /* A transparent border + padding-box clip insets the visible pill within the
+       track, so it reads as a floating rounded thumb instead of a flush-edge bar. */
+    background-color: var(--scrollbar-thumb);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover, var(--scrollbar-thumb));
+  }
+}
+
+.results-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  @include thin-scrollbar;
+}
+
+/* The add/edit geofence form reuses .results-card's shell but, unlike the read-only
+   panels, needs its own padding/scrolling since it's a full form, not a details list. */
+.geofence-form-card {
+  padding: 20px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  @include thin-scrollbar;
+}
+
+/* Position: relative anchor for .details-top-actions, which floats over this panel's
+   top-right corner instead of reserving its own row — see .details-top-actions below. */
+.details-panel {
+  position: relative;
+}
+
+/* Full-bleed — .results-card's own overflow: hidden clips this to its rounded top corners,
+   so no border-radius is needed here. .details-top-actions (position: absolute, z-index: 10)
+   floats over it same as it would over any other panel content. */
+.details-cover-image {
+  display: block;
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.details-top-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 8px 0 8px;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  padding: 6px 8px;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+/* Floats over the panel's top-right corner rather than sitting in its own row — when there's
+   no back-link (accessed directly, not via search), reserving a whole blank row just for a
+   close button wasted a large chunk of the panel's height for nothing. */
+.details-top-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--hover);
+  }
+
+  &.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+
+    &:hover {
+      background: var(--accent-bg-hover);
+    }
+  }
+}
+
+.icon-action-danger {
+  color: var(--danger);
+}
+
+/* Collapsed: just the plain "..." icon button (via .icon-action-button). Open: the trigger stays
+   highlighted and the two action icons float below it as an absolutely-positioned pill — taken
+   out of normal flow so opening the menu never stretches/pushes the panel content below it. */
+.entity-menu-wrapper {
+  position: relative;
+  border-radius: 999px;
+}
+
+.entity-menu-wrapper.open .entity-menu-trigger {
+  background: var(--hover);
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.entity-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.entity-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 901;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+  background: var(--hover);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+
+.entity-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.entity-menu-item-danger {
+  color: var(--danger);
+}
+
+.details-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Right padding clears the floating .details-top-actions pill so a long title wraps before
+     reaching it instead of rendering underneath it. Top padding keeps a bit of breathing room
+     above the title now that the old dedicated top-bar row no longer reserves any — not all
+     of that space was useless, just most of it. */
+  padding: 10px 72px 0 16px;
+}
+
+.details-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.details-header .result-title {
+  font-size: 17px;
+  font-weight: 500;
+  white-space: normal;
+}
+
+.details-category-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.details-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 16px 0;
+}
+
+.detail-tag-chip {
+  display: inline-block;
+  background: var(--hover);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+.details-tabs {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.details-tab {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 10px 2px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+}
+
+.overview-description {
+  margin: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+.details-fields {
+  margin: 0;
+  padding: 0 16px 16px;
+  max-height: 45vh;
+  overflow-y: auto;
+  @include thin-scrollbar;
+}
+
+.details-field {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.details-field dt {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.details-field dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.reviews-panel {
+  padding: 12px 16px 16px;
+}
+
+.reviews-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+  @include thin-scrollbar;
+}
+
+.review-item {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.review-text {
+  margin: 6px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.review-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
+.result-icon-device {
+  background: var(--device-icon-bg);
+  color: var(--device-icon-color);
+}
+
+.result-icon-geofence {
+  background: var(--geofence-icon-bg);
+  color: var(--geofence-icon-color);
+}
+
+/* The details panel reuses the same #entityIcon template as the results list, but at a
+   larger size — scoped by ancestor rather than a variant class since the icon itself never
+   knows which context it's rendered in. */
+.details-header .result-icon {
+  width: 64px;
+  height: 64px;
+
+  .material-symbols-outlined {
+    font-size: 32px;
+  }
+}
+
+.result-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.result-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-rating {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.rating-star {
+  font-size: 14px;
+  color: var(--border);
+
+  &.filled {
+    color: #fbbc04;
+  }
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: var(--surface);
+
+  &:hover {
+    background: var(--hover);
+  }
+
+  &:disabled {
+    cursor: default;
+    color: var(--accent);
+
+    &:hover {
+      background: var(--surface);
+    }
+  }
+
+  &.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+
+    &:hover {
+      background: var(--accent-bg-hover);
+    }
+  }
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.icon-button.round {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+}
+
+.icon-button.square {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  font-weight: 600;
+
+  &:first-child {
+    border-radius: $radius $radius 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 0 $radius $radius;
+    border-top: 1px solid var(--border);
+  }
+}
+
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  pointer-events: auto;
+}
+
+.bottom-right {
+  position: absolute;
+  bottom: 24px;
+  right: 12px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9.6px;
+}
+
+.zoom-stack {
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  border-radius: $radius;
+  overflow: hidden;
+}
+
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 901;
+  width: 220px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 14px;
+  text-align: left;
+
+  .material-symbols-outlined {
+    flex: 0 0 auto;
+    font-size: 18px;
+    color: var(--text-secondary);
+  }
+
+  &:hover {
+    background: var(--hover);
+  }
+
+  &.active {
+    color: var(--accent);
+
+    .material-symbols-outlined:first-child {
+      color: var(--accent);
+    }
+  }
+}
+
+.map-type-check {
+  margin-left: auto;
+}
+
+.context-submenu-wrapper {
+  position: relative;
+}
+
+.context-submenu-caret {
+  margin-left: auto;
+}
+
+.context-submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  z-index: 902;
+  width: 200px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+}
+
+.map-type-wrapper {
+  position: relative;
+}
+
+.map-type-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 901;
+  width: 180px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--backdrop);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.modal-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.modal-subtitle {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.modal-hint {
+  margin: -2px 0 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+
+  input,
+  textarea,
+  select {
+    font: inherit;
+    font-size: 14px;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    resize: vertical;
+    background: var(--surface);
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+  }
+}
+
+.modal-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.modal-add-category-button {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  color: var(--accent);
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
+.tag-input-wrapper {
+  position: relative;
+
+  input {
+    width: 100%;
+  }
+}
+
+.tag-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-radius: 12px;
+  padding: 3px 6px 3px 10px;
+  font-size: 12px;
+}
+
+.tag-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+
+  .material-symbols-outlined {
+    font-size: 14px;
+  }
+
+  &:hover {
+    background: var(--accent-bg-hover);
+  }
+}
+
+.tag-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.tag-suggestion-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.modal-error {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modal-button {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-button-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.modal-button-primary {
+  background: #da5050;
+  color: #fff;
+
+  &:hover {
+    background: #c23f3f;
+  }
+
+  &:disabled {
+    background: var(--disabled-bg);
+    color: var(--disabled-text);
+    cursor: default;
+  }
+}
+
+.modal-button-danger {
+  background: #d93025;
+  color: #fff;
+
+  &:hover {
+    background: #b3261e;
+  }
+
+  &:disabled {
+    background: var(--disabled-bg);
+    color: var(--disabled-text);
+    cursor: default;
+  }
+}
+
+.map-access-denied {
+  position: absolute;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  background: var(--surface);
+
+  .material-symbols-outlined {
+    font-size: 40px;
+    color: var(--text-secondary);
+  }
+
+  p {
+    margin: 0;
+    max-width: 320px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+}
+
+.sign-in-button {
+  border: none;
+  border-radius: $radius;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent, #da5050);
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.92;
+  }
+}

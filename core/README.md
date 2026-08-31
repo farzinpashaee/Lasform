@@ -1,0 +1,282 @@
+# Lasform Core
+
+Spring Boot backend for Lasform. This file covers the authentication/authorization layer
+(`com.csl.lasform.auth` and `com.csl.lasform.config.SecurityConfig`) — everything else about the
+project lives in the [repo root README](../README.md).
+
+## Authentication & authorization
+
+### The model
+
+Permissions are atomic capability strings (`device:read`, `user:invite`, ...), defined once in
+[`PermissionKey`](src/main/java/com/csl/lasform/auth/domain/model/PermissionKey.java). Roles are
+named bundles of permissions. A user is assigned one or more roles (`UserRole`), which resolve to a
+flat permission set at login/refresh time (`PermissionResolutionService`). **Nothing in the app
+branches on a role name** — every check, everywhere, is `hasAuthority('some:permission')` against
+that resolved set. `AuthSeeder` seeds the fixed permission catalog and 5 system roles
+(SUPER_ADMIN/ADMIN/OPERATOR/VIEWER/ANONYMOUS) on every startup, idempotently.
+
+### Token flow
+
+```
+POST /api/auth/login {email, password}
+  → validates credentials, resolves permissions
+  → access token  (15m, carries userId/orgId/permissions[]/mustResetPassword)
+  → refresh token (7d, carries only a jti pointing at a RefreshToken DB record)
+
+Authenticated request:  Authorization: Bearer <access token>
+  → JwtAuthenticationFilter verifies the signature, sets the SecurityContext
+  → @PreAuthorize("hasAuthority('...')") on the controller method checks the token's permissions[]
+
+POST /api/auth/refresh {refreshToken}
+  → looks up the RefreshToken record by its jti (must exist, not revoked, not expired)
+  → re-resolves the user's current permissions (a role change since login takes effect here)
+  → issues a new access token only — the refresh token is not rotated
+```
+
+**Anonymous requests are not rejected.** No/invalid/expired token → `JwtAuthenticationFilter`
+leaves the `SecurityContext` unset → Spring Security's own anonymous-authentication filter fills
+it in with the ANONYMOUS role's permissions (resolved once at startup — see
+`SecurityConfig.anonymousAuthorities()`). So `hasAuthority('map:view_public')` behaves identically
+for a logged-in user and a request with no token at all; nothing needs an `isAnonymous()` special
+case. One consequence: Spring Security's normal 401-vs-403 split falls out for free —
+`@PreAuthorize` denying an *anonymous* caller routes to `JsonAuthenticationEntryPoint` (401,
+"you're not authenticated"), denying an *authenticated* caller routes to
+`JsonAccessDeniedHandler` (403, "you're authenticated but not allowed") — see
+`ExceptionTranslationFilter` in Spring Security for why; there's no custom branching for this in
+the app.
+
+**Forced password reset.** A user created via `POST /api/users` (or seeded as the initial admin)
+gets `mustResetPassword=true`. Their access token still carries their real permissions, but
+`PasswordResetEnforcementFilter` blocks every request except `/api/auth/{login,refresh,reset-password}`
+with 403 (`password_reset_required`) until `POST /api/auth/reset-password` clears the flag. This is
+a single filter, not a check repeated in every controller.
+
+### Google sign-in/sign-up
+
+```
+POST /api/auth/google {accessToken}
+  → accessToken is a Google OAuth2 access token obtained client-side via Google Identity
+    Services' initTokenClient (scope: openid email profile) — see web-face's GoogleAuthService
+  → GoogleUserInfoClient calls Google's userinfo endpoint with it as a Bearer token; a
+    successful response IS the proof the token is genuine (Google rejects anything
+    expired/revoked/malformed before we'd see a body) — no local JWKS/signature verification
+  → look up the returned email:
+      no account yet        → create one (DISABLED, VIEWER-only, no password — see
+                               UserManagementService#signUpViaGoogle) → {pendingApproval: true}
+      account exists, not ACTIVE → same {pendingApproval: true}, no tokens issued
+      account exists, ACTIVE     → {pendingApproval: false, accessToken, refreshToken, ...},
+                                    same as a normal login, minus the password check
+```
+
+One endpoint backs both the "Sign in with Google" and "Sign up with Google" buttons — the two
+only ever differed by which case above applies, not by anything the frontend needs to decide
+ahead of time. Accounts created this way have `passwordHash = null`; `AuthenticationService.login`
+guards against calling the password encoder on that. Requires a Google OAuth2 Client ID, read by
+the **frontend** at runtime from the `lasform.security.sso.google.client.id` config entry (not a
+build-time `environment.ts` value — see the Config section below) — the backend needs no matching
+config since it doesn't check the token's audience (see the "Known gaps" note below).
+
+### First-run setup wizard
+
+```
+GET  /api/setup/status        → { needsSetup: boolean }   — true iff userRepository.findAll().isEmpty()
+POST /api/setup/admin {displayName, email, password}
+  → 400 (error.setup.alreadyCompleted) once needsSetup() is false
+  → otherwise creates a SUPER_ADMIN (mustResetPassword=false — this password was chosen by the
+    admin themselves, unlike the env-var/admin-invited paths) and logs them in via
+    AuthenticationService#login, returning the same TokenResponse shape as POST /api/auth/login
+```
+
+This is a second, interactive way to satisfy the same "create the first SUPER_ADMIN" invariant
+`AuthSeeder#seedSuperAdmin` already enforces via `LASFORM_ADMIN_EMAIL`/`LASFORM_ADMIN_PASSWORD` at
+startup — the two coexist rather than one replacing the other. If those env vars are set, the admin
+already exists by the time any request is served, `needsSetup()` is false immediately, and the
+frontend wizard (`web-face`'s `/setup` route) never shows. If they're unset, `/setup` is how a fresh
+install gets its first admin through the UI instead of a redeploy. Once logged in this way, the
+wizard's remaining (optional) steps — map provider, feature flags, Google SSO client id — are just
+the normal authenticated `config`/`feature-flags` endpoints using the session this establishes; no
+separate "setup mode" write path exists for them, `SUPER_ADMIN` already holds every `PermissionKey`.
+See `SetupService`/`SetupController` (`auth/application`, `auth/infrastructure/web`).
+
+### Refresh token storage: DB, not Redis
+
+Refresh tokens are stored in Mongo (`refresh_tokens` collection) rather than Redis. Tradeoff: Mongo
+needs a TTL index (`expiresAt`, `expireAfter = "0s"`) to get the same "expires and disappears on
+its own" behavior Redis gives for free, and a Mongo round-trip is slower than a Redis lookup — but
+it avoids standing up a second stateful service for what's currently a handful of small documents,
+and revocation/expiry checks are simple queries against data that's already backed up alongside
+everything else. Reach for Redis instead once refresh-token traffic or an actual multi-instance
+deployment makes the extra infra worth it — the domain port (`RefreshTokenRepository`) doesn't
+change either way, only its adapter would.
+
+### Config
+
+All in `application.yml`, overridable via env var (Spring's relaxed binding, e.g.
+`lasform.jwt.secret` ↔ `LASFORM_JWT_SECRET`):
+
+| Property | Env var | Default | Notes |
+|---|---|---|---|
+| `lasform.jwt.secret` | `LASFORM_JWT_SECRET` | *(none)* | HMAC-SHA256 key, 32+ chars. Unset → an ephemeral random key is generated at startup (logged as a warning) so local dev works with zero config, at the cost of invalidating every token on restart. |
+| `lasform.jwt.access-token-ttl` | `LASFORM_JWT_ACCESS_TOKEN_TTL` | `15m` | Spring's simple duration syntax. |
+| `lasform.jwt.refresh-token-ttl` | `LASFORM_JWT_REFRESH_TOKEN_TTL` | `7d` | |
+| `lasform.seed.enabled` | `LASFORM_SEED_ENABLED` | `true` | Turn off for e.g. a read replica. Also gates `ConfigDefaultsSeeder` below. |
+| `lasform.org.name` | `LASFORM_ORG_NAME` | `Lasform` | Name of the single org created on first run. |
+| `lasform.admin.email` / `lasform.admin.password` | `LASFORM_ADMIN_EMAIL` / `LASFORM_ADMIN_PASSWORD` | *(none)* | Initial SUPER_ADMIN, created once on first run. Unset → `AuthSeeder` logs a warning and skips creating it, rather than guessing. |
+| `lasform.storage.images.base-path` | `LASFORM_STORAGE_IMAGES_BASE_PATH` | `./data/images` | Location/Device image storage root. DB-overridable (no restart) from Settings → General — see `ImageStorageSettingsService`. |
+| `lasform.storage.images.max-file-size` | `LASFORM_STORAGE_IMAGES_MAX_FILE_SIZE` | `5MB` | Same override rule as above. |
+| `lasform.storage.images.allowed-extensions` | `LASFORM_STORAGE_IMAGES_ALLOWED_EXTENSIONS` | `jpg,jpeg,png` | Same override rule as above; only extensions in `ImageStorageSettingsService.SUPPORTED_EXTENSIONS` actually take effect. |
+| `lasform.config-defaults.google-maps-api-key` | `LASFORM_CONFIG_DEFAULTS_GOOGLE_MAPS_API_KEY` | *(none)* | One-time seed for the `map.google.api.key` config entry — see below. |
+| `lasform.config-defaults.google-sso-client-id` | `LASFORM_CONFIG_DEFAULTS_GOOGLE_SSO_CLIENT_ID` | *(none)* | One-time seed for the `lasform.security.sso.google.client.id` config entry — see below. |
+
+The last two rows aren't read directly anywhere — `ConfigDefaultsSeeder` copies them into the
+generic `config_entries` store once on first startup, only if that key doesn't have an entry yet.
+From then on the value lives purely in the database, editable from Settings → General/Features
+Management, and survives independently of whatever the env var is set to on later restarts. This
+is deliberately different from the `lasform.storage.images.*` rows above, which are read fresh on
+every use (env var value is the fallback, not a one-time seed) — an API key or OAuth client id has
+no sensible non-blank default to fall back to, so there's nothing to merge on every read; either an
+operator seeded one, an admin set one, or the feature that needs it stays unconfigured. Google
+sign-in itself has no other backend config — see the "Google sign-in/sign-up" section above.
+
+### Adding a new permission-gated endpoint
+
+1. **Add the key** to [`PermissionKey`](src/main/java/com/csl/lasform/auth/domain/model/PermissionKey.java)
+   (`SOMETHING_READ("something:read", "...")`). This is the only place a permission key is ever
+   defined — don't type the string anywhere else in Java except `@PreAuthorize`.
+2. **Grant it to a role.** Add the new `PermissionKey` to the relevant list(s) in
+   `AuthSeeder.buildRolePermissions()`. It's picked up automatically on the next restart —
+   seeding is idempotent and additive (existing grants are never revoked by re-seeding).
+3. **Gate the endpoint**: `@PreAuthorize("hasAuthority('something:read')")` on the controller
+   method, using the literal string (this is the one place a permission key legitimately appears
+   as a string literal — `@PreAuthorize`'s value is a compile-time annotation constant, so it can't
+   reference the enum directly).
+   - If the endpoint is one of the CRUD methods inherited from `AbstractCrudController`
+     (`getById`/`list`/`update`/`delete`), you must **override it and repeat its original
+     `@GetMapping`/`@PatchMapping`/`@DeleteMapping` and parameter annotations**, not just add
+     `@PreAuthorize` — overriding a mapped method without redeclaring the mapping annotation
+     silently drops the endpoint (Java doesn't inherit annotations across an `@Override`). See any
+     of `DeviceController`/`LocationController`/`GeofenceController`/`EventController` for the
+     pattern.
+4. That's it — no changes needed to `SecurityConfig`, the JWT filter, or anything else.
+
+### Known gaps (not built yet)
+
+- **Event ingestion** (`POST /api/v1/events`) is deliberately left ungated — it's meant to be
+  called by devices, not interactive users, and there's no device-credential scheme yet. Anyone
+  can currently post events.
+- **Refresh token rotation** isn't implemented — a refresh token stays valid, reusable, until its
+  own expiry or explicit revocation, rather than being replaced on every use.
+- **Role/permission management endpoints** (creating custom roles, editing a role's bundle via
+  API) don't exist — `role:manage` is seeded but nothing currently checks it.
+- Users can only reset **their own** password via `/api/auth/reset-password`; there's no
+  admin-initiated "force a reset" or "revoke all sessions" endpoint yet.
+- **Google auth doesn't check the access token's audience.** `GoogleUserInfoClient` trusts any
+  access token Google's userinfo endpoint accepts, without confirming it was minted for *our*
+  Client ID specifically (there's no `lasform.google.*` backend config to check against). Accepted
+  for a single-purpose app; add an audience check (Google's `tokeninfo` endpoint, or switch to
+  verifying a signed ID token instead of an access token) before this app is ever a shared backend
+  for multiple frontends/clients.
+
+## Location reviews
+
+`com.csl.lasform.review` — 1-5 star ratings (+ optional text) on a `Location`, built hexagonal
+(`domain`/`application`/`infrastructure`) like `auth`, unlike the classic entity/repository/service
+stack `Location`/`Device`/etc. use. It depends on the classic `LocationRepository` directly (there's
+no domain port for `Location` to depend on instead) to keep the two denormalized fields in sync —
+an accepted seam between the two architectural styles, not an oversight.
+
+### Moderation flow
+
+```
+POST /api/locations/{locationId}/reviews {rating, reviewText}
+  → upsert: one review per (locationId, userId) — a second submission updates the first,
+    it never creates a duplicate (enforced by a unique compound index as a DB-level safety net)
+  → always resets status → PENDING and clears any prior soft-delete, even editing an
+    already-PUBLISHED review — an edited review needs re-moderation before it counts again
+  → reviewText is HTML-escaped on write (HtmlUtils.htmlEscape) — plain text only, never
+    rendered as markup by any frontend, so this closes off stored XSS regardless of whether
+    a later frontend also escapes on output
+
+GET /api/locations/{locationId}/reviews          — public: PUBLISHED + non-deleted only
+DELETE /api/locations/{locationId}/reviews/me      — soft-delete the caller's own review
+DELETE /api/reviews/{reviewId}                     — soft-delete someone else's review
+GET /api/reviews/pending                           — moderation queue (all PENDING)
+PATCH /api/reviews/{reviewId}/status {status}      — PENDING → PUBLISHED | REJECTED only
+```
+
+**Soft delete only** — nothing is ever removed from the `reviews` collection. A delete sets
+`deleted=true`/`deletedAt`/`deletedBy`; every public/moderation query filters on `deleted=false`
+(or the specific status it needs) rather than relying on the document being absent.
+
+**Ownership is checked in the service layer, not just `@PreAuthorize`.** `review:delete_others`
+proves the caller *can* delete someone's review, not that the target isn't their own —
+`ReviewService.deleteOthers` throws `AccessDeniedException` (403) if `review.userId == callerId`,
+regardless of whether that caller also holds `review:delete_own`. Deleting your own review always
+goes through the `/me` endpoint instead.
+
+**Status transitions are one-way and PENDING-gated.** `PATCH .../status` only accepts `PUBLISHED`
+or `REJECTED` as the target (400 on anything else, including `PENDING`), and only if the review's
+*current* status is `PENDING` (400 otherwise) — there's no "unpublish"/"un-reject" transition,
+because a resubmit (`POST` again) already resets status to `PENDING` for re-moderation, which is
+the only path back into the queue.
+
+**`Location.averageRating`/`reviewCount` are recalculated, never trusted from a client**, after
+every write that could change a location's published rating set — upsert, status transition,
+delete-own, delete-others — via a Mongo aggregation (`$avg`/`$count` scoped to
+`status=PUBLISHED, deleted=false`) in `ReviewRepositoryAdapter#aggregatePublished`, never by
+loading every review into memory. `LocationController#create` also zeroes both fields on the
+Location side regardless of what a `POST /api/v1/locations` body contains, since
+`AbstractCrudService.create` saves the bound entity as-is (unlike `update`, whose field-copy
+allow-list in `LocationServiceImpl#applyUpdate` already excludes them by omission).
+
+**No transaction wraps the review write and the location update** — this app runs against a
+standalone (non-replica-set) MongoDB instance (see `application.yml`; no `MongoTransactionManager`
+bean exists), so the two are separate, sequential writes. A crash between them leaves
+`Location.averageRating`/`reviewCount` briefly stale until the next write to that location's
+reviews recalculates them. Documented here and in `ReviewService`'s class Javadoc rather than
+silently assumed away.
+
+### Permissions
+
+| Key | Who |
+|---|---|
+| `review:create` | VIEWER, OPERATOR, ADMIN, SUPER_ADMIN — write/upsert your own review |
+| `review:view` | ANONYMOUS + everyone — read published reviews |
+| `review:delete_own` | VIEWER, OPERATOR, ADMIN, SUPER_ADMIN |
+| `review:delete_others` | OPERATOR, ADMIN, SUPER_ADMIN |
+| `review:moderate` | OPERATOR, ADMIN, SUPER_ADMIN — queue + approve/reject |
+
+No new roles — same 5 system roles as everything else in the app.
+
+## Device event ingestion
+
+`com.csl.lasform.ingestion` — lets a device push a reading in its own wire format instead of
+this app's internal `Event` shape, alongside the existing raw `POST /api/v1/events`:
+
+```
+POST /api/v1/events/sensorthings {"value": [Observation, ...]}   — OGC SensorThings API
+POST /api/v1/events/geojson      {"type": "FeatureCollection", "features": [Feature, ...]}
+  → EventIngestAdapter<T> translates the wire format into Event(s)
+    (type=LOCATION_RECEIVED, source=DEVICE; unmapped fields land in Event.payload)
+  → EventIngestionService persists them (EventService.createAll) and, for any event whose
+    deviceId matches a registered Device (Device.deviceIdentifier), updates that device's
+    lastKnownPoint/lastSeenAt/batteryLevel — best-effort, silently skipped if no match
+```
+
+Both collection shapes mirror their own protocol's convention (SensorThings' own `{"value":
+[...]}` collection response shape; GeoJSON's `FeatureCollection`) rather than a bare JSON array —
+even a single reading is posted as a one-element collection.
+
+**SensorThings support is a pragmatic subset**, not the full entity-linking API (no
+Things/Datastreams/ObservedProperties as separately queryable resources) — `Observation.result` is
+read as a map when it's telemetry-shaped (`speed`/`heading`/`accuracy`/`altitude`/`batteryLevel`
+extracted, the rest kept as opaque payload), and the device is identified via a pragmatic
+`parameters.deviceId` extension, falling back to `Datastream.Thing.name`/`@iot.id`.
+
+**Same open-access precedent as `POST /api/v1/events`** (see "Known gaps" above) — no
+`@PreAuthorize` on either endpoint, for the same reason: devices have no credential scheme yet.
+
+**`Event.deviceId` is treated as `Device.deviceIdentifier`** (the hardware/external identifier a
+real device would actually know about itself), not Mongo's internal `Device.id` — consistent with
+there being no FK enforcement between the two collections either way.
