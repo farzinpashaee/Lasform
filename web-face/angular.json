@@ -36,7 +36,7 @@
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "src/styles.scss"
             ],
-            "allowedCommonJsDependencies": ["leaflet", "leaflet.markercluster", "qrcode"]
+            "allowedCommonJsDependencies": ["leaflet", "leaflet.markercluster", "leaflet-draw", "qrcode"]
           },
           "configurations": {
             "production": {
