@@ -16,4 +16,10 @@ public interface LocationService extends CrudService<Location, String>, ImageAtt
 
     /** Paginated/sortable listing, optionally filtered by free-text {@code q} (name/description/tags), category, and/or tags. */
     Page<Location> search(String q, String categoryId, List<String> tags, Pageable pageable);
+
+    /**
+     * Every Location whose point falls within the given lon/lat rectangle, capped at {@code limit} — backs the
+     * map's viewport-based marker loading (reloaded on pan/zoom instead of fetching the whole collection).
+     */
+    List<Location> findWithinBounds(double west, double south, double east, double north, int limit);
 }

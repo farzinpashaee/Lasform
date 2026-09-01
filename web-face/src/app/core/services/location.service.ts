@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { MapBounds } from '../maps';
 import { GeoResults } from '../models/geo.model';
 import { Image } from '../models/image.model';
 import { Location } from '../models/location.model';
@@ -23,6 +24,13 @@ export class LocationService extends CrudService<Location> {
   findNear(lat: number, lng: number, radiusMeters: number): Observable<GeoResults<Location>> {
     return this.http.get<GeoResults<Location>>(`${this.resourceUrl}/near`, {
       params: buildHttpParams({ lat, lng, radiusMeters }),
+    });
+  }
+
+  /** Every Location within the given map bounds, capped at `limit` — backs the map's viewport-based marker loading. */
+  findWithinBounds(bounds: MapBounds, limit = 2000): Observable<Location[]> {
+    return this.http.get<Location[]>(`${this.resourceUrl}/within-bounds`, {
+      params: buildHttpParams({ ...bounds, limit }),
     });
   }
 

@@ -12,6 +12,7 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.geo.GeoJsonPolygon;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,28 @@ public class LocationServiceImpl extends AbstractCrudService<Location, String> i
         long total = mongoTemplate.count(filter, Location.class);
         List<Location> content = mongoTemplate.find(filter.with(pageable), Location.class);
         return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public List<Location> findWithinBounds(double west, double south, double east, double north, int limit) {
+        // A zero-area box (e.g. a caller's map reporting its bounds before it has an actual pixel
+        // viewport to unproject) reaches MongoDB as a polygon ring with fewer than 3 distinct
+        // vertices, which errors ("Loop must have at least 3 different vertices") rather than just
+        // matching nothing — so short-circuit here instead of forwarding a query that can't succeed.
+        if (west == east || south == north) {
+            return List.of();
+        }
+        // point is a GeoJsonPoint under a 2dsphere index, so the box has to be a GeoJSON geometry
+        // (Criteria.within(Box) generates a legacy $box, which 2dsphere doesn't support) — a
+        // 5-point ring, first/last coordinate repeated to close it, going around once.
+        GeoJsonPolygon box = new GeoJsonPolygon(
+                new Point(west, south),
+                new Point(east, south),
+                new Point(east, north),
+                new Point(west, north),
+                new Point(west, south));
+        Query query = new Query(Criteria.where("point").within(box)).limit(limit);
+        return mongoTemplate.find(query, Location.class);
     }
 
     /** {@code categoryIds}/{@code tags} are arrays; equality/`in` on an array field means "contains any". */
