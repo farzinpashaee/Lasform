@@ -28,6 +28,12 @@ spring:
   data:
     mongodb:
       auto-index-creation: true
+    web:
+      pageable:
+        # Spring's built-in default is 2000 — the map view paginates through every Location
+        # to render all markers with no artificial cap, which needs a page size above that
+        # default max when the collection is large.
+        max-page-size: 20000
 
   servlet:
     multipart:
