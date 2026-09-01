@@ -14,6 +14,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { EMPTY, Observable, expand, reduce } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { FEATURE_FLAGS } from '../../core/feature-flag-keys';
@@ -402,12 +403,21 @@ export class MapPage implements AfterViewInit, OnDestroy {
     return category.marker ? `${category.marker} ${category.name}` : category.name;
   }
 
+  /** Pages through every Location via the size/page Pageable params — the map shows all of them, no cap. */
+  private fetchAllLocations(): Observable<Location[]> {
+    const size = 5000;
+    return this.locationService.findAll({ size, page: 0 }).pipe(
+      expand((page) => (page.last ? EMPTY : this.locationService.findAll({ size, page: page.number + 1 }))),
+      reduce((all: Location[], page) => all.concat(page.content), [] as Location[]),
+    );
+  }
+
   private loadLocationMarkers(): void {
-    this.locationService.findAll({ size: 200 }).subscribe({
-      next: (page) => {
+    this.fetchAllLocations().subscribe({
+      next: (locations) => {
         this.mapAccessDenied.set(false);
-        this.allLocationHits = page.content.map((location) => ({ type: 'LOCATION' as const, data: location }));
-        const markers = page.content.map((location) => {
+        this.allLocationHits = locations.map((location) => ({ type: 'LOCATION' as const, data: location }));
+        const markers = locations.map((location) => {
           const [lng, lat] = location.point.coordinates;
           return { id: location.id, lat, lng, title: location.name };
         });

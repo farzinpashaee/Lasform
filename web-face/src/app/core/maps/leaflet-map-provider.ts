@@ -54,6 +54,15 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 }
 
+/**
+ * Markers are built/added this many at a time, yielding to the browser (via requestAnimationFrame)
+ * between chunks, instead of one synchronous pass over the whole array. Constructing thousands of
+ * L.Marker instances (icon + popup + click handler each) and inserting them into a layer is cheap
+ * per-marker but adds up — at tens of thousands of markers a single unchunked pass blocks the main
+ * thread long enough to freeze the tab (observed with a 200k-location demo dataset).
+ */
+const MARKER_CHUNK_SIZE = 2000;
+
 const ROADMAP_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 /** Esri's free World Imagery service — no API key required. */
 const SATELLITE_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -169,6 +178,8 @@ private map?: L.Map;
   private deviceTrailsById = new Map<string, L.LayerGroup>();
   private activeDrawHandler?: L.Draw.Circle | L.Draw.Polygon;
   private activeDrawCreatedListener?: L.LeafletEventHandlerFn;
+  /** Bumped on every setMarkers()/setClusteringEnabled() call so a stale chunked build still in flight (via requestAnimationFrame) can tell it's been superseded and stop early instead of racing the newer one. */
+  private markersRenderToken = 0;
 
   async initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
     await ensureLeafletPluginsLoaded();
@@ -202,8 +213,24 @@ private map?: L.Map;
     if (!this.map) {
       return;
     }
+    const token = ++this.markersRenderToken;
+    this.markersLayer?.remove();
     this.markersById.clear();
-    this.allMarkers = markers.map((marker) => {
+    this.allMarkers = [];
+    this.markersLayer = this.createEmptyMarkersLayer();
+    this.markersLayer.addTo(this.map);
+    this.buildMarkersChunk(markers, onMarkerClick, token, 0);
+  }
+
+  /** Constructs and adds markers[offset..offset+MARKER_CHUNK_SIZE) to the live layer, then yields via requestAnimationFrame before continuing — see MARKER_CHUNK_SIZE. */
+  private buildMarkersChunk(markers: MapMarkerData[], onMarkerClick: ((id: string) => void) | undefined, token: number, offset: number): void {
+    if (token !== this.markersRenderToken || !this.markersLayer) {
+      return; // a newer setMarkers()/setClusteringEnabled() call superseded this one mid-flight
+    }
+    const end = Math.min(offset + MARKER_CHUNK_SIZE, markers.length);
+    const chunk: L.Marker[] = [];
+    for (let i = offset; i < end; i++) {
+      const marker = markers[i];
       const leafletMarker = L.marker([marker.lat, marker.lng], marker.kind === 'device' ? { icon: DEVICE_ICON } : undefined);
       if (marker.title) {
         leafletMarker.bindPopup(marker.title);
@@ -214,9 +241,14 @@ private map?: L.Map;
           leafletMarker.on('click', () => onMarkerClick(marker.id!));
         }
       }
-      return leafletMarker;
-    });
-    this.rebuildMarkersLayer();
+      chunk.push(leafletMarker);
+    }
+    this.allMarkers.push(...chunk);
+    this.addLayersToMarkersLayer(chunk);
+
+    if (end < markers.length) {
+      requestAnimationFrame(() => this.buildMarkersChunk(markers, onMarkerClick, token, end));
+    }
   }
 
   setClusteringEnabled(enabled: boolean): void {
@@ -287,19 +319,42 @@ private map?: L.Map;
     }
   }
 
+  /** Re-adds the already-built this.allMarkers to a fresh layer (clustered or not) — used when the clustering toggle flips, so it's just re-laying-out existing markers, not reconstructing them. */
   private rebuildMarkersLayer(): void {
     if (!this.map) {
       return;
     }
+    const token = ++this.markersRenderToken;
     this.markersLayer?.remove();
-    if (this.clusteringEnabled) {
-      const clusterGroup = L.markerClusterGroup();
-      clusterGroup.addLayers(this.allMarkers);
-      this.markersLayer = clusterGroup;
-    } else {
-      this.markersLayer = L.layerGroup(this.allMarkers);
-    }
+    this.markersLayer = this.createEmptyMarkersLayer();
     this.markersLayer.addTo(this.map);
+    this.addMarkersChunk(this.allMarkers, token, 0);
+  }
+
+  /** Adds allMarkers[offset..offset+MARKER_CHUNK_SIZE) (already-constructed) to the live layer, then yields via requestAnimationFrame before continuing. */
+  private addMarkersChunk(markers: L.Marker[], token: number, offset: number): void {
+    if (token !== this.markersRenderToken || !this.markersLayer) {
+      return;
+    }
+    const end = Math.min(offset + MARKER_CHUNK_SIZE, markers.length);
+    this.addLayersToMarkersLayer(markers.slice(offset, end));
+    if (end < markers.length) {
+      requestAnimationFrame(() => this.addMarkersChunk(markers, token, end));
+    }
+  }
+
+  private createEmptyMarkersLayer(): L.LayerGroup {
+    // chunkedLoading also batches addLayers() internally across animation frames — belt-and-braces
+    // with our own chunking above, since it only kicks in past its own (higher) internal threshold.
+    return this.clusteringEnabled ? L.markerClusterGroup({ chunkedLoading: true }) : L.layerGroup();
+  }
+
+  private addLayersToMarkersLayer(markers: L.Marker[]): void {
+    if (this.markersLayer instanceof L.MarkerClusterGroup) {
+      this.markersLayer.addLayers(markers);
+    } else {
+      markers.forEach((marker) => this.markersLayer!.addLayer(marker));
+    }
   }
 
   zoomIn(): void {
