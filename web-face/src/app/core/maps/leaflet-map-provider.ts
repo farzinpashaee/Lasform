@@ -32,6 +32,7 @@ import {
   DEVICE_TRAIL_COLOR,
   GeofenceShapeData,
   GeofenceShapeKind,
+  MapBounds,
   MapContextMenuEvent,
   MapMarkerData,
   MapProvider,
@@ -53,6 +54,15 @@ const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 }
+
+/**
+ * Markers are built/added this many at a time, yielding to the browser (via requestAnimationFrame)
+ * between chunks, instead of one synchronous pass over the whole array. Constructing thousands of
+ * L.Marker instances (icon + popup + click handler each) and inserting them into a layer is cheap
+ * per-marker but adds up — at tens of thousands of markers a single unchunked pass blocks the main
+ * thread long enough to freeze the tab (observed with a 200k-location demo dataset).
+ */
+const MARKER_CHUNK_SIZE = 2000;
 
 const ROADMAP_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 /** Esri's free World Imagery service — no API key required. */
@@ -169,6 +179,8 @@ private map?: L.Map;
   private deviceTrailsById = new Map<string, L.LayerGroup>();
   private activeDrawHandler?: L.Draw.Circle | L.Draw.Polygon;
   private activeDrawCreatedListener?: L.LeafletEventHandlerFn;
+  /** Bumped on every setMarkers()/setClusteringEnabled() call so a stale chunked build still in flight (via requestAnimationFrame) can tell it's been superseded and stop early instead of racing the newer one. */
+  private markersRenderToken = 0;
 
   async initialize(container: HTMLElement, options: MapViewOptions): Promise<void> {
     await ensureLeafletPluginsLoaded();
@@ -186,14 +198,29 @@ private map?: L.Map;
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.map);
 
-    // Leaflet caches the container's size at construction time; if the browser hasn't finished
-    // laying out the page yet (common right after Angular's view init), that cache is 0x0 and
-    // every layer — tiles included — renders as if the map had no visible area. A deferred
-    // invalidateSize() forces a re-measure once layout has actually settled.
-    setTimeout(() => this.map?.invalidateSize(), 0);
-
     this.geofenceLayer = L.featureGroup().addTo(this.map);
     this.trailLayer = L.featureGroup().addTo(this.map);
+
+    // Leaflet caches the container's size at construction time; if the browser hasn't finished
+    // laying out the page yet (common right after Angular's view init), that cache is 0x0 and
+    // every layer — tiles included — renders as if the map had no visible area, and getBounds()
+    // degenerates to a single point (all four corners collapse to the center) since there's no
+    // pixel viewport to unproject. A single setTimeout(0) isn't reliably enough — it can still run
+    // before the browser has actually completed a layout/paint pass — two requestAnimationFrame
+    // ticks is the standard "definitely past a real paint" pattern (rAF runs immediately before a
+    // repaint, so the second one is guaranteed to fire after the first repaint has happened).
+    // BUT rAF never fires at all while the tab is backgrounded/hidden (browsers suspend it) — a
+    // bare double-rAF await would then hang forever, so it's raced against a plain timeout
+    // fallback that fires regardless of visibility. Awaited here (not fired detached) so
+    // initialize()'s resolution is a real guarantee for every caller, not just this file's own
+    // tile rendering — the map page immediately calls getBounds() once initialize() resolves, and
+    // a degenerate box there reaches MongoDB as a zero-area polygon, which errors ("Loop must have
+    // at least 3 different vertices").
+    await Promise.race([
+      new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      new Promise<void>((resolve) => setTimeout(resolve, 150)),
+    ]);
+    this.map?.invalidateSize();
 
     return Promise.resolve();
   }
@@ -202,8 +229,24 @@ private map?: L.Map;
     if (!this.map) {
       return;
     }
+    const token = ++this.markersRenderToken;
+    this.markersLayer?.remove();
     this.markersById.clear();
-    this.allMarkers = markers.map((marker) => {
+    this.allMarkers = [];
+    this.markersLayer = this.createEmptyMarkersLayer();
+    this.markersLayer.addTo(this.map);
+    this.buildMarkersChunk(markers, onMarkerClick, token, 0);
+  }
+
+  /** Constructs and adds markers[offset..offset+MARKER_CHUNK_SIZE) to the live layer, then yields via requestAnimationFrame before continuing — see MARKER_CHUNK_SIZE. */
+  private buildMarkersChunk(markers: MapMarkerData[], onMarkerClick: ((id: string) => void) | undefined, token: number, offset: number): void {
+    if (token !== this.markersRenderToken || !this.markersLayer) {
+      return; // a newer setMarkers()/setClusteringEnabled() call superseded this one mid-flight
+    }
+    const end = Math.min(offset + MARKER_CHUNK_SIZE, markers.length);
+    const chunk: L.Marker[] = [];
+    for (let i = offset; i < end; i++) {
+      const marker = markers[i];
       const leafletMarker = L.marker([marker.lat, marker.lng], marker.kind === 'device' ? { icon: DEVICE_ICON } : undefined);
       if (marker.title) {
         leafletMarker.bindPopup(marker.title);
@@ -214,9 +257,14 @@ private map?: L.Map;
           leafletMarker.on('click', () => onMarkerClick(marker.id!));
         }
       }
-      return leafletMarker;
-    });
-    this.rebuildMarkersLayer();
+      chunk.push(leafletMarker);
+    }
+    this.allMarkers.push(...chunk);
+    this.addLayersToMarkersLayer(chunk);
+
+    if (end < markers.length) {
+      requestAnimationFrame(() => this.buildMarkersChunk(markers, onMarkerClick, token, end));
+    }
   }
 
   setClusteringEnabled(enabled: boolean): void {
@@ -287,19 +335,42 @@ private map?: L.Map;
     }
   }
 
+  /** Re-adds the already-built this.allMarkers to a fresh layer (clustered or not) — used when the clustering toggle flips, so it's just re-laying-out existing markers, not reconstructing them. */
   private rebuildMarkersLayer(): void {
     if (!this.map) {
       return;
     }
+    const token = ++this.markersRenderToken;
     this.markersLayer?.remove();
-    if (this.clusteringEnabled) {
-      const clusterGroup = L.markerClusterGroup();
-      clusterGroup.addLayers(this.allMarkers);
-      this.markersLayer = clusterGroup;
-    } else {
-      this.markersLayer = L.layerGroup(this.allMarkers);
-    }
+    this.markersLayer = this.createEmptyMarkersLayer();
     this.markersLayer.addTo(this.map);
+    this.addMarkersChunk(this.allMarkers, token, 0);
+  }
+
+  /** Adds allMarkers[offset..offset+MARKER_CHUNK_SIZE) (already-constructed) to the live layer, then yields via requestAnimationFrame before continuing. */
+  private addMarkersChunk(markers: L.Marker[], token: number, offset: number): void {
+    if (token !== this.markersRenderToken || !this.markersLayer) {
+      return;
+    }
+    const end = Math.min(offset + MARKER_CHUNK_SIZE, markers.length);
+    this.addLayersToMarkersLayer(markers.slice(offset, end));
+    if (end < markers.length) {
+      requestAnimationFrame(() => this.addMarkersChunk(markers, token, end));
+    }
+  }
+
+  private createEmptyMarkersLayer(): L.LayerGroup {
+    // chunkedLoading also batches addLayers() internally across animation frames — belt-and-braces
+    // with our own chunking above, since it only kicks in past its own (higher) internal threshold.
+    return this.clusteringEnabled ? L.markerClusterGroup({ chunkedLoading: true }) : L.layerGroup();
+  }
+
+  private addLayersToMarkersLayer(markers: L.Marker[]): void {
+    if (this.markersLayer instanceof L.MarkerClusterGroup) {
+      this.markersLayer.addLayers(markers);
+    } else {
+      markers.forEach((marker) => this.markersLayer!.addLayer(marker));
+    }
   }
 
   zoomIn(): void {
@@ -397,6 +468,25 @@ private map?: L.Map;
     // 'dragstart' fires only for an actual pointer-driven drag of the map — unlike 'movestart',
     // it never fires for a programmatic panTo()/setView(), so no "ignore my own pans" flag is needed.
     this.map?.on('dragstart', () => handler());
+  }
+
+  getBounds(): MapBounds | null {
+    if (!this.map) {
+      return null;
+    }
+    const bounds = this.map.getBounds();
+    return { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() };
+  }
+
+  onBoundsChanged(handler: (bounds: MapBounds) => void): void {
+    // 'moveend' fires once a pan OR a zoom has finished settling — covers both without a
+    // separate 'zoomend' listener (zooming always ends in a moveend too).
+    this.map?.on('moveend', () => {
+      const bounds = this.getBounds();
+      if (bounds) {
+        handler(bounds);
+      }
+    });
   }
 
   startDrawingGeofence(kind: GeofenceShapeKind, onComplete: (shape: GeofenceShapeData) => void): void {

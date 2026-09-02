@@ -31,6 +31,14 @@ export interface MapMarkerData {
   kind?: 'location' | 'device';
 }
 
+/** A visible-map rectangle in plain lon/lat, vendor-agnostic (mirrors both Leaflet's LatLngBounds and google.maps.LatLngBounds). */
+export interface MapBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
 export interface MapContextMenuEvent {
   lat: number;
   lng: number;
@@ -84,6 +92,12 @@ export interface MapProvider {
 
   /** Toggles grouping nearby markers into cluster badges; re-applies to whatever markers are current. */
   setClusteringEnabled(enabled: boolean): void;
+
+  /** The currently visible map area, or null before initialize() has resolved. */
+  getBounds(): MapBounds | null;
+
+  /** Registers the handler fired once a pan or zoom settles (not on every intermediate frame while dragging/animating). */
+  onBoundsChanged(handler: (bounds: MapBounds) => void): void;
 
   zoomIn(): void;
 

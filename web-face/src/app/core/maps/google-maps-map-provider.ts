@@ -5,6 +5,7 @@ import {
   DEVICE_TRAIL_COLOR,
   GeofenceShapeData,
   GeofenceShapeKind,
+  MapBounds,
   MapContextMenuEvent,
   MapMarkerData,
   MapProvider,
@@ -257,6 +258,25 @@ export class GoogleMapsMapProvider implements MapProvider {
     // 'dragstart' fires only for an actual pointer-driven drag of the map — unlike 'center_changed',
     // it never fires for a programmatic panTo()/setCenter(), so no "ignore my own pans" flag is needed.
     this.map?.addListener('dragstart', () => handler());
+  }
+
+  getBounds(): MapBounds | null {
+    const bounds = this.map?.getBounds();
+    if (!bounds) {
+      return null;
+    }
+    return { west: bounds.getSouthWest().lng(), south: bounds.getSouthWest().lat(), east: bounds.getNorthEast().lng(), north: bounds.getNorthEast().lat() };
+  }
+
+  onBoundsChanged(handler: (bounds: MapBounds) => void): void {
+    // 'idle' fires once the map has settled after a pan/zoom/resize — unlike 'bounds_changed',
+    // which fires continuously while dragging or animating.
+    this.map?.addListener('idle', () => {
+      const bounds = this.getBounds();
+      if (bounds) {
+        handler(bounds);
+      }
+    });
   }
 
   startDrawingGeofence(kind: GeofenceShapeKind, onComplete: (shape: GeofenceShapeData) => void): void {

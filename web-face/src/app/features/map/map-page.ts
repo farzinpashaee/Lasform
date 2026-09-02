@@ -14,6 +14,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { FEATURE_FLAGS } from '../../core/feature-flag-keys';
@@ -21,6 +22,7 @@ import {
   GeofenceShapeData,
   GeofenceShapeKind,
   MAP_PROVIDER,
+  MapBounds,
   MapContextMenuEvent,
   MapMarkerData,
   MapProvider,
@@ -95,8 +97,11 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   private readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
 
-  /** All locations shown as markers before any search; looked up on marker click when hasSearched() is false. */
-  private allLocationHits: SearchHit[] = [];
+  /** Locations currently shown as markers (i.e. within the map's visible bounds) before any search; looked up on marker click when hasSearched() is false. */
+  private visibleLocationHits: SearchHit[] = [];
+  /** Debounced so a rapid pan/zoom sequence doesn't fire a within-bounds request per intermediate step. */
+  private readonly boundsChanged$ = new Subject<MapBounds>();
+  private boundsChangedSubscription?: Subscription;
   /** Geofences currently rendered read-only on the map; looked up by id when one is clicked. */
   private geofencesById = new Map<string, Geofence>();
   /** The device id behind deviceLiveActive(), if any — see stopDeviceLive() for why this isn't read off selectedResult(). */
@@ -232,6 +237,15 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.mapProvider.onUserPanStart(() => {
       this.followingLiveDevice = false;
     });
+    // Re-fetch whatever's in view on every pan/zoom, instead of the initial load being the only
+    // one — see loadLocationMarkers()'s doc comment. Skipped entirely while a text search is
+    // active: renderSearchMarkers() (not bounds) owns the marker set until the search is cleared.
+    this.boundsChangedSubscription = this.boundsChanged$.pipe(debounceTime(300)).subscribe((bounds) => {
+      if (!this.hasSearched()) {
+        this.loadLocationMarkers(bounds);
+      }
+    });
+    this.mapProvider.onBoundsChanged((bounds) => this.boundsChanged$.next(bounds));
     this.jumpToQueryLocation();
     this.jumpToQueryGeofence();
     this.jumpToDrawGeofence();
@@ -359,6 +373,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.mapProvider.destroy();
+    this.boundsChangedSubscription?.unsubscribe();
     this.revokeCoverImageUrl();
     this.deviceLiveService.unsubscribeAll();
   }
@@ -402,12 +417,22 @@ export class MapPage implements AfterViewInit, OnDestroy {
     return category.marker ? `${category.marker} ${category.name}` : category.name;
   }
 
-  private loadLocationMarkers(): void {
-    this.locationService.findAll({ size: 200 }).subscribe({
-      next: (page) => {
+  /**
+   * Loads only the Locations within the given (or, if omitted, the map's current) bounds — the
+   * marker set is re-fetched every time the visible area changes instead of loading the whole
+   * collection once, so it scales independently of how many locations exist overall. See
+   * onBoundsChanged() below for what re-triggers this on pan/zoom.
+   */
+  private loadLocationMarkers(bounds?: MapBounds): void {
+    const effectiveBounds = bounds ?? this.mapProvider.getBounds();
+    if (!effectiveBounds) {
+      return;
+    }
+    this.locationService.findWithinBounds(effectiveBounds).subscribe({
+      next: (locations) => {
         this.mapAccessDenied.set(false);
-        this.allLocationHits = page.content.map((location) => ({ type: 'LOCATION' as const, data: location }));
-        const markers = page.content.map((location) => {
+        this.visibleLocationHits = locations.map((location) => ({ type: 'LOCATION' as const, data: location }));
+        const markers = locations.map((location) => {
           const [lng, lat] = location.point.coordinates;
           return { id: location.id, lat, lng, title: location.name };
         });
@@ -1128,7 +1153,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
         this.closeDeleteConfirm();
         this.closeDetails();
         this.searchResults.update((results) => results.filter((r) => r.data.id !== id));
-        this.allLocationHits = this.allLocationHits.filter((h) => h.data.id !== id);
+        this.visibleLocationHits = this.visibleLocationHits.filter((h) => h.data.id !== id);
         this.refreshMapMarkers();
       },
       error: () => {
@@ -1149,7 +1174,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   private onMarkerClicked(id: string): void {
-    const source = this.hasSearched() ? this.searchResults() : this.allLocationHits;
+    const source = this.hasSearched() ? this.searchResults() : this.visibleLocationHits;
     const hit = source.find((candidate) => candidate.data.id === id);
     if (hit) {
       this.selectedGeofence.set(null);
