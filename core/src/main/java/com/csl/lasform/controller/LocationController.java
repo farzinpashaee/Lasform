@@ -35,6 +35,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/locations")
 public class LocationController extends AbstractCrudController<Location> {
 
+    private static final int MAX_WITHIN_BOUNDS_LIMIT = 5000;
+
     private final LocationService locationService;
 
     public LocationController(LocationService locationService) {
@@ -91,6 +93,21 @@ public class LocationController extends AbstractCrudController<Location> {
         entity.setAverageRating(0.0);
         entity.setReviewCount(0);
         return createOne(entity);
+    }
+
+    // Backs the map's viewport-based marker loading: reloaded with the current visible bounds on
+    // every pan/zoom instead of fetching the whole collection (see MapPage#loadLocationMarkers).
+    // Same public-map exception as list() above — anonymous callers need this too.
+    @GetMapping("/within-bounds")
+    @PreAuthorize("hasAuthority('location:read') or hasAuthority('map:view_public')")
+    public List<Location> withinBounds(
+            @RequestParam double west,
+            @RequestParam double south,
+            @RequestParam double east,
+            @RequestParam double north,
+            @RequestParam(defaultValue = "2000") int limit) {
+        int effectiveLimit = Math.min(Math.max(limit, 1), MAX_WITHIN_BOUNDS_LIMIT);
+        return locationService.findWithinBounds(west, south, east, north, effectiveLimit);
     }
 
     @GetMapping("/near")

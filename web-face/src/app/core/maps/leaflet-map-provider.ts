@@ -32,6 +32,7 @@ import {
   DEVICE_TRAIL_COLOR,
   GeofenceShapeData,
   GeofenceShapeKind,
+  MapBounds,
   MapContextMenuEvent,
   MapMarkerData,
   MapProvider,
@@ -197,14 +198,29 @@ private map?: L.Map;
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.map);
 
-    // Leaflet caches the container's size at construction time; if the browser hasn't finished
-    // laying out the page yet (common right after Angular's view init), that cache is 0x0 and
-    // every layer — tiles included — renders as if the map had no visible area. A deferred
-    // invalidateSize() forces a re-measure once layout has actually settled.
-    setTimeout(() => this.map?.invalidateSize(), 0);
-
     this.geofenceLayer = L.featureGroup().addTo(this.map);
     this.trailLayer = L.featureGroup().addTo(this.map);
+
+    // Leaflet caches the container's size at construction time; if the browser hasn't finished
+    // laying out the page yet (common right after Angular's view init), that cache is 0x0 and
+    // every layer — tiles included — renders as if the map had no visible area, and getBounds()
+    // degenerates to a single point (all four corners collapse to the center) since there's no
+    // pixel viewport to unproject. A single setTimeout(0) isn't reliably enough — it can still run
+    // before the browser has actually completed a layout/paint pass — two requestAnimationFrame
+    // ticks is the standard "definitely past a real paint" pattern (rAF runs immediately before a
+    // repaint, so the second one is guaranteed to fire after the first repaint has happened).
+    // BUT rAF never fires at all while the tab is backgrounded/hidden (browsers suspend it) — a
+    // bare double-rAF await would then hang forever, so it's raced against a plain timeout
+    // fallback that fires regardless of visibility. Awaited here (not fired detached) so
+    // initialize()'s resolution is a real guarantee for every caller, not just this file's own
+    // tile rendering — the map page immediately calls getBounds() once initialize() resolves, and
+    // a degenerate box there reaches MongoDB as a zero-area polygon, which errors ("Loop must have
+    // at least 3 different vertices").
+    await Promise.race([
+      new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+      new Promise<void>((resolve) => setTimeout(resolve, 150)),
+    ]);
+    this.map?.invalidateSize();
 
     return Promise.resolve();
   }
@@ -452,6 +468,25 @@ private map?: L.Map;
     // 'dragstart' fires only for an actual pointer-driven drag of the map — unlike 'movestart',
     // it never fires for a programmatic panTo()/setView(), so no "ignore my own pans" flag is needed.
     this.map?.on('dragstart', () => handler());
+  }
+
+  getBounds(): MapBounds | null {
+    if (!this.map) {
+      return null;
+    }
+    const bounds = this.map.getBounds();
+    return { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() };
+  }
+
+  onBoundsChanged(handler: (bounds: MapBounds) => void): void {
+    // 'moveend' fires once a pan OR a zoom has finished settling — covers both without a
+    // separate 'zoomend' listener (zooming always ends in a moveend too).
+    this.map?.on('moveend', () => {
+      const bounds = this.getBounds();
+      if (bounds) {
+        handler(bounds);
+      }
+    });
   }
 
   startDrawingGeofence(kind: GeofenceShapeKind, onComplete: (shape: GeofenceShapeData) => void): void {
