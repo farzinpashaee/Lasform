@@ -131,27 +131,37 @@ fun MainScreen(
     // While powered on, capture + queue an event every `updateFrequencyMinutes`, then try to flush
     // the whole queue as a single list POST. Failed/offline attempts stay queued and are retried
     // together (with any newly captured events) on the next cycle. Stops as soon as powered off.
+    //
+    // A cycle with no location fix (permission not granted yet, GPS/network providers off, or no
+    // fix obtained within the timeout and no cached last-known location) captures nothing — the
+    // server's Event.point is required, so sending a pointless event would just be rejected with a
+    // 400 and get stuck in the queue forever. Any already-queued events with a real point (e.g.
+    // from a prior network failure) still get retried every cycle regardless.
     LaunchedEffect(isOn) {
         while (isOn) {
             val location = locationProvider.getCurrentLocation()
-            val event = EventApi.buildEventPayload(
-                deviceId = devicePrefs.deviceId,
-                userId = devicePrefs.userId,
-                location = location,
-                batteryLevel = readBatteryLevel(context)
-            )
-            eventQueueStore.enqueue(event)
+            if (location != null) {
+                val event = EventApi.buildEventPayload(
+                    deviceId = devicePrefs.deviceId,
+                    userId = devicePrefs.userId,
+                    location = location,
+                    batteryLevel = readBatteryLevel(context)
+                )
+                eventQueueStore.enqueue(event)
+            }
 
             val pendingEvents = eventQueueStore.getAll()
-            val result = EventApi.postEvents(devicePrefs.serverUrl, pendingEvents)
-            lastEventTimestamp = System.currentTimeMillis()
-            if (result is EventPostResult.Success) {
-                eventQueueStore.clear()
-                lastEventSuccess = true
-                pendingEventCount = 0
-            } else {
-                lastEventSuccess = false
-                pendingEventCount = pendingEvents.size
+            if (pendingEvents.isNotEmpty()) {
+                val result = EventApi.postEvents(devicePrefs.serverUrl, pendingEvents)
+                lastEventTimestamp = System.currentTimeMillis()
+                if (result is EventPostResult.Success) {
+                    eventQueueStore.clear()
+                    lastEventSuccess = true
+                    pendingEventCount = 0
+                } else {
+                    lastEventSuccess = false
+                    pendingEventCount = pendingEvents.size
+                }
             }
 
             delay(devicePrefs.updateFrequencyMinutes.coerceAtLeast(1) * 60_000L)
