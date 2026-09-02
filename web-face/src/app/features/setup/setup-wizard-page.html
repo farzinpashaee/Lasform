@@ -1,0 +1,120 @@
+<div class="setup-page">
+  <div class="setup-card">
+    <p class="step-indicator">{{ 'setup.stepIndicator' | transloco: { step: currentStep(), total: TOTAL_STEPS } }}</p>
+    <div class="step-track">
+      @for (step of [1, 2, 3]; track step) {
+        <span class="step-dot" [class.active]="step === currentStep()" [class.done]="step < currentStep()"></span>
+      }
+    </div>
+
+    @if (currentStep() === 1) {
+      <h1 class="setup-title">{{ 'setup.admin.title' | transloco }}</h1>
+      <p class="setup-subtitle">{{ 'setup.admin.subtitle' | transloco }}</p>
+
+      <form (ngSubmit)="submitAdmin()">
+        <div class="setup-field">
+          <input
+            type="text"
+            [(ngModel)]="displayName"
+            name="displayName"
+            required
+            autocomplete="name"
+            [placeholder]="'auth.signUp.fullName' | transloco"
+          />
+        </div>
+
+        <div class="setup-field">
+          <input
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            required
+            autocomplete="username"
+            [class.input-error]="emailError()"
+            [placeholder]="'auth.login.email' | transloco"
+            (blur)="validateEmail()"
+          />
+          @if (emailError()) {
+            <p class="field-error">{{ emailError() }}</p>
+          }
+        </div>
+
+        <div class="setup-field setup-field-password">
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            [(ngModel)]="password"
+            name="password"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            [placeholder]="'auth.login.password' | transloco"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="'common.togglePasswordVisibility' | transloco"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+
+        <div class="setup-field setup-field-password">
+          <input
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            [(ngModel)]="confirmPassword"
+            name="confirmPassword"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            [placeholder]="'auth.signUp.confirmPassword' | transloco"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="toggleConfirmPasswordVisibility()"
+            [attr.aria-label]="'common.togglePasswordVisibility' | transloco"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">{{
+              showConfirmPassword() ? 'visibility_off' : 'visibility'
+            }}</span>
+          </button>
+        </div>
+
+        @if (error()) {
+          <p class="setup-error">{{ error() }}</p>
+        }
+
+        <button
+          type="submit"
+          class="setup-submit"
+          [disabled]="submitting() || !displayName().trim() || !email().trim() || password().length < 8 || !confirmPassword()"
+        >
+          {{ (submitting() ? 'setup.admin.submitting' : 'setup.admin.submit') | transloco }}
+        </button>
+      </form>
+    }
+
+    @if (currentStep() === 2) {
+      <p class="setup-subtitle setup-step-subtitle">{{ 'setup.mapProvider.subtitle' | transloco }}</p>
+      <app-map-provider-settings />
+      <div class="setup-actions">
+        <button type="button" class="setup-skip" (click)="goToStep(3)">{{ 'setup.skip' | transloco }}</button>
+        <button type="button" class="setup-submit setup-submit-inline" (click)="goToStep(3)">
+          {{ 'common.next' | transloco }}
+        </button>
+      </div>
+    }
+
+    @if (currentStep() === 3) {
+      <p class="setup-subtitle setup-step-subtitle">{{ 'setup.features.subtitle' | transloco }}</p>
+      <app-feature-management-page />
+      <div class="setup-actions">
+        <button type="button" class="setup-skip" (click)="finish()">{{ 'setup.skip' | transloco }}</button>
+        <button type="button" class="setup-submit setup-submit-inline" (click)="finish()">
+          {{ 'setup.finish' | transloco }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

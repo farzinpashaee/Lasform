@@ -28,11 +28,27 @@ spring:
   data:
     mongodb:
       auto-index-creation: true
+    web:
+      pageable:
+        # Spring's built-in default is 2000 — the map view paginates through every Location
+        # to render all markers with no artificial cap, which needs a page size above that
+        # default max when the collection is large.
+        max-page-size: 20000
 
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+
+# Only 'health' is exposed — SecurityConfig's anyRequest().permitAll() means anything listed here is
+# publicly reachable with no auth, same as every other endpoint in this app. Never add 'env', 'beans',
+# 'configprops', etc. here: they'd leak lasform.jwt.secret / the Mongo URI to anyone. show-details
+# defaults to 'never' for the same reason — left unset deliberately, don't override it to 'always'.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
 
 lasform:
   storage:

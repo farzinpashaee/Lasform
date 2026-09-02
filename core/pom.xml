@@ -46,6 +46,10 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<dependency>
@@ -168,8 +172,33 @@
                                 <echo file="${project.build.directory}/starter.sh">#!/bin/bash
 cd "$(dirname "$0")"
 
+# The port the app listens on by default (application.yml's server.port) -- used below only
+# as a fallback for locating a still-running previous instance when starter.pid isn't there
+# to read. Override with APP_PORT=... in the environment if this instance actually runs on
+# a different port (e.g. via a --config override further down).
+if [ -z "$APP_PORT" ]; then
+  APP_PORT=8087
+fi
+
+OLD_PID=
 if [ -f starter.pid ]; then
   OLD_PID=$(cat starter.pid)
+else
+  # `mvn clean` wipes target/ (starter.pid included) before every rebuild, so a pipeline
+  # that always runs `mvn clean install` never finds the previous run's PID file here even
+  # though that previous instance may still be running. Fall back to asking the OS what's
+  # actually bound to the app's port instead, trying whichever lookup tool is available.
+  if command -v lsof > /dev/null 2>&amp;1; then
+    OLD_PID=$(lsof -t -i TCP:"$APP_PORT" -sTCP:LISTEN 2>/dev/null | head -n 1)
+  elif command -v ss > /dev/null 2>&amp;1; then
+    OLD_PID=$(ss -ltnp 2>/dev/null | grep ":$APP_PORT " | grep -oP 'pid=\K[0-9]+' | head -n 1)
+  fi
+  if [ -n "$OLD_PID" ]; then
+    echo "No starter.pid found; found PID $OLD_PID listening on port $APP_PORT instead."
+  fi
+fi
+
+if [ -n "$OLD_PID" ]; then
   if ps -p "$OLD_PID" > /dev/null 2>&amp;1; then
     echo "Existing process running with PID $OLD_PID. Stopping it..."
     kill "$OLD_PID"
@@ -179,12 +208,31 @@ if [ -f starter.pid ]; then
       kill -9 "$OLD_PID"
     fi
   else
-    echo "PID file found but process $OLD_PID is not running. Cleaning up."
+    echo "PID $OLD_PID is not running. Nothing to stop."
   fi
-  rm -f starter.pid
+fi
+rm -f starter.pid
+
+# Optional: ./starter.sh --config /path/to/override.yml
+# The file's values layer on top of (not instead of) the packaged application.yml via
+# Spring's additional-location mechanism, so it only needs to list what it's actually
+# overriding for this instance. Anything else on the command line is still forwarded to
+# java untouched, same as before this option existed.
+CONFIG_ARG=
+if [ "$1" = "--config" ]; then
+  if [ -z "$2" ] || [ ! -f "$2" ]; then
+    echo "--config requires a path to an existing file (got: '$2')" >&amp;2
+    exit 1
+  fi
+  CONFIG_ARG="--spring.config.additional-location=file:$2"
+  shift 2
 fi
 
-nohup java -jar ${project.build.finalName}.jar "$@" > starter.log 2>&amp;1 &amp;
+if [ -n "$CONFIG_ARG" ]; then
+  nohup java -jar ${project.build.finalName}.jar "$CONFIG_ARG" "$@" > starter.log 2>&amp;1 &amp;
+else
+  nohup java -jar ${project.build.finalName}.jar "$@" > starter.log 2>&amp;1 &amp;
+fi
 echo $! > starter.pid
 echo "Started with PID $(cat starter.pid)"
                                 </echo>
@@ -238,7 +286,13 @@ echo "Started with PID $(cat starter.pid)"
 									<goal>npm</goal>
 								</goals>
 								<configuration>
-									<arguments>ci</arguments>
+									<!-- The include=dev flag overrides npm's own default of skipping
+									     devDependencies when NODE_ENV=production is set in the environment
+									     (common on deploy/CI boxes). angular/cli and the rest of the actual
+									     build toolchain live in devDependencies, so without this the install
+									     silently succeeds with only the runtime deps present, and ng build
+									     then fails with MODULE_NOT_FOUND. -->
+									<arguments>ci --include=dev</arguments>
 								</configuration>
 							</execution>
 							<execution>
