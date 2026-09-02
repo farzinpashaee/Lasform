@@ -41,9 +41,9 @@ class DevicePreferences private constructor(context: Context) {
         get() = prefs.getString(KEY_USER_ID, "") ?: ""
         set(value) = prefs.edit { putString(KEY_USER_ID, value) }
 
-    var updateFrequencyMinutes: Int
-        get() = prefs.getInt(KEY_UPDATE_FREQUENCY, DEFAULT_UPDATE_FREQUENCY)
-        set(value) = prefs.edit { putInt(KEY_UPDATE_FREQUENCY, value) }
+    var updateFrequencySeconds: Int
+        get() = prefs.getInt(KEY_UPDATE_FREQUENCY_SECONDS, DEFAULT_UPDATE_FREQUENCY_SECONDS)
+        set(value) = prefs.edit { putInt(KEY_UPDATE_FREQUENCY_SECONDS, value) }
 
     /** True once the user has saved device configuration at least once. */
     var isSetupComplete: Boolean
@@ -68,13 +68,15 @@ class DevicePreferences private constructor(context: Context) {
         private const val KEY_POWER_ON_TS = "power_on_ts"
         private const val KEY_SERVER_URL = "server_url"
         private const val KEY_USER_ID = "user_id"
-        private const val KEY_UPDATE_FREQUENCY = "update_frequency"
+        // Renamed from the old minute-based "update_frequency" key so an existing stored value
+        // (e.g. "10" meaning 10 minutes) never gets silently reinterpreted as 10 seconds.
+        private const val KEY_UPDATE_FREQUENCY_SECONDS = "update_frequency_seconds"
         private const val KEY_SETUP_COMPLETE = "setup_complete"
         private const val KEY_DEVICE_API_RESPONSE = "device_api_response"
 
         const val DEFAULT_DEVICE_NAME = "Device Name"
         const val DEFAULT_SERVER_URL_HINT = "http://localhost:8080"
-        const val DEFAULT_UPDATE_FREQUENCY = 10
+        const val DEFAULT_UPDATE_FREQUENCY_SECONDS = 10
 
         @Volatile
         private var instance: DevicePreferences? = null

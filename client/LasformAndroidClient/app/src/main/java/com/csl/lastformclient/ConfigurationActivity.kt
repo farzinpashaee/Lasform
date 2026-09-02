@@ -95,7 +95,7 @@ fun ConfigurationScreen(
     var deviceId by remember { mutableStateOf(devicePrefs.deviceId) }
     var userId by remember { mutableStateOf(devicePrefs.userId) }
     var serverUrl by remember { mutableStateOf(devicePrefs.serverUrl) }
-    var frequency by remember { mutableIntStateOf(devicePrefs.updateFrequencyMinutes) }
+    var frequency by remember { mutableIntStateOf(devicePrefs.updateFrequencySeconds) }
     var isValidating by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val isSaveEnabled = deviceId.isNotBlank() && serverUrl.isNotBlank() && !isValidating
@@ -146,7 +146,7 @@ fun ConfigurationScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                FieldLabel("Update Frequency (Minutes)")
+                FieldLabel("Update Frequency (Seconds)")
                 FrequencyStepper(
                     value = frequency,
                     onDecrement = { frequency = (frequency - 1).coerceAtLeast(MIN_FREQUENCY) },
@@ -178,7 +178,7 @@ fun ConfigurationScreen(
                                     devicePrefs.deviceId = deviceId
                                     devicePrefs.userId = userId
                                     devicePrefs.serverUrl = serverUrl
-                                    devicePrefs.updateFrequencyMinutes = frequency
+                                    devicePrefs.updateFrequencySeconds = frequency
                                     devicePrefs.deviceApiResponse = result.responseJson
                                     devicePrefs.isSetupComplete = true
                                     isValidating = false

@@ -128,7 +128,7 @@ fun MainScreen(
         }
     }
 
-    // While powered on, capture + queue an event every `updateFrequencyMinutes`, then try to flush
+    // While powered on, capture + queue an event every `updateFrequencySeconds`, then try to flush
     // the whole queue as a single list POST. Failed/offline attempts stay queued and are retried
     // together (with any newly captured events) on the next cycle. Stops as soon as powered off.
     //
@@ -168,7 +168,7 @@ fun MainScreen(
                 }
             }
 
-            delay(devicePrefs.updateFrequencyMinutes.coerceAtLeast(1) * 60_000L)
+            delay(devicePrefs.updateFrequencySeconds.coerceAtLeast(1) * 1_000L)
         }
     }
 
