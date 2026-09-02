@@ -13,7 +13,11 @@ sealed class DeviceValidationResult {
 
 /**
  * Validates a device ID against the LASTFORM server:
- * GET {server}/api/v1/devices/{deviceId}
+ * GET {server}/api/v1/devices/by-identifier/{deviceId}/validate
+ *
+ * This is the anonymous-friendly endpoint (device:validate_self) — the client has no credentials
+ * at setup time, and the plain GET /api/v1/devices/{id} lookup requires an authenticated
+ * device:read authority, which an unauthenticated device never has.
  */
 object DeviceApi {
     private const val CONNECT_TIMEOUT_MS = 10_000
@@ -25,7 +29,7 @@ object DeviceApi {
             try {
                 val base = serverUrl.trim().trimEnd('/')
                 val encodedId = URLEncoder.encode(deviceId.trim(), "UTF-8")
-                val url = URL("$base/api/v1/devices/$encodedId")
+                val url = URL("$base/api/v1/devices/by-identifier/$encodedId/validate")
 
                 connection = (url.openConnection() as HttpURLConnection).apply {
                     requestMethod = "GET"

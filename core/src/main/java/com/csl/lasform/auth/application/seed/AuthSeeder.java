@@ -193,7 +193,9 @@ public class AuthSeeder {
                         PermissionKey.REVIEW_CREATE, PermissionKey.REVIEW_VIEW, PermissionKey.REVIEW_DELETE_OWN));
         map.put(
                 SystemRoleName.ANONYMOUS,
-                List.of(PermissionKey.MAP_VIEW_PUBLIC, PermissionKey.REVIEW_VIEW, PermissionKey.GEOFENCE_READ));
+                List.of(
+                        PermissionKey.MAP_VIEW_PUBLIC, PermissionKey.REVIEW_VIEW, PermissionKey.GEOFENCE_READ,
+                        PermissionKey.DEVICE_VALIDATE_SELF));
 
         return map;
     }
