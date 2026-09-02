@@ -90,6 +90,17 @@ public class DeviceController extends AbstractCrudController<Device> {
         return deviceService.findByDeviceIdentifier(deviceIdentifier);
     }
 
+    // Lets an unauthenticated device (the Android client's setup screen, before it has any
+    // credentials) confirm its deviceIdentifier is registered, without exposing the full Device
+    // record the way getByIdentifier() above does. Same public-read-carve-out pattern as
+    // LocationController's map:view_public endpoints.
+    @GetMapping("/by-identifier/{deviceIdentifier}/validate")
+    @PreAuthorize("hasAuthority('device:read') or hasAuthority('device:validate_self')")
+    public DeviceValidationResponse validateByIdentifier(@PathVariable String deviceIdentifier) {
+        Device device = deviceService.findByDeviceIdentifier(deviceIdentifier);
+        return new DeviceValidationResponse(device.getDeviceIdentifier(), device.getStatus());
+    }
+
     /** Same permission as update() — regenerating is a write to the device, not a separate capability. */
     @PostMapping("/{id}/identifier/regenerate")
     @PreAuthorize("hasAuthority('device:write')")
