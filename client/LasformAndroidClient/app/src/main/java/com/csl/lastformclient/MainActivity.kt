@@ -150,7 +150,11 @@ fun MainScreen(
                 eventQueueStore.enqueue(event)
             }
 
-            val pendingEvents = eventQueueStore.getAll()
+            // Drops any point-less event still sitting in the on-disk queue from before this
+            // client-side fix (see EventQueueStore#pruneInvalid) — otherwise it would block every
+            // flush of this device's queue forever, since the server rejects the whole batch if any
+            // single event is invalid.
+            val pendingEvents = eventQueueStore.pruneInvalid { it.has("point") }
             if (pendingEvents.isNotEmpty()) {
                 val result = EventApi.postEvents(devicePrefs.serverUrl, pendingEvents)
                 lastEventTimestamp = System.currentTimeMillis()
