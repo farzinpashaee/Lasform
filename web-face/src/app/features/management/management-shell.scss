@@ -73,8 +73,11 @@ $radius: 8px;
 }
 
 /* Opens the off-canvas sidebar below $mobile-breakpoint (see .management-sidebar); above it the
-   sidebar is permanently visible in normal flow, so this toggle would have nothing to do. */
-.sidebar-toggle {
+   sidebar is permanently visible in normal flow, so this toggle would have nothing to do.
+   Qualified as .icon-button.sidebar-toggle (not just .sidebar-toggle) so this display: none
+   reliably beats .icon-button's own display: flex below regardless of source order — two equally-
+   specific single-class rules would otherwise let whichever comes later in the file win. */
+.icon-button.sidebar-toggle {
   display: none;
   flex: 0 0 auto;
 }
@@ -235,7 +238,7 @@ $mobile-breakpoint: 768px;
    content (see the min-width: 0 comment above) — collapse it into a hamburger-triggered off-canvas
    drawer instead, closed by default. */
 @media (max-width: $mobile-breakpoint) {
-  .sidebar-toggle {
+  .icon-button.sidebar-toggle {
     display: flex;
   }
 
