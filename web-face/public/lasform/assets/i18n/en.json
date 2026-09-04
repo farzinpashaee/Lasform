@@ -122,6 +122,7 @@
   },
   "management": {
     "backLabel": "Management",
+    "toggleMenu": "Toggle menu",
     "settingsGroup": "Settings",
     "navGeneralSettings": "General Settings",
     "navMapProvider": "Map Provider",
