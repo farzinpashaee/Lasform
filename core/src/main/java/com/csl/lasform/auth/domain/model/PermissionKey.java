@@ -10,6 +10,7 @@ public enum PermissionKey {
     DEVICE_READ("device:read", "View devices"),
     DEVICE_WRITE("device:write", "Create and update devices"),
     DEVICE_DELETE("device:delete", "Delete devices"),
+    DEVICE_VALIDATE_SELF("device:validate_self", "Confirm a device identifier is registered, without authenticating"),
 
     LOCATION_READ("location:read", "View locations"),
     LOCATION_WRITE("location:write", "Create and update locations"),

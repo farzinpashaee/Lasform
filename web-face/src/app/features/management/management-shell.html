@@ -1,9 +1,20 @@
 <div class="management-page" [class.dark-theme]="darkMode()">
   <header class="management-header">
-    <button type="button" class="back-button" (click)="backToMap()">
-      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-      <span>{{ 'management.backLabel' | transloco }}</span>
-    </button>
+    <div class="header-start">
+      <button
+        type="button"
+        class="icon-button round sidebar-toggle"
+        [attr.aria-label]="'management.toggleMenu' | transloco"
+        [attr.aria-expanded]="sidebarOpen()"
+        (click)="toggleSidebar()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <button type="button" class="back-button" (click)="backToMap()">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+        <span>{{ 'management.backLabel' | transloco }}</span>
+      </button>
+    </div>
 
     <div class="header-actions">
       @if (featureFlags.isEnabled(FEATURE_FLAGS.darkMode)) {
@@ -23,11 +34,16 @@
   </header>
 
   <div class="management-body">
-    <nav class="management-sidebar">
+    @if (sidebarOpen()) {
+      <div class="sidebar-backdrop" (click)="closeSidebar()" (contextmenu)="closeSidebar()"></div>
+    }
+    <nav class="management-sidebar" [class.open]="sidebarOpen()">
       <ul class="nav-list">
         @for (link of navLinks; track link.path) {
           <li *hasPermission="link.permission ? [link.permission] : []">
-            <a class="nav-link" [routerLink]="link.path" routerLinkActive="active">{{ link.labelKey | transloco }}</a>
+            <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" (click)="closeSidebar()">
+              {{ link.labelKey | transloco }}
+            </a>
           </li>
         }
       </ul>
@@ -49,7 +65,7 @@
             <ul class="nav-list">
               @for (child of group.children; track child.path) {
                 <li *hasPermission="child.permission ? [child.permission] : []">
-                  <a class="nav-link nav-link-child" [routerLink]="child.path" routerLinkActive="active">
+                  <a class="nav-link nav-link-child" [routerLink]="child.path" routerLinkActive="active" (click)="closeSidebar()">
                     {{ child.labelKey | transloco }}
                   </a>
                 </li>

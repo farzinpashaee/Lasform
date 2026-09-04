@@ -1,9 +1,9 @@
 package com.csl.lastformclient
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
-import android.os.BatteryManager
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -55,12 +55,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.csl.lastformclient.data.DeviceInfoService
 import com.csl.lastformclient.data.DevicePreferences
-import com.csl.lastformclient.data.EventApi
-import com.csl.lastformclient.data.EventPostResult
-import com.csl.lastformclient.data.EventQueueStore
 import com.csl.lastformclient.data.LocationProvider
+import com.csl.lastformclient.data.TrackingStatus
+import com.csl.lastformclient.service.LocationTrackingService
 import com.csl.lastformclient.ui.theme.CardBackground
 import com.csl.lastformclient.ui.theme.LastformClientTheme
 import com.csl.lastformclient.ui.theme.MenuIconTint
@@ -98,15 +98,11 @@ fun MainScreen(
 ) {
     val context = LocalContext.current
     val locationProvider = remember { LocationProvider(context) }
-    val eventQueueStore = remember { EventQueueStore.getInstance(context) }
     var isOn by remember { mutableStateOf(devicePrefs.isOn) }
     var uptimeSeconds by remember { mutableStateOf(0L) }
     var deviceName by remember { mutableStateOf(deviceInfoService.getDeviceName()) }
     var showPayloadDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
-    var lastEventSuccess by remember { mutableStateOf<Boolean?>(null) }
-    var lastEventTimestamp by remember { mutableStateOf<Long?>(null) }
-    var pendingEventCount by remember { mutableStateOf(0) }
 
     // Re-read config/name after returning from Device Configuration, since it may have changed.
     val configurationLauncher = rememberLauncherForActivityResult(
@@ -120,41 +116,31 @@ fun MainScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { /* Event posting proceeds either way; location fields are just omitted if denied. */ }
 
+    // Only affects whether the ongoing tracking notification can show — LocationTrackingService
+    // runs and posts events regardless of this being granted or denied.
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { }
+
+    // The actual capture-and-post loop runs in LocationTrackingService (a foreground service), not
+    // here — a plain Composable LaunchedEffect gets throttled/suspended by Android's background
+    // execution limits as soon as this Activity stops being the foreground app (screen off,
+    // backgrounded), which was why updates used to stall until the app was reopened. If the app
+    // process was killed and relaunched while devicePrefs.isOn was still true from a prior
+    // session, the service was killed along with it — restart it here so tracking actually resumes
+    // instead of just showing a stale "on" toggle. Starting it when already running is a no-op
+    // (LocationTrackingService#onStartCommand only launches a new loop if one isn't already active).
+    LaunchedEffect(Unit) {
+        if (devicePrefs.isOn) {
+            ContextCompat.startForegroundService(context, Intent(context, LocationTrackingService::class.java))
+        }
+    }
+
     LaunchedEffect(isOn) {
         while (isOn) {
             val elapsedMs = System.currentTimeMillis() - devicePrefs.powerOnTimestamp
             uptimeSeconds = (elapsedMs / 1000).coerceAtLeast(0)
             delay(1000)
-        }
-    }
-
-    // While powered on, capture + queue an event every `updateFrequencyMinutes`, then try to flush
-    // the whole queue as a single list POST. Failed/offline attempts stay queued and are retried
-    // together (with any newly captured events) on the next cycle. Stops as soon as powered off.
-    LaunchedEffect(isOn) {
-        while (isOn) {
-            val location = locationProvider.getCurrentLocation()
-            val event = EventApi.buildEventPayload(
-                deviceId = devicePrefs.deviceId,
-                userId = devicePrefs.userId,
-                location = location,
-                batteryLevel = readBatteryLevel(context)
-            )
-            eventQueueStore.enqueue(event)
-
-            val pendingEvents = eventQueueStore.getAll()
-            val result = EventApi.postEvents(devicePrefs.serverUrl, pendingEvents)
-            lastEventTimestamp = System.currentTimeMillis()
-            if (result is EventPostResult.Success) {
-                eventQueueStore.clear()
-                lastEventSuccess = true
-                pendingEventCount = 0
-            } else {
-                lastEventSuccess = false
-                pendingEventCount = pendingEvents.size
-            }
-
-            delay(devicePrefs.updateFrequencyMinutes.coerceAtLeast(1) * 60_000L)
         }
     }
 
@@ -172,16 +158,28 @@ fun MainScreen(
                 deviceName = deviceName,
                 isOn = isOn,
                 uptimeSeconds = uptimeSeconds,
-                lastEventSuccess = lastEventSuccess,
-                lastEventTimestamp = lastEventTimestamp,
-                pendingEventCount = pendingEventCount,
+                lastEventSuccess = TrackingStatus.lastEventSuccess,
+                lastEventTimestamp = TrackingStatus.lastEventTimestamp,
+                pendingEventCount = TrackingStatus.pendingEventCount,
                 onToggle = {
                     val newState = !isOn
                     devicePrefs.setPowerState(newState)
                     isOn = newState
                     uptimeSeconds = 0L
-                    if (newState && !locationProvider.hasLocationPermission()) {
-                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    val serviceIntent = Intent(context, LocationTrackingService::class.java)
+                    if (newState) {
+                        if (!locationProvider.hasLocationPermission()) {
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                            PackageManager.PERMISSION_GRANTED
+                        ) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        ContextCompat.startForegroundService(context, serviceIntent)
+                    } else {
+                        context.stopService(serviceIntent)
                     }
                 }
             )
@@ -384,11 +382,6 @@ private fun InfoDialog(title: String, message: String, onDismiss: () -> Unit) {
         title = { Text(title) },
         text = { Text(message) }
     )
-}
-
-private fun readBatteryLevel(context: Context): Int? {
-    val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-    return batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)?.takeIf { it in 0..100 }
 }
 
 private fun formatUptime(totalSeconds: Long): String {

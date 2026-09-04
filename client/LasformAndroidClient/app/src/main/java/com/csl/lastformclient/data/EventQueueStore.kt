@@ -35,6 +35,23 @@ class EventQueueStore private constructor(context: Context) {
         prefs.edit { remove(KEY_EVENTS) }
     }
 
+    /**
+     * Permanently drops queued events that fail [isValid] and rewrites the queue without them.
+     * Needed because the server validates a flush's whole event array atomically — a single
+     * malformed event queued before a client-side validation fix (e.g. one missing its required
+     * "point", see EventApi) would otherwise block every future flush forever, since a failed POST
+     * never clears the queue. Returns the surviving, still-pending events.
+     */
+    @Synchronized
+    fun pruneInvalid(isValid: (JSONObject) -> Boolean): List<JSONObject> {
+        val events = readAll()
+        val valid = events.filter(isValid)
+        if (valid.size != events.size) {
+            writeAll(valid)
+        }
+        return valid
+    }
+
     private fun readAll(): List<JSONObject> {
         val raw = prefs.getString(KEY_EVENTS, null) ?: return emptyList()
         return try {

@@ -24,6 +24,12 @@ $radius: 8px;
   position: relative;
   width: 100%;
   height: 100vh;
+  /* 100vh is the *largest* possible mobile-browser viewport (address bar hidden), taller than
+     what's actually on screen once that bar is showing — so bottom-anchored controls
+     (.bottom-right's zoom buttons) end up positioned below the visible area, under the browser's
+     own UI. 100dvh tracks the real visible viewport instead; the 100vh line above is kept as a
+     fallback for browsers that don't support dvh (they simply ignore this override). */
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -224,6 +230,24 @@ $radius: 8px;
   position: relative;
 }
 
+/* Collapses the panel down to just its title bar (.details-top-actions + .details-header) —
+   toggled by the minimize button next to close, mainly so the panel can be shrunk out of the way
+   on mobile, where its full height can otherwise cover most of the map in live mode. */
+.details-panel.minimized {
+  .details-cover-image,
+  .details-top-bar,
+  .details-tag-row,
+  .details-tabs,
+  .overview-panel,
+  .reviews-panel {
+    display: none;
+  }
+
+  .details-header {
+    padding-bottom: 12px;
+  }
+}
+
 /* Full-bleed — .results-card's own overflow: hidden clips this to its rounded top corners,
    so no border-radius is needed here. .details-top-actions (position: absolute, z-index: 10)
    floats over it same as it would over any other panel content. */
@@ -375,10 +399,11 @@ $radius: 8px;
   align-items: center;
   gap: 12px;
   /* Right padding clears the floating .details-top-actions pill so a long title wraps before
-     reaching it instead of rendering underneath it. Top padding keeps a bit of breathing room
-     above the title now that the old dedicated top-bar row no longer reserves any — not all
-     of that space was useless, just most of it. */
-  padding: 10px 72px 0 16px;
+     reaching it instead of rendering underneath it — sized for its widest case, up to 4 icon
+     buttons (entity menu, live toggle, minimize, close). Top padding keeps a bit of breathing
+     room above the title now that the old dedicated top-bar row no longer reserves any — not
+     all of that space was useless, just most of it. */
+  padding: 10px 96px 0 16px;
 }
 
 .details-header-text {
