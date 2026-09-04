@@ -37,9 +37,11 @@
   "map": {
     "searchPlaceholder": "Search Lasform Maps",
     "searching": "Searching…",
+    "searchResultFor": "Search result for \"{{query}}\"",
     "noResults": "No results for \"{{query}}\"",
     "searchFailed": "Search failed. Please try again.",
     "backToResults": "Back to results",
+    "closeSearch": "Close search",
     "myLocation": "My location",
     "satelliteView": "Satellite view",
     "mapView": "Map view",

@@ -77,6 +77,9 @@ export interface MapProvider {
   /** Opens the tooltip/info window for the marker with the given id, if it's currently on the map. */
   openMarkerPopup(id: string): void;
 
+  /** Closes the tooltip/info window for the marker with the given id, if it's currently open. */
+  closeMarkerPopup(id: string): void;
+
   /** Moves an existing marker to a new position, if one exists under this id. Never adds a marker. */
   moveMarker(id: string, lat: number, lng: number): void;
 

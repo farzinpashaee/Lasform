@@ -113,6 +113,13 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.infoWindow.open(this.map, entry.marker);
   }
 
+  // id is unused: this.infoWindow is a single instance shared across every marker (see
+  // openMarkerPopup), so closing it always closes whichever marker's popup is currently open —
+  // the id param exists only to match MapProvider's per-marker-id shape.
+  closeMarkerPopup(_id: string): void {
+    this.infoWindow?.close();
+  }
+
   moveMarker(id: string, lat: number, lng: number): void {
     const entry = this.markersById.get(id);
     if (!entry) {

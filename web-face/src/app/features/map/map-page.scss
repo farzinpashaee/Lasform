@@ -144,9 +144,31 @@ $radius: 8px;
   overflow: hidden;
 }
 
+/* Only shown while looking at the results list itself (searching/error/empty/list — see
+   closeSearch()'s doc comment in map-page.ts for why not the details sub-view too). A real row in
+   normal flow, not floating over the content below like .details-top-actions does — unlike that
+   row's close button, this one has label text to share the row with, so there's no "wastes a
+   whole row for one small icon" downside to justify floating it instead. Sits above (rather than
+   inside) the scrollable .results-status/.results-list, so it stays in view — not scrolled past —
+   while those scroll beneath it. */
+.results-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 8px 10px 20px;
+}
+
+.results-list-header-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .results-status {
-  padding: 16px;
+  padding: 16px 20px;
   font-size: 14px;
   color: var(--text-secondary);
 }
@@ -155,8 +177,14 @@ $radius: 8px;
   color: var(--danger);
 }
 
+/* align-items: flex-start overrides flex's default `stretch`, which would otherwise force both
+   slides (the results list and the details panel — side-by-side flex items in the same row, only
+   one ever visible, scrolled off via transform rather than removed) to the same cross-axis size:
+   whichever is taller. That alone isn't the full fix, though — see .results-slide below for why
+   the container itself still needs to shrink to whichever slide is actually showing. */
 .results-slider {
   display: flex;
+  align-items: flex-start;
   width: 200%;
   transition: transform 0.25s ease;
   transform: translateX(0);
@@ -169,6 +197,22 @@ $radius: 8px;
 .results-slide {
   flex: 0 0 50%;
   min-width: 0;
+  overflow: hidden;
+}
+
+/* A flex row's own height is the max of its children's, regardless of align-items — so even with
+   align-items: flex-start above (which stops the *shorter* slide being stretched), .results-card
+   was still exactly as tall as the *taller* slide even while showing the shorter one, since both
+   are always present (this is a transform-based slide, not a conditionally-rendered one) and
+   "not currently visible" isn't the same as "not contributing to the row's height". A long,
+   scrollable results list (max-height: 60vh — easily several hundred px for 15-20+ results) left
+   that much blank space below the details panel's own (usually much shorter, especially
+   minimized) content — the reported bug. Collapsing whichever slide ISN'T showing to zero height
+   (its content is clipped by .results-slide's own overflow: hidden above, and it's already
+   scrolled off-screen anyway) means the row's height is always just the visible slide's own. */
+.results-slider:not(.showing-details) .results-slide:last-child,
+.results-slider.showing-details .results-slide:first-child {
+  height: 0;
 }
 
 @mixin thin-scrollbar {
@@ -210,6 +254,9 @@ $radius: 8px;
   list-style: none;
   margin: 0;
   padding: 4px 0;
+  /* .results-list-header, right above this in the DOM, is what keeps the header out of this
+     scrolling area — see that rule's doc comment — so this max-height is the list's own, not
+     shared with the header (which isn't a sibling inside here). */
   max-height: 60vh;
   overflow-y: auto;
   @include thin-scrollbar;
@@ -230,12 +277,14 @@ $radius: 8px;
   position: relative;
 }
 
-/* Collapses the panel down to just its title bar (.details-top-actions + .details-header) —
-   toggled by the minimize button next to close, mainly so the panel can be shrunk out of the way
-   on mobile, where its full height can otherwise cover most of the map in live mode. */
+/* Collapses the panel down to just its title bar (.details-top-bar when present, plus
+   .details-top-actions + .details-header) — toggled by the minimize button next to close, mainly
+   so the panel can be shrunk out of the way on mobile, where its full height can otherwise cover
+   most of the map in live mode. .details-top-bar (the "back to results" link, shown only when
+   reached via search — see hasSearched() in map-page.html) stays visible: minimizing shouldn't
+   strand the user without a way back to their search results. */
 .details-panel.minimized {
   .details-cover-image,
-  .details-top-bar,
   .details-tag-row,
   .details-tabs,
   .overview-panel,
@@ -299,7 +348,18 @@ $radius: 8px;
   gap: 4px;
 }
 
+/* position: relative + a z-index above .entity-menu-backdrop's (900) — that backdrop is a
+   `position: fixed; inset: 0;` sibling-ish descendant (nested under .entity-menu-wrapper, one of
+   these buttons' siblings within .details-top-actions) that catches "click outside closes the
+   menu". A plain `z-index` on the container above it does NOT help: these buttons are
+   `position: static` by default, so per the CSS stacking spec they paint *before* any positioned
+   descendant with z-index >= 0 in the same context — including the backdrop — regardless of the
+   container's own z-index. Without their own position + z-index here to opt into that same
+   compare-by-z-index step, opening the entity menu then clicking any of these — minimize, close,
+   the live toggle — silently hit the backdrop instead and just closed the menu. */
 .icon-action-button {
+  position: relative;
+  z-index: 903;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -334,10 +394,9 @@ $radius: 8px;
 }
 
 /* Collapsed: just the plain "..." icon button (via .icon-action-button). Open: the trigger stays
-   highlighted and the two action icons float below it as an absolutely-positioned pill — taken
-   out of normal flow so opening the menu never stretches/pushes the panel content below it. */
+   highlighted and the two action icons float below it as a fixed-position pill — taken out of
+   normal flow so opening the menu never stretches/pushes the panel content below it. */
 .entity-menu-wrapper {
-  position: relative;
   border-radius: 999px;
 }
 
@@ -355,10 +414,13 @@ $radius: 8px;
   z-index: 900;
 }
 
+/* `position: fixed` (viewport-relative, via the top/left inline styles map-page.ts computes from
+   the trigger button's own position — see toggleEntityMenu()) rather than `position: absolute`
+   anchored to .entity-menu-wrapper: .results-card, several ancestors up, is `overflow: hidden`
+   (needed for the search/details slide transition — see .results-slider), which would otherwise
+   clip this dropdown whenever the details panel is short, e.g. minimized. */
 .entity-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
+  position: fixed;
   z-index: 901;
   display: flex;
   flex-direction: column;
