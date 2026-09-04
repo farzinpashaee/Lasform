@@ -97,8 +97,15 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   private readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
 
-  /** Locations currently shown as markers (i.e. within the map's visible bounds) before any search; looked up on marker click when hasSearched() is false. */
-  private visibleLocationHits: SearchHit[] = [];
+  /**
+   * Every Location marker loaded so far, keyed by id — accumulates as the user pans/zooms
+   * (each within-bounds fetch merges its results in) rather than being replaced by each fetch,
+   * so a marker already on the map never disappears just because it scrolled out of view; a
+   * newly-visited area's markers get added the first time it comes into view. Looked up on
+   * marker click when hasSearched() is false — unrelated to searchResults(), the separate,
+   * fully-replaced marker set search owns instead (see renderSearchMarkers()).
+   */
+  private readonly loadedLocationsById = new Map<string, SearchHit>();
   /** Debounced so a rapid pan/zoom sequence doesn't fire a within-bounds request per intermediate step. */
   private readonly boundsChanged$ = new Subject<MapBounds>();
   private boundsChangedSubscription?: Subscription;
@@ -421,10 +428,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Loads only the Locations within the given (or, if omitted, the map's current) bounds — the
-   * marker set is re-fetched every time the visible area changes instead of loading the whole
-   * collection once, so it scales independently of how many locations exist overall. See
-   * onBoundsChanged() below for what re-triggers this on pan/zoom.
+   * Fetches only the Locations within the given (or, if omitted, the map's current) bounds and
+   * merges them into loadedLocationsById — a newly-visited area's markers get added, but nothing
+   * already loaded is dropped just because it's no longer within bounds (see that field's doc
+   * comment). Re-fetching only the visible area on every pan/zoom, rather than the whole
+   * collection once, is what lets this scale independently of how many locations exist overall.
+   * See onBoundsChanged() below for what re-triggers this on pan/zoom.
    */
   private loadLocationMarkers(bounds?: MapBounds): void {
     const effectiveBounds = bounds ?? this.mapProvider.getBounds();
@@ -434,12 +443,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.locationService.findWithinBounds(effectiveBounds).subscribe({
       next: (locations) => {
         this.mapAccessDenied.set(false);
-        this.visibleLocationHits = locations.map((location) => ({ type: 'LOCATION' as const, data: location }));
-        const markers = locations.map((location) => {
-          const [lng, lat] = location.point.coordinates;
-          return { id: location.id, lat, lng, title: location.name };
-        });
-        this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
+        for (const location of locations) {
+          if (location.id) {
+            this.loadedLocationsById.set(location.id, { type: 'LOCATION', data: location });
+          }
+        }
+        this.renderLoadedLocationMarkers();
       },
       error: (error: unknown) => {
         if (error instanceof HttpErrorResponse && error.status === 401) {
@@ -447,6 +456,16 @@ export class MapPage implements AfterViewInit, OnDestroy {
         }
       },
     });
+  }
+
+  /** Renders every marker in loadedLocationsById — the full accumulated set, not just the latest fetch. */
+  private renderLoadedLocationMarkers(): void {
+    const markers = [...this.loadedLocationsById.values()].map((hit) => {
+      const location = hit.data as Location;
+      const [lng, lat] = location.point.coordinates;
+      return { id: location.id, lat, lng, title: location.name };
+    });
+    this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
   }
 
   private loadCategories(): void {
@@ -1127,6 +1146,12 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.closeEditModal();
     this.selectedResult.set(hit);
     this.searchResults.update((results) => results.map((r) => (r.data.id === hit.data.id ? hit : r)));
+    if (hit.type === 'LOCATION' && hit.data.id) {
+      // Applied directly (not just left to the next within-bounds fetch to pick up) so an edit
+      // that moves the point elsewhere still updates its marker immediately, regardless of
+      // whether that new position happens to fall inside the map's current view.
+      this.loadedLocationsById.set(hit.data.id, hit);
+    }
     this.refreshMapMarkers();
   }
 
@@ -1161,7 +1186,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
         this.closeDeleteConfirm();
         this.closeDetails();
         this.searchResults.update((results) => results.filter((r) => r.data.id !== id));
-        this.visibleLocationHits = this.visibleLocationHits.filter((h) => h.data.id !== id);
+        this.loadedLocationsById.delete(id);
         this.refreshMapMarkers();
       },
       error: () => {
@@ -1171,19 +1196,22 @@ export class MapPage implements AfterViewInit, OnDestroy {
     });
   }
 
-  /** Re-renders whichever marker set is currently shown (search results, or all locations) after an edit/delete. */
+  /**
+   * Re-renders whichever marker set is currently shown (search results, or the accumulated
+   * loadedLocationsById) after an edit/delete — a local re-render, not a network fetch, since
+   * the caller has already applied the change to whichever of those two the edit/delete affected.
+   */
   private refreshMapMarkers(): void {
     if (this.hasSearched()) {
       this.renderSearchMarkers(this.searchResults());
     } else {
-      this.loadLocationMarkers();
+      this.renderLoadedLocationMarkers();
     }
     this.startGlobalLive();
   }
 
   private onMarkerClicked(id: string): void {
-    const source = this.hasSearched() ? this.searchResults() : this.visibleLocationHits;
-    const hit = source.find((candidate) => candidate.data.id === id);
+    const hit = this.hasSearched() ? this.searchResults().find((candidate) => candidate.data.id === id) : this.loadedLocationsById.get(id);
     if (hit) {
       this.selectedGeofence.set(null);
       this.selectedResult.set(hit);
