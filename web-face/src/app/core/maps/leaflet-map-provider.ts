@@ -289,6 +289,10 @@ private map?: L.Map;
     }
   }
 
+  closeMarkerPopup(id: string): void {
+    this.markersById.get(id)?.closePopup();
+  }
+
   moveMarker(id: string, lat: number, lng: number): void {
     // setLatLng alone is enough even when clustered: MarkerClusterGroup binds its own 'move'
     // handler to every child marker and re-buckets it internally — no manual remove/re-add.

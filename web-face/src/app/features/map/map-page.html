@@ -185,38 +185,15 @@
           <div class="details-top-actions">
             @if (canEditHit(hit)) {
               <div class="entity-menu-wrapper" [class.open]="entityMenuOpen()">
-                @if (entityMenuOpen()) {
-                  <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
-                }
                 <button
                   type="button"
                   class="icon-action-button entity-menu-trigger"
                   [attr.aria-label]="'common.moreActions' | transloco"
                   [attr.aria-expanded]="entityMenuOpen()"
-                  (click)="toggleEntityMenu()"
+                  (click)="toggleEntityMenu($event, openEditModalFn(hit), openDeleteConfirmFn(hit))"
                 >
                   <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
                 </button>
-                @if (entityMenuOpen()) {
-                  <div class="entity-menu">
-                    <button
-                      type="button"
-                      class="entity-menu-item"
-                      [attr.aria-label]="'common.edit' | transloco"
-                      (click)="openEditModal(hit); closeEntityMenu()"
-                    >
-                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="entity-menu-item entity-menu-item-danger"
-                      [attr.aria-label]="'common.delete' | transloco"
-                      (click)="openDeleteConfirm(hit); closeEntityMenu()"
-                    >
-                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-                    </button>
-                  </div>
-                }
               </div>
             }
             @if (hit.type === 'DEVICE' && authService.isAuthenticated()) {
@@ -342,38 +319,15 @@
           <div class="details-top-actions">
             @if (authService.hasPermission('geofence:write')) {
               <div class="entity-menu-wrapper" [class.open]="entityMenuOpen()">
-                @if (entityMenuOpen()) {
-                  <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
-                }
                 <button
                   type="button"
                   class="icon-action-button entity-menu-trigger"
                   [attr.aria-label]="'common.moreActions' | transloco"
                   [attr.aria-expanded]="entityMenuOpen()"
-                  (click)="toggleEntityMenu()"
+                  (click)="toggleEntityMenu($event, editGeofenceFromDetailsFn(geofence), openDeleteConfirmGeofenceFn(geofence))"
                 >
                   <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
                 </button>
-                @if (entityMenuOpen()) {
-                  <div class="entity-menu">
-                    <button
-                      type="button"
-                      class="entity-menu-item"
-                      [attr.aria-label]="'common.edit' | transloco"
-                      (click)="editGeofenceFromDetails(geofence); closeEntityMenu()"
-                    >
-                      <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="entity-menu-item entity-menu-item-danger"
-                      [attr.aria-label]="'common.delete' | transloco"
-                      (click)="openDeleteConfirmGeofence(geofence); closeEntityMenu()"
-                    >
-                      <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-                    </button>
-                  </div>
-                }
               </div>
             }
             <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeGeofenceDetails()">
@@ -429,6 +383,34 @@
       <app-account-menu />
     </div>
   </div>
+
+  <!--
+    The one shared entity-menu dropdown for every trigger button in .details-top-actions (both
+    the location/device and geofence details panels) — deliberately NOT nested inside
+    .results-slider next to its trigger the way the rest of that row is. .results-slider carries a
+    permanent `transform` for its results/details slide animation, and per the CSS spec a
+    `transform` on an ancestor becomes the containing block for any `position: fixed` descendant —
+    silently defeating this dropdown's `position: fixed` (see entityMenuPosition's doc comment in
+    map-page.ts for why it needs to be fixed at all: escaping .results-card's `overflow: hidden`).
+    Being all the way out here, with actions captured into entityMenuActions rather than reading
+    `hit`/`geofence` from a template context it no longer has, is what actually escapes that.
+  -->
+  @if (entityMenuOpen()) {
+    <div class="entity-menu-backdrop" (click)="closeEntityMenu()" (contextmenu)="closeEntityMenu()"></div>
+    <div class="entity-menu" [style.top.px]="entityMenuPosition()?.top" [style.left.px]="entityMenuPosition()?.left">
+      <button type="button" class="entity-menu-item" [attr.aria-label]="'common.edit' | transloco" (click)="entityMenuActions()?.onEdit(); closeEntityMenu()">
+        <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+      </button>
+      <button
+        type="button"
+        class="entity-menu-item entity-menu-item-danger"
+        [attr.aria-label]="'common.delete' | transloco"
+        (click)="entityMenuActions()?.onDelete(); closeEntityMenu()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+      </button>
+    </div>
+  }
 
   <div class="bottom-right controls">
     <button

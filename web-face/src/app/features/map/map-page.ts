@@ -139,6 +139,28 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly coverImageUrl = signal<string | null>(null);
   protected readonly selectedGeofence = signal<Geofence | null>(null);
   protected readonly entityMenuOpen = signal(false);
+  /**
+   * Viewport coordinates for the open entity-menu dropdown, computed from its trigger button's
+   * position — see toggleEntityMenu(). The dropdown renders `position: fixed` at these
+   * coordinates instead of being anchored via CSS `position: absolute` relative to the trigger,
+   * so it isn't clipped by .results-card's `overflow: hidden` (needed elsewhere, for the
+   * search/details slide transition) when the details panel is short — e.g. minimized.
+   */
+  protected readonly entityMenuPosition = signal<{ top: number; left: number } | null>(null);
+  /**
+   * The edit/delete actions for whichever entity the open entity-menu is for — set by
+   * toggleEntityMenu(), read by the single shared dropdown markup at the root of the template
+   * (see map-page.html, right after the closing </div> of .top-bar). That markup has to live
+   * there, outside .results-slider, rather than inline next to each trigger button the way the
+   * rest of .details-top-actions does: .results-slider has a permanent `transform` (for the
+   * results/details slide animation) which — per the CSS spec — makes it the containing block for
+   * any `position: fixed` descendant, silently defeating the dropdown's whole reason for being
+   * `position: fixed` in the first place (escaping .results-card's `overflow: hidden`; see
+   * entityMenuPosition's doc comment above). Being outside .results-slider entirely is what
+   * actually avoids that, at the cost of not having direct template access to `hit`/`geofence`
+   * anymore — hence capturing the two callbacks up front instead.
+   */
+  protected readonly entityMenuActions = signal<{ onEdit: () => void; onDelete: () => void } | null>(null);
   /** Collapses the open details panel down to just its title bar — see toggleDetailsMinimized().
    *  Mainly for mobile, where the full panel can cover most of the map in live mode. */
   protected readonly detailsMinimized = signal(false);
@@ -400,12 +422,53 @@ export class MapPage implements AfterViewInit, OnDestroy {
     return this.authService.hasPermission(hit.type === 'LOCATION' ? 'location:write' : 'device:write');
   }
 
-  protected toggleEntityMenu(): void {
-    this.entityMenuOpen.update((open) => !open);
+  // The next four just curry hit/geofence into a () => void for toggleEntityMenu's onEdit/onDelete
+  // params — template expressions can't write an arrow function literal directly (e.g.
+  // `() => openEditModal(hit)` isn't valid Angular template syntax), so this is the call site's
+  // only way to hand over "do this, later, with this specific hit" without also giving the
+  // now-offsite shared dropdown direct template access to `hit`/`geofence` (it has none — see
+  // entityMenuActions' doc comment).
+  protected openEditModalFn(hit: SearchHit): () => void {
+    return () => this.openEditModal(hit);
+  }
+
+  protected openDeleteConfirmFn(hit: SearchHit): () => void {
+    return () => this.openDeleteConfirm(hit);
+  }
+
+  protected editGeofenceFromDetailsFn(geofence: Geofence): () => void {
+    return () => this.editGeofenceFromDetails(geofence);
+  }
+
+  protected openDeleteConfirmGeofenceFn(geofence: Geofence): () => void {
+    return () => this.openDeleteConfirmGeofence(geofence);
+  }
+
+  /**
+   * event.currentTarget is the trigger button — its position drives entityMenuPosition (see doc
+   * comment there). onEdit/onDelete are captured now (into entityMenuActions), rather than the
+   * shared dropdown markup calling back into `hit`/`geofence` directly, because that markup lives
+   * outside .results-slider and so has no template access to either — see entityMenuActions' doc
+   * comment for why it has to live out there.
+   */
+  protected toggleEntityMenu(event: MouseEvent, onEdit: () => void, onDelete: () => void): void {
+    if (this.entityMenuOpen()) {
+      this.closeEntityMenu();
+      return;
+    }
+    const trigger = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    // Right-edge-aligned under the trigger, matching the old CSS `right: 0` anchoring — the
+    // dropdown and trigger are both a plain 28px icon-button-wide column, so same-left-edge
+    // achieves the same alignment without needing the dropdown's own rendered width up front.
+    this.entityMenuPosition.set({ top: trigger.bottom + 4, left: trigger.left });
+    this.entityMenuActions.set({ onEdit, onDelete });
+    this.entityMenuOpen.set(true);
   }
 
   protected closeEntityMenu(): void {
     this.entityMenuOpen.set(false);
+    this.entityMenuPosition.set(null);
+    this.entityMenuActions.set(null);
   }
 
   /** Tag chips shown under the name in the details panel. */
@@ -1065,8 +1128,24 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.stopDeviceLive();
   }
 
+  /**
+   * Minimizing is meant to shrink the details panel out of the way so more of the map is visible
+   * (see the CSS's doc comment on .details-panel.minimized) — leaving the selected marker's popup
+   * bubble open would defeat that, covering map area with a second, redundant copy of the same
+   * name shown in the (still-visible, even minimized) panel title. Restored on expand so it's
+   * back exactly as selectResult() first left it.
+   */
   protected toggleDetailsMinimized(): void {
     this.detailsMinimized.update((minimized) => !minimized);
+    const id = this.selectedResult()?.data.id;
+    if (!id) {
+      return;
+    }
+    if (this.detailsMinimized()) {
+      this.mapProvider.closeMarkerPopup(id);
+    } else {
+      this.mapProvider.openMarkerPopup(id);
+    }
   }
 
   protected selectDetailsTab(tab: DetailsTab, hit: SearchHit): void {
