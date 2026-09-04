@@ -52,6 +52,8 @@
     "stopLive": "Stop live tracking",
     "showDeviceLive": "Show live",
     "stopDeviceLive": "Stop live",
+    "minimizeDetails": "Minimize",
+    "expandDetails": "Expand",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "centerHere": "Center here",
