@@ -111,6 +111,14 @@
               <ng-container [ngTemplateOutlet]="geofenceDetailsBody" [ngTemplateOutletContext]="{ geofence }" />
             </div>
           } @else if (hasSearched()) {
+            @if (selectedResult() === null) {
+              <div class="results-list-header">
+                <span class="results-list-header-text">{{ 'map.searchResultFor' | transloco: { query: searchQuery() } }}</span>
+                <button type="button" class="icon-action-button" [attr.aria-label]="'map.closeSearch' | transloco" (click)="closeSearch()">
+                  <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                </button>
+              </div>
+            }
             @if (searching()) {
               <div class="results-status">{{ 'map.searching' | transloco }}</div>
             } @else if (searchError()) {

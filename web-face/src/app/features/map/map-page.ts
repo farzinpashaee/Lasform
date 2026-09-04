@@ -58,6 +58,10 @@ const MAX_DEVICE_TRAIL_POINTS = 10;
 
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
 
+/** The map's view on load — also where closeSearch() returns it to. */
+const DEFAULT_MAP_CENTER = { lat: 43.8628, lng: -79.4308 };
+const DEFAULT_MAP_ZOOM = 14;
+
 interface GeofenceFormTarget {
   mode: 'create' | 'edit-shape';
   geofenceId?: string;
@@ -257,8 +261,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
-      center: { lat: 43.8628, lng: -79.4308 },
-      zoom: 14,
+      center: DEFAULT_MAP_CENTER,
+      zoom: DEFAULT_MAP_ZOOM,
     });
 
     this.loadLocationMarkers();
@@ -1101,6 +1105,25 @@ export class MapPage implements AfterViewInit, OnDestroy {
         this.searchError.set(this.transloco.translate('map.searchFailed'));
       },
     });
+  }
+
+  /**
+   * Dismisses the search results card entirely — clears the query and results, and returns the
+   * map to its default view/markers, as if the app had just been opened. Only shown while looking
+   * at the results list itself (searching/error/empty/list — not the details sub-view, which
+   * already has its own, narrower close button that just backs out to the list without losing the
+   * search). loadLocationMarkers() in the panTo callback (not immediately) so it reads the
+   * default view's bounds once the map has actually finished moving there, not wherever it
+   * happened to be a moment ago.
+   */
+  protected closeSearch(): void {
+    this.closeDetails();
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+    this.hasSearched.set(false);
+    this.searching.set(false);
+    this.searchError.set(null);
+    this.mapProvider.panTo(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng, DEFAULT_MAP_ZOOM, () => this.loadLocationMarkers());
   }
 
   protected selectResult(hit: SearchHit): void {

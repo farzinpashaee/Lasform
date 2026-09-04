@@ -144,9 +144,31 @@ $radius: 8px;
   overflow: hidden;
 }
 
+/* Only shown while looking at the results list itself (searching/error/empty/list — see
+   closeSearch()'s doc comment in map-page.ts for why not the details sub-view too). A real row in
+   normal flow, not floating over the content below like .details-top-actions does — unlike that
+   row's close button, this one has label text to share the row with, so there's no "wastes a
+   whole row for one small icon" downside to justify floating it instead. Sits above (rather than
+   inside) the scrollable .results-status/.results-list, so it stays in view — not scrolled past —
+   while those scroll beneath it. */
+.results-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 8px 10px 20px;
+}
+
+.results-list-header-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .results-status {
-  padding: 16px;
+  padding: 16px 20px;
   font-size: 14px;
   color: var(--text-secondary);
 }
@@ -232,6 +254,9 @@ $radius: 8px;
   list-style: none;
   margin: 0;
   padding: 4px 0;
+  /* .results-list-header, right above this in the DOM, is what keeps the header out of this
+     scrolling area — see that rule's doc comment — so this max-height is the list's own, not
+     shared with the header (which isn't a sibling inside here). */
   max-height: 60vh;
   overflow-y: auto;
   @include thin-scrollbar;
