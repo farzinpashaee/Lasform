@@ -52,6 +52,8 @@
     "stopLive": "Stop live tracking",
     "showDeviceLive": "Show live",
     "stopDeviceLive": "Stop live",
+    "minimizeDetails": "Minimize",
+    "expandDetails": "Expand",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "centerHere": "Center here",
@@ -120,6 +122,7 @@
   },
   "management": {
     "backLabel": "Management",
+    "toggleMenu": "Toggle menu",
     "settingsGroup": "Settings",
     "navGeneralSettings": "General Settings",
     "navMapProvider": "Map Provider",

@@ -37,6 +37,10 @@ export class ManagementShell {
 
   protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
 
+  /** Off-canvas nav drawer state, mobile only (see management-shell.scss's breakpoint) — the
+   *  sidebar stays permanently visible above that breakpoint regardless of this signal. */
+  protected readonly sidebarOpen = signal(false);
+
   protected readonly navGroups: NavGroup[] = [
     {
       labelKey: 'management.settingsGroup',
@@ -59,6 +63,14 @@ export class ManagementShell {
 
   protected toggleGroup(group: NavGroup): void {
     group.expanded.update((expanded) => !expanded);
+  }
+
+  protected toggleSidebar(): void {
+    this.sidebarOpen.update((open) => !open);
+  }
+
+  protected closeSidebar(): void {
+    this.sidebarOpen.set(false);
   }
 
   protected toggleDarkMode(): void {

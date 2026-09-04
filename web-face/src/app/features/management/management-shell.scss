@@ -65,6 +65,23 @@ $radius: 8px;
   background: var(--surface);
 }
 
+.header-start {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Opens the off-canvas sidebar below $mobile-breakpoint (see .management-sidebar); above it the
+   sidebar is permanently visible in normal flow, so this toggle would have nothing to do.
+   Qualified as .icon-button.sidebar-toggle (not just .sidebar-toggle) so this display: none
+   reliably beats .icon-button's own display: flex below regardless of source order — two equally-
+   specific single-class rules would otherwise let whichever comes later in the file win. */
+.icon-button.sidebar-toggle {
+  display: none;
+  flex: 0 0 auto;
+}
+
 .back-button {
   display: flex;
   align-items: center;
@@ -123,6 +140,8 @@ $radius: 8px;
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
+  position: relative;
 }
 
 .management-sidebar {
@@ -131,6 +150,10 @@ $radius: 8px;
   padding: 20px 0;
   border-right: 1px solid var(--border);
   background: var(--surface);
+}
+
+.sidebar-backdrop {
+  display: none;
 }
 
 .nav-group {
@@ -198,7 +221,56 @@ $radius: 8px;
 
 .management-content {
   flex: 1 1 auto;
+  /* Flex items default to min-width: auto, which refuses to shrink below the content's own
+     intrinsic width (the toolbar's filters + a wide table) — without this, .management-content
+     forces .management-body wider than the viewport instead of letting a too-wide child scroll
+     within its own box (every *-table-wrapper already has overflow-x: auto for exactly that),
+     so the whole page ends up scrolling horizontally, sidebar included. */
+  min-width: 0;
   overflow-y: auto;
   padding: 32px;
   background: linear-gradient(135deg, var(--content-bg-from), var(--content-bg-to));
+}
+
+$mobile-breakpoint: 768px;
+
+/* Below this width the permanent 220px sidebar would leave too little room for the toolbar/table
+   content (see the min-width: 0 comment above) — collapse it into a hamburger-triggered off-canvas
+   drawer instead, closed by default. */
+@media (max-width: $mobile-breakpoint) {
+  .icon-button.sidebar-toggle {
+    display: flex;
+  }
+
+  .management-sidebar {
+    position: fixed;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    z-index: 600;
+    width: 260px;
+    max-width: 80vw;
+    box-shadow: var(--shadow);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  .management-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    top: 56px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 599;
+    background: var(--backdrop);
+  }
+
+  .management-content {
+    padding: 16px;
+  }
 }

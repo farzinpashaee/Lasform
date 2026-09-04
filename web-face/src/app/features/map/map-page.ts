@@ -132,6 +132,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly coverImageUrl = signal<string | null>(null);
   protected readonly selectedGeofence = signal<Geofence | null>(null);
   protected readonly entityMenuOpen = signal(false);
+  /** Collapses the open details panel down to just its title bar — see toggleDetailsMinimized().
+   *  Mainly for mobile, where the full panel can cover most of the map in live mode. */
+  protected readonly detailsMinimized = signal(false);
   protected readonly detailsTab = signal<DetailsTab>('overview');
   protected readonly reviews = signal<Review[]>([]);
   protected readonly loadingReviews = signal(false);
@@ -1038,8 +1041,13 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected closeDetails(): void {
     this.selectedResult.set(null);
     this.entityMenuOpen.set(false);
+    this.detailsMinimized.set(false);
     this.revokeCoverImageUrl();
     this.stopDeviceLive();
+  }
+
+  protected toggleDetailsMinimized(): void {
+    this.detailsMinimized.update((minimized) => !minimized);
   }
 
   protected selectDetailsTab(tab: DetailsTab, hit: SearchHit): void {
@@ -1190,6 +1198,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private resetDetailsPanelState(hit: SearchHit): void {
     this.detailsTab.set('overview');
     this.entityMenuOpen.set(false);
+    this.detailsMinimized.set(false);
     this.reviews.set([]);
     this.reviewsLoadError.set(null);
     if (hit.type === 'DEVICE' && hit.data.id && hit.data.id === this.liveTrackedDeviceId) {
