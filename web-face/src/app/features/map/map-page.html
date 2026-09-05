@@ -470,6 +470,41 @@
         </ul>
       }
     </div>
+    @if (groupExtraMapControls()) {
+      @if (extraMapControlsOpen()) {
+        <div class="map-extra-controls">
+          <ng-container [ngTemplateOutlet]="extraMapControlButtons" />
+        </div>
+      }
+      <button
+        class="icon-button round"
+        type="button"
+        [attr.aria-label]="'map.moreMapControls' | transloco"
+        [class.active]="extraMapControlsOpen()"
+        [attr.aria-expanded]="extraMapControlsOpen()"
+        (click)="toggleExtraMapControls()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+      </button>
+    } @else {
+      <ng-container [ngTemplateOutlet]="extraMapControlButtons" />
+    }
+    <div class="zoom-stack">
+      <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomIn' | transloco" (click)="zoomIn()">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      </button>
+      <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomOut' | transloco" (click)="zoomOut()">
+        <span class="material-symbols-outlined" aria-hidden="true">remove</span>
+      </button>
+    </div>
+  </div>
+
+  <!--
+    Shared by both branches above: inline (groupExtraMapControls() false — 2 or fewer of these are
+    actually enabled, not worth hiding) and grouped behind the "more" toggle, inside
+    .map-extra-controls (more than 2 — see extraMapControlsCount's doc comment in map-page.ts).
+  -->
+  <ng-template #extraMapControlButtons>
     @if (featureFlags.isEnabled(FEATURE_FLAGS.mapClustering)) {
       <button
         class="icon-button round"
@@ -491,7 +526,7 @@
         [attr.aria-pressed]="geofencesVisible()"
         (click)="toggleGeofencesVisible()"
       >
-        <span class="material-symbols-outlined" aria-hidden="true">fence</span>
+        <span class="material-symbols-outlined" aria-hidden="true">texture</span>
       </button>
     }
     @if (authService.hasPermission('device:read')) {
@@ -506,15 +541,7 @@
         <span class="material-symbols-outlined" aria-hidden="true">sensors</span>
       </button>
     }
-    <div class="zoom-stack">
-      <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomIn' | transloco" (click)="zoomIn()">
-        <span class="material-symbols-outlined" aria-hidden="true">add</span>
-      </button>
-      <button class="icon-button square" type="button" [attr.aria-label]="'map.zoomOut' | transloco" (click)="zoomOut()">
-        <span class="material-symbols-outlined" aria-hidden="true">remove</span>
-      </button>
-    </div>
-  </div>
+  </ng-template>
 
   @if (mapContextMenu(); as menu) {
     <div class="context-menu-backdrop" (click)="closeMapContextMenu()" (contextmenu)="closeMapContextMenu()"></div>

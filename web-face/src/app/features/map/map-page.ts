@@ -187,6 +187,35 @@ export class MapPage implements AfterViewInit, OnDestroy {
   ];
   protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
 
+  /**
+   * How many of the bottom-right map controls beyond "layers" and "my location" (clustering,
+   * geofences-visible, live) are actually enabled for this user/deployment right now — each is
+   * independently gated by a feature flag or permission, so the count varies. A computed (not a
+   * plain getter) so it's read the same way in the template as any other reactive state here,
+   * and only recomputes when the flags/permissions it reads actually change.
+   */
+  protected readonly extraMapControlsCount = computed(() => {
+    let count = 0;
+    if (this.featureFlags.isEnabled(FEATURE_FLAGS.mapClustering)) {
+      count++;
+    }
+    if (this.authService.hasPermission('geofence:read')) {
+      count++;
+    }
+    if (this.authService.hasPermission('device:read')) {
+      count++;
+    }
+    return count;
+  });
+  /**
+   * Past 2, those controls clutter the corner enough to be worth tucking behind a "more" toggle
+   * instead of always showing every one inline — see extraMapControlsOpen and the #extraMapControls
+   * template.
+   */
+  protected readonly groupExtraMapControls = computed(() => this.extraMapControlsCount() > 2);
+  /** Whether the grouped controls (see groupExtraMapControls) are currently expanded. Irrelevant, and left as-is, when groupExtraMapControls() is false — they're just always shown inline then. */
+  protected readonly extraMapControlsOpen = signal(false);
+
   protected readonly mapContextMenu = signal<MapContextMenuState | null>(null);
   protected readonly newLocationTarget = signal<{ lat: number; lng: number } | null>(null);
   protected readonly newLocationName = signal('');
@@ -667,6 +696,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected closeMapTypeMenu(): void {
     this.mapTypeMenuOpen.set(false);
+  }
+
+  protected toggleExtraMapControls(): void {
+    this.extraMapControlsOpen.update((open) => !open);
   }
 
   protected selectMapType(type: MapType): void {
