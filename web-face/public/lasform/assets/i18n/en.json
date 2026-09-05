@@ -47,6 +47,7 @@
     "mapView": "Map view",
     "terrainView": "Terrain view",
     "changeMapType": "Change map type",
+    "moreMapControls": "More map controls",
     "toggleClustering": "Toggle marker clustering",
     "showGeofences": "Show geofences",
     "hideGeofences": "Hide geofences",

@@ -790,6 +790,27 @@ $radius: 8px;
   overflow: hidden;
 }
 
+/* The clustering/geofences/live buttons, grouped into one pill instead of each floating as its
+   own separate circle — see groupExtraMapControls()'s doc comment in map-page.ts for when this
+   applies (more than 2 of them enabled) vs. the plain individual-circle style those same buttons
+   otherwise use (2 or fewer). Each button keeps its .icon-button.round classes (same markup
+   either way, via the shared #extraMapControlButtons template) — only its own shadow/radius are
+   suppressed here, since the pill itself now provides both, same pattern as .zoom-stack above. */
+.map-extra-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+
+  .icon-button.round {
+    box-shadow: none;
+    border-radius: 0;
+  }
+}
+
 .context-menu-backdrop {
   position: fixed;
   inset: 0;
