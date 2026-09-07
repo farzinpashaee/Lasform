@@ -39,6 +39,8 @@ import {
   MapType,
   MapViewOptions,
   PolygonShape,
+  interpolateHeading,
+  moveDurationMs,
   trailPointOpacity,
 } from './map-provider.model';
 
@@ -126,14 +128,27 @@ function locationIconWithEmoji(emoji: string): L.DivIcon {
   return icon;
 }
 
-/** Same pin silhouette/size as the default icon, so it drops in with the same anchor/shadow. */
-const DEVICE_ICON = L.icon({
-  iconUrl: 'lasform/assets/images/markers/device-marker-icon.png',
-  shadowUrl: 'lasform/assets/images/markers/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const DEVICE_ICON_URL = 'lasform/assets/images/markers/device-marker-icon.png';
+const DEVICE_SHADOW_URL = 'lasform/assets/images/markers/marker-shadow.png';
+const DEVICE_ICON_SIZE: L.PointTuple = [25, 41];
+const DEVICE_ICON_ANCHOR: L.PointTuple = [12, 41];
+const DEVICE_POPUP_ANCHOR: L.PointTuple = [1, -34];
+
+/**
+ * Same pin silhouette/size as the default icon, so it drops in with the same anchor/shadow — but
+ * built as a divIcon (rather than a plain L.icon) so the pin image can carry its own independent
+ * CSS `transform: rotate(...)` (see setMarkerRotation) to point in the device's heading. Leaflet
+ * positions a marker by setting `transform: translate3d(...)` directly on the icon element itself;
+ * rotating that SAME element would fight that positioning transform every time the marker moves.
+ * Rotating a child element instead sidesteps the conflict entirely. The shadow deliberately doesn't
+ * rotate — it isn't meant to track the pin's orientation, only its shape/position.
+ */
+const DEVICE_ICON = L.divIcon({
+  className: 'device-marker-icon',
+  html: `<img class="device-marker-shadow" src="${DEVICE_SHADOW_URL}"><img class="device-marker-pin" src="${DEVICE_ICON_URL}">`,
+  iconSize: DEVICE_ICON_SIZE,
+  iconAnchor: DEVICE_ICON_ANCHOR,
+  popupAnchor: DEVICE_POPUP_ANCHOR,
 });
 
 /** Undocumented internals of leaflet-draw's shared Polyline/Polygon draw handler that the closing-click patch below needs. */
@@ -211,6 +226,10 @@ private map?: L.Map;
   private markersLayer?: L.LayerGroup;
   private markersById = new Map<string, L.Marker>();
   private allMarkers: L.Marker[] = [];
+  /** In-flight moveMarker() glide/rotation animations, keyed by marker id — cancelled if a newer moveMarker() call for the same id arrives before one finishes, so they never race each other. */
+  private moveAnimations = new Map<string, number>();
+  /** Each device marker's current heading, so the next moveMarker() call can turn from it rather than snapping — see interpolateHeading(). */
+  private markerHeadings = new Map<string, number>();
   private clusteringEnabled = false;
   private userLocationMarker?: L.CircleMarker;
   private mapType: MapType = 'roadmap';
@@ -278,6 +297,11 @@ private map?: L.Map;
     this.markersLayer?.remove();
     this.markersById.clear();
     this.allMarkers = [];
+    for (const handle of this.moveAnimations.values()) {
+      cancelAnimationFrame(handle);
+    }
+    this.moveAnimations.clear();
+    this.markerHeadings.clear();
     this.markersLayer = this.createEmptyMarkersLayer();
     this.markersLayer.addTo(this.map);
     this.buildMarkersChunk(markers, onMarkerClick, token, 0);
@@ -302,6 +326,16 @@ private map?: L.Map;
         this.markersById.set(marker.id, leafletMarker);
         if (onMarkerClick) {
           leafletMarker.on('click', () => onMarkerClick(marker.id!));
+        }
+        if (marker.kind === 'device' && marker.heading !== undefined) {
+          const id = marker.id;
+          const heading = marker.heading;
+          this.markerHeadings.set(id, heading);
+          // The pin's rotatable <img> only exists once Leaflet actually creates the marker's DOM
+          // element, which for a clustered layer can happen well after this chunk is built (or
+          // never, while it stays bundled inside an unopened cluster) — 'add' fires exactly when
+          // that element is created, whether that's now or much later.
+          leafletMarker.once('add', () => this.setMarkerRotation(leafletMarker, heading));
         }
       }
       chunk.push(leafletMarker);
@@ -340,10 +374,58 @@ private map?: L.Map;
     this.markersById.get(id)?.closePopup();
   }
 
-  moveMarker(id: string, lat: number, lng: number): void {
-    // setLatLng alone is enough even when clustered: MarkerClusterGroup binds its own 'move'
-    // handler to every child marker and re-buckets it internally — no manual remove/re-add.
-    this.markersById.get(id)?.setLatLng([lat, lng]);
+  moveMarker(id: string, lat: number, lng: number, headingDegrees?: number, speedMetersPerSecond?: number): void {
+    const marker = this.markersById.get(id);
+    if (!marker) {
+      return;
+    }
+    this.cancelMoveAnimation(id);
+
+    const from = marker.getLatLng();
+    const to = L.latLng(lat, lng);
+    const fromHeading = this.markerHeadings.get(id);
+    const duration = moveDurationMs(from.distanceTo(to), speedMetersPerSecond);
+    const start = performance.now();
+
+    const step = (now: number): void => {
+      const t = Math.min(1, (now - start) / duration);
+      // setLatLng alone is enough even when clustered: MarkerClusterGroup binds its own 'move'
+      // handler to every child marker and re-buckets it internally — no manual remove/re-add.
+      marker.setLatLng([from.lat + (to.lat - from.lat) * t, from.lng + (to.lng - from.lng) * t]);
+      if (headingDegrees !== undefined) {
+        this.setMarkerRotation(marker, interpolateHeading(fromHeading, headingDegrees, t));
+      }
+      if (t < 1) {
+        this.moveAnimations.set(id, requestAnimationFrame(step));
+      } else {
+        this.moveAnimations.delete(id);
+        if (headingDegrees !== undefined) {
+          this.markerHeadings.set(id, headingDegrees);
+        }
+      }
+    };
+    this.moveAnimations.set(id, requestAnimationFrame(step));
+  }
+
+  private cancelMoveAnimation(id: string): void {
+    const handle = this.moveAnimations.get(id);
+    if (handle !== undefined) {
+      cancelAnimationFrame(handle);
+      this.moveAnimations.delete(id);
+    }
+  }
+
+  /**
+   * Rotates a device marker's pin <img> in place — see DEVICE_ICON's doc comment for why this
+   * targets a child element rather than the marker's own (Leaflet-positioned) icon element. A no-op
+   * for anything without a `.device-marker-pin` child — a location marker, or a device marker
+   * whose DOM element hasn't been created yet (e.g. still bundled inside an unopened cluster).
+   */
+  private setMarkerRotation(marker: L.Marker, angleDegrees: number): void {
+    const pin = marker.getElement()?.querySelector<HTMLElement>('.device-marker-pin');
+    if (pin) {
+      pin.style.transform = `rotate(${angleDegrees}deg)`;
+    }
   }
 
   setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {
@@ -685,6 +767,11 @@ private map?: L.Map;
     this.markersLayer = undefined;
     this.markersById.clear();
     this.allMarkers = [];
+    for (const handle of this.moveAnimations.values()) {
+      cancelAnimationFrame(handle);
+    }
+    this.moveAnimations.clear();
+    this.markerHeadings.clear();
     this.userLocationMarker = undefined;
     this.mapType = 'roadmap';
     this.roadmapLayer = undefined;

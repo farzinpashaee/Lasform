@@ -87,6 +87,31 @@ app-root {
   user-select: none;
 }
 
+/* Live-tracked device pin — same divIcon reset as .location-marker-icon above, but its pin <img> is
+   rotated in place (see LeafletMapProvider#setMarkerRotation) to face the device's heading. The
+   pin is a plain sibling of the shadow rather than the icon element itself specifically so that
+   rotation (a CSS transform) never fights the *other* transform Leaflet sets directly on the icon
+   element to position it on the map — see DEVICE_ICON's doc comment in leaflet-map-provider.ts. */
+.device-marker-icon {
+  background: transparent;
+  border: none;
+}
+.device-marker-icon .device-marker-shadow,
+.device-marker-icon .device-marker-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+.device-marker-icon .device-marker-shadow {
+  width: 41px;
+  height: 41px;
+}
+.device-marker-icon .device-marker-pin {
+  width: 25px;
+  height: 41px;
+}
+
 /* Geofence name label centered on its shape — rendered by Leaflet/Google Maps outside Angular's
    view (dynamically created DOM), so this has to live in the global stylesheet, not a component one. */
 .geofence-label {

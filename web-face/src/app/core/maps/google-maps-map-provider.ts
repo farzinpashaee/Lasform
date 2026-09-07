@@ -12,6 +12,8 @@ import {
   MapType,
   MapViewOptions,
   PolygonShape,
+  interpolateHeading,
+  moveDurationMs,
   trailPointOpacity,
 } from './map-provider.model';
 import { loadGoogleMaps } from './google-maps-script-loader';
@@ -24,11 +26,92 @@ const GEOFENCE_SHAPE_OPTIONS = { strokeColor: '#da5050', strokeWeight: 3, fillCo
  */
 const DEFAULT_CIRCLE_RADIUS_METERS = 150;
 
+const DEVICE_ICON_URL = 'lasform/assets/images/markers/device-marker-icon.png';
+const DEVICE_ICON_WIDTH = 25;
+const DEVICE_ICON_HEIGHT = 41;
+const DEVICE_ICON_ANCHOR: [number, number] = [12, 41];
+/**
+ * Side length of the square canvas rotatedDeviceIcon() draws into — big enough that the pin's
+ * anchor point (its tip, DEVICE_ICON_ANCHOR) can sit exactly at the canvas's own center with room
+ * for the whole pin to swing around it at any angle without clipping.
+ */
+const DEVICE_ICON_ROTATION_CANVAS_SIZE =
+  2 * Math.max(DEVICE_ICON_ANCHOR[0], DEVICE_ICON_WIDTH - DEVICE_ICON_ANCHOR[0], DEVICE_ICON_ANCHOR[1], DEVICE_ICON_HEIGHT - DEVICE_ICON_ANCHOR[1]);
+/** Heading is rounded to the nearest multiple of this before generating/caching a rotated icon — re-rendering a canvas for every trivial fluctuation buys nothing visible. */
+const HEADING_BUCKET_DEGREES = 5;
+
+let deviceIconImage: HTMLImageElement | undefined;
+/** The plain device pin image, loaded once and reused as the source bitmap for every rotatedDeviceIcon() render. */
+function deviceIconImageElement(): HTMLImageElement {
+  if (!deviceIconImage) {
+    deviceIconImage = new Image();
+    deviceIconImage.src = DEVICE_ICON_URL;
+  }
+  return deviceIconImage;
+}
+
+const rotatedDeviceIconsByBucket = new Map<number, google.maps.Icon>();
+
+/**
+ * google.maps.Marker's classic Icon interface has no rotation hook for an image URL (only
+ * path-based Symbol icons support a `rotation`), so a heading is instead baked directly into the
+ * icon bitmap via an offscreen canvas. Rotating a plain rectangular render around its own center
+ * would drag the pin's tip away from the marker's actual geo position at every angle but 0°/180°
+ * (the tip sits near the bottom of the icon, not its center) — instead, the pin is drawn onto a
+ * canvas sized and offset so its anchor point lands exactly on the canvas's own center, then
+ * rotated around THAT center. A rotation always fixes its own center in place, so the tip stays
+ * glued to the marker's position at every heading, and the resulting icon's anchor is simply the
+ * canvas's fixed center regardless of angle. Cached per heading "bucket" (nearest 5°) rather than
+ * regenerated on every fluctuation. Returns undefined until the base image has finished loading
+ * (only possible on the very first call after page load) — callers should fall back to the
+ * unrotated icon then; the next update almost always succeeds once the (tiny, already-requested)
+ * image is cached.
+ */
+function rotatedDeviceIcon(headingDegrees: number): google.maps.Icon | undefined {
+  const image = deviceIconImageElement();
+  if (!image.complete || image.naturalWidth === 0) {
+    return undefined;
+  }
+  const bucket = Math.round(headingDegrees / HEADING_BUCKET_DEGREES) * HEADING_BUCKET_DEGREES;
+  let icon = rotatedDeviceIconsByBucket.get(bucket);
+  if (!icon) {
+    const size = DEVICE_ICON_ROTATION_CANVAS_SIZE;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return undefined;
+    }
+    context.translate(size / 2, size / 2);
+    context.rotate((bucket * Math.PI) / 180);
+    context.drawImage(image, -DEVICE_ICON_ANCHOR[0], -DEVICE_ICON_ANCHOR[1], DEVICE_ICON_WIDTH, DEVICE_ICON_HEIGHT);
+    icon = { url: canvas.toDataURL(), scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(size / 2, size / 2) };
+    rotatedDeviceIconsByBucket.set(bucket, icon);
+  }
+  return icon;
+}
+
+const EARTH_RADIUS_METERS = 6371000;
+/** Plain haversine great-circle distance — avoids pulling in the Maps JS API's separate `geometry` library (not currently loaded, see google-maps-script-loader.ts) just for computeDistanceBetween(). */
+function haversineMeters(from: google.maps.LatLng, to: google.maps.LatLng): number {
+  const lat1 = (from.lat() * Math.PI) / 180;
+  const lat2 = (to.lat() * Math.PI) / 180;
+  const dLat = lat2 - lat1;
+  const dLng = ((to.lng() - from.lng()) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(a));
+}
+
 export class GoogleMapsMapProvider implements MapProvider {
   private map?: google.maps.Map;
   private infoWindow?: google.maps.InfoWindow;
   private markers: google.maps.Marker[] = [];
   private markersById = new Map<string, { marker: google.maps.Marker; title?: string }>();
+  /** In-flight moveMarker() glide/rotation animations, keyed by marker id — cancelled if a newer moveMarker() call for the same id arrives before one finishes, so they never race each other. */
+  private moveAnimations = new Map<string, number>();
+  /** Each device marker's current heading, so the next moveMarker() call can turn from it rather than snapping — see interpolateHeading(). */
+  private markerHeadings = new Map<string, number>();
   private clusterer?: MarkerClusterer;
   private clusteringEnabled = false;
   private userLocationMarker?: google.maps.Marker;
@@ -63,7 +146,7 @@ export class GoogleMapsMapProvider implements MapProvider {
       // provider itself owns adding markers to the map.
       const marker = new google.maps.Marker({
         position: { lat: markerData.lat, lng: markerData.lng },
-        icon: markerData.kind === 'device' ? this.deviceMarkerIcon() : this.locationMarkerIcon(),
+        icon: markerData.kind === 'device' ? this.deviceMarkerIcon(markerData.heading) : this.locationMarkerIcon(),
         label: markerData.kind !== 'device' && markerData.categoryEmoji ? { text: markerData.categoryEmoji, fontSize: '13px' } : undefined,
       });
       if (markerData.title || markerData.id) {
@@ -80,19 +163,27 @@ export class GoogleMapsMapProvider implements MapProvider {
       this.markers.push(marker);
       if (markerData.id) {
         this.markersById.set(markerData.id, { marker, title: markerData.title });
+        if (markerData.kind === 'device' && markerData.heading !== undefined) {
+          this.markerHeadings.set(markerData.id, markerData.heading);
+        }
       }
     }
     this.applyClustering();
   }
 
   // Built lazily (not a module-level constant) since google.maps.Size/Point only exist once
-  // loadGoogleMaps() has resolved — same pin size/anchor as the default red-pin icon.
-  private deviceMarkerIcon(): google.maps.Icon {
-    return {
-      url: 'lasform/assets/images/markers/device-marker-icon.png',
-      scaledSize: new google.maps.Size(25, 41),
-      anchor: new google.maps.Point(12, 41),
-    };
+  // loadGoogleMaps() has resolved — same pin size/anchor as the default red-pin icon. headingDegrees,
+  // if given, bakes that heading into the icon bitmap itself (see rotatedDeviceIcon) — classic
+  // Marker icons have no separate rotation property for an image URL.
+  private deviceMarkerIcon(headingDegrees?: number): google.maps.Icon {
+    const rotated = headingDegrees !== undefined ? rotatedDeviceIcon(headingDegrees) : undefined;
+    return (
+      rotated ?? {
+        url: DEVICE_ICON_URL,
+        scaledSize: new google.maps.Size(DEVICE_ICON_WIDTH, DEVICE_ICON_HEIGHT),
+        anchor: new google.maps.Point(...DEVICE_ICON_ANCHOR),
+      }
+    );
   }
 
   /** Lasform's branded pin — replaces Google's default red pin for location markers. Sized to the SVG's 140x200 (0.7:1) viewBox, anchored at its tip. labelOrigin centers a category emoji label (see setMarkers) in the pin's circular head instead of Google's default (the icon's dead center). */
@@ -131,15 +222,47 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.infoWindow?.close();
   }
 
-  moveMarker(id: string, lat: number, lng: number): void {
+  moveMarker(id: string, lat: number, lng: number, headingDegrees?: number, speedMetersPerSecond?: number): void {
     const entry = this.markersById.get(id);
     if (!entry) {
       return;
     }
-    entry.marker.setPosition({ lat, lng });
-    // Unlike Leaflet's cluster plugin, @googlemaps/markerclusterer doesn't watch marker
-    // position on its own — render() is its documented "recalculate and redraw" call.
-    this.clusterer?.render();
+    this.cancelMoveAnimation(id);
+
+    const { marker } = entry;
+    const from = marker.getPosition() ?? new google.maps.LatLng(lat, lng);
+    const to = new google.maps.LatLng(lat, lng);
+    const fromHeading = this.markerHeadings.get(id);
+    const duration = moveDurationMs(haversineMeters(from, to), speedMetersPerSecond);
+    const start = performance.now();
+
+    const step = (now: number): void => {
+      const t = Math.min(1, (now - start) / duration);
+      marker.setPosition({ lat: from.lat() + (to.lat() - from.lat()) * t, lng: from.lng() + (to.lng() - from.lng()) * t });
+      if (headingDegrees !== undefined) {
+        marker.setIcon(this.deviceMarkerIcon(interpolateHeading(fromHeading, headingDegrees, t)));
+      }
+      // Unlike Leaflet's cluster plugin, @googlemaps/markerclusterer doesn't watch marker
+      // position on its own — render() is its documented "recalculate and redraw" call.
+      this.clusterer?.render();
+      if (t < 1) {
+        this.moveAnimations.set(id, requestAnimationFrame(step));
+      } else {
+        this.moveAnimations.delete(id);
+        if (headingDegrees !== undefined) {
+          this.markerHeadings.set(id, headingDegrees);
+        }
+      }
+    };
+    this.moveAnimations.set(id, requestAnimationFrame(step));
+  }
+
+  private cancelMoveAnimation(id: string): void {
+    const handle = this.moveAnimations.get(id);
+    if (handle !== undefined) {
+      cancelAnimationFrame(handle);
+      this.moveAnimations.delete(id);
+    }
   }
 
   setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {
@@ -521,5 +644,10 @@ export class GoogleMapsMapProvider implements MapProvider {
     }
     this.markers = [];
     this.markersById.clear();
+    for (const handle of this.moveAnimations.values()) {
+      cancelAnimationFrame(handle);
+    }
+    this.moveAnimations.clear();
+    this.markerHeadings.clear();
   }
 }

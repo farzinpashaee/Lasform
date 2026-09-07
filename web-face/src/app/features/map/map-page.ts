@@ -683,7 +683,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     }
     if (device.lastKnownPoint) {
       const [lng, lat] = device.lastKnownPoint.coordinates;
-      this.mapProvider.moveMarker(device.id, lat, lng);
+      this.mapProvider.moveMarker(device.id, lat, lng, device.heading, device.speed);
       if (device.id === this.liveTrackedDeviceId) {
         this.pushDeviceTrailPoint(device.id, lat, lng);
       }
@@ -1512,6 +1512,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
         title: this.resultTitle(hit),
         kind: hit.type === 'DEVICE' ? 'device' : 'location',
         categoryEmoji: this.categoryEmoji(categoryIds),
+        heading: hit.type === 'DEVICE' ? (hit.data as Device).heading : undefined,
       });
     }
     this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));

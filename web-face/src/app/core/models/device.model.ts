@@ -11,6 +11,10 @@ export interface Device extends Auditable {
   status?: DeviceStatus;
   lastKnownPoint?: GeoJsonPoint;
   lastSeenAt?: string;
+  /** Denormalized from the most recent Event that reported one — degrees clockwise from north. */
+  heading?: number;
+  /** Denormalized from the most recent Event that reported one, in meters/second. */
+  speed?: number;
   batteryLevel?: number;
   categoryIds?: string[];
   tags?: string[];
