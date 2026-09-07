@@ -63,7 +63,8 @@ export class GoogleMapsMapProvider implements MapProvider {
       // provider itself owns adding markers to the map.
       const marker = new google.maps.Marker({
         position: { lat: markerData.lat, lng: markerData.lng },
-        icon: markerData.kind === 'device' ? this.deviceMarkerIcon() : undefined,
+        icon: markerData.kind === 'device' ? this.deviceMarkerIcon() : this.locationMarkerIcon(),
+        label: markerData.kind !== 'device' && markerData.categoryEmoji ? { text: markerData.categoryEmoji, fontSize: '13px' } : undefined,
       });
       if (markerData.title || markerData.id) {
         marker.addListener('click', () => {
@@ -91,6 +92,16 @@ export class GoogleMapsMapProvider implements MapProvider {
       url: 'lasform/assets/images/markers/device-marker-icon.png',
       scaledSize: new google.maps.Size(25, 41),
       anchor: new google.maps.Point(12, 41),
+    };
+  }
+
+  /** Lasform's branded pin — replaces Google's default red pin for location markers. Sized to the SVG's 140x200 (0.7:1) viewBox, anchored at its tip. labelOrigin centers a category emoji label (see setMarkers) in the pin's circular head instead of Google's default (the icon's dead center). */
+  private locationMarkerIcon(): google.maps.Icon {
+    return {
+      url: 'lasform/assets/images/markers/lasform-base-marker_140X200.svg',
+      scaledSize: new google.maps.Size(23, 33),
+      anchor: new google.maps.Point(12, 33),
+      labelOrigin: new google.maps.Point(11, 11),
     };
   }
 

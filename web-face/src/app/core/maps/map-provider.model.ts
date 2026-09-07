@@ -29,6 +29,8 @@ export interface MapMarkerData {
   title?: string;
   /** Which icon to render — defaults to the location pin when omitted. */
   kind?: 'location' | 'device';
+  /** The location's first category's marker emoji (e.g. "🏥"), if any — rendered on top of the pin. */
+  categoryEmoji?: string;
 }
 
 /** A visible-map rectangle in plain lon/lat, vendor-agnostic (mirrors both Leaflet's LatLngBounds and google.maps.LatLngBounds). */

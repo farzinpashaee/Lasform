@@ -51,6 +51,42 @@ app-root {
     'opsz' 20;
 }
 
+/* Location marker pin with a category emoji layered on top — rendered by Leaflet outside Angular's
+   view (dynamically created DOM via a divIcon), so this has to live in the global stylesheet, not a
+   component one. Leaflet's default divIcon styling (white box + border) is reset here since our
+   className replaces it entirely; the shadow/pin images reproduce what a plain L.icon + shadowUrl
+   would otherwise render in Leaflet's separate icon/shadow panes. */
+.location-marker-icon {
+  background: transparent;
+  border: none;
+}
+.location-marker-icon .location-marker-shadow,
+.location-marker-icon .location-marker-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+.location-marker-icon .location-marker-shadow {
+  width: 33px;
+  height: 33px;
+}
+.location-marker-icon .location-marker-pin {
+  width: 23px;
+  height: 33px;
+}
+/* Centered on the pin's circular head (roughly a third of the way down from its tip-anchored top). */
+.location-marker-icon .location-marker-emoji {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* Geofence name label centered on its shape — rendered by Leaflet/Google Maps outside Angular's
    view (dynamically created DOM), so this has to live in the global stylesheet, not a component one. */
 .geofence-label {

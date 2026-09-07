@@ -73,13 +73,58 @@ const TERRAIN_MAX_ZOOM = 17;
 
 // Leaflet's default icon resolves its image URLs relative to the stylesheet that
 // declared it, which esbuild's bundling breaks — markers render as a broken-image
-// icon unless the URLs are pointed at the assets explicitly, once, up front.
+// icon unless the URLs are pointed at the assets explicitly, once, up front. Left in
+// place (rather than removed) because leaflet-draw's vertex/edit handles fall back to
+// this same default icon and would otherwise render as broken images too.
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: 'lasform/assets/images/markers/marker-icon.png',
   iconRetinaUrl: 'lasform/assets/images/markers/marker-icon-2x.png',
   shadowUrl: 'lasform/assets/images/markers/marker-shadow.png',
 });
+
+const LOCATION_ICON_URL = 'lasform/assets/images/markers/lasform-base-marker_140X200.svg';
+const LOCATION_SHADOW_URL = 'lasform/assets/images/markers/marker-shadow.png';
+/** Sized to the SVG's 140x200 (0.7:1) viewBox, anchored at its tip. Shared by both LOCATION_ICON and locationIconWithEmoji() below, so the pin sits identically whether or not it carries an emoji. */
+const LOCATION_ICON_SIZE: L.PointTuple = [23, 33];
+const LOCATION_ICON_ANCHOR: L.PointTuple = [12, 33];
+const LOCATION_POPUP_ANCHOR: L.PointTuple = [0, -30];
+const LOCATION_SHADOW_SIZE: L.PointTuple = [33, 33];
+
+/** Lasform's branded pin — replaces Leaflet's default red pin for location markers with no category emoji, with the same drop shadow as the default/device pins. */
+const LOCATION_ICON = L.icon({
+  iconUrl: LOCATION_ICON_URL,
+  shadowUrl: LOCATION_SHADOW_URL,
+  iconSize: LOCATION_ICON_SIZE,
+  iconAnchor: LOCATION_ICON_ANCHOR,
+  popupAnchor: LOCATION_POPUP_ANCHOR,
+  shadowSize: LOCATION_SHADOW_SIZE,
+});
+
+/** One divIcon per distinct category emoji, built on first use and reused for every marker in that category rather than rebuilding identical HTML per marker. */
+const locationIconsByEmoji = new Map<string, L.DivIcon>();
+
+/**
+ * Same pin/shadow as LOCATION_ICON, but built as a divIcon so a category's emoji can be layered
+ * centered in the pin's circular head — a plain L.icon can only ever show a single flat image, with
+ * nowhere to composite a second one on top. The shadow and pin are plain <img>s stacked via CSS
+ * (see .location-marker-icon in styles.scss) rather than Leaflet's own icon/shadow panes, since a
+ * divIcon has no shadow slot of its own.
+ */
+function locationIconWithEmoji(emoji: string): L.DivIcon {
+  let icon = locationIconsByEmoji.get(emoji);
+  if (!icon) {
+    icon = L.divIcon({
+      className: 'location-marker-icon',
+      html: `<img class="location-marker-shadow" src="${LOCATION_SHADOW_URL}"><img class="location-marker-pin" src="${LOCATION_ICON_URL}"><span class="location-marker-emoji">${escapeHtml(emoji)}</span>`,
+      iconSize: LOCATION_ICON_SIZE,
+      iconAnchor: LOCATION_ICON_ANCHOR,
+      popupAnchor: LOCATION_POPUP_ANCHOR,
+    });
+    locationIconsByEmoji.set(emoji, icon);
+  }
+  return icon;
+}
 
 /** Same pin silhouette/size as the default icon, so it drops in with the same anchor/shadow. */
 const DEVICE_ICON = L.icon({
@@ -247,7 +292,9 @@ private map?: L.Map;
     const chunk: L.Marker[] = [];
     for (let i = offset; i < end; i++) {
       const marker = markers[i];
-      const leafletMarker = L.marker([marker.lat, marker.lng], marker.kind === 'device' ? { icon: DEVICE_ICON } : undefined);
+      const icon =
+        marker.kind === 'device' ? DEVICE_ICON : marker.categoryEmoji ? locationIconWithEmoji(marker.categoryEmoji) : LOCATION_ICON;
+      const leafletMarker = L.marker([marker.lat, marker.lng], { icon });
       if (marker.title) {
         leafletMarker.bindPopup(marker.title);
       }
