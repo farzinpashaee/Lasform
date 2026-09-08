@@ -381,6 +381,15 @@ export class GoogleMapsMapProvider implements MapProvider {
     return { west: bounds.getSouthWest().lng(), south: bounds.getSouthWest().lat(), east: bounds.getNorthEast().lng(), north: bounds.getNorthEast().lat() };
   }
 
+  getCenter(): { lat: number; lng: number } | null {
+    const center = this.map?.getCenter();
+    return center ? { lat: center.lat(), lng: center.lng() } : null;
+  }
+
+  getZoom(): number | null {
+    return this.map?.getZoom() ?? null;
+  }
+
   onBoundsChanged(handler: (bounds: MapBounds) => void): void {
     // 'idle' fires once the map has settled after a pan/zoom/resize — unlike 'bounds_changed',
     // which fires continuously while dragging or animating.
