@@ -188,9 +188,15 @@ else
   # that always runs `mvn clean install` never finds the previous run's PID file here even
   # though that previous instance may still be running. Fall back to asking the OS what's
   # actually bound to the app's port instead, trying whichever lookup tool is available.
+  # lsof is tried first, but it can come back empty even when installed and even when a
+  # process genuinely holds the port (seen in practice: permission/namespace quirks, a stale
+  # lsof device cache) — ss reads the same information straight from the kernel and doesn't
+  # share that failure mode, so it's always tried too whenever lsof didn't turn up a PID,
+  # not just when lsof itself is missing.
   if command -v lsof > /dev/null 2>&amp;1; then
     OLD_PID=$(lsof -t -i TCP:"$APP_PORT" -sTCP:LISTEN 2>/dev/null | head -n 1)
-  elif command -v ss > /dev/null 2>&amp;1; then
+  fi
+  if [ -z "$OLD_PID" ] &amp;&amp; command -v ss > /dev/null 2>&amp;1; then
     OLD_PID=$(ss -ltnp 2>/dev/null | grep ":$APP_PORT " | grep -oP 'pid=\K[0-9]+' | head -n 1)
   fi
   if [ -n "$OLD_PID" ]; then
