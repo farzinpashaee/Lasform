@@ -172,13 +172,7 @@
                                 <echo file="${project.build.directory}/starter.sh">#!/bin/bash
 cd "$(dirname "$0")"
 
-# The port the app listens on by default (application.yml's server.port) -- used below only
-# as a fallback for locating a still-running previous instance when starter.pid isn't there
-# to read. Override with APP_PORT=... in the environment if this instance actually runs on
-# a different port (e.g. via a --config override further down).
-if [ -z "$APP_PORT" ]; then
-  APP_PORT=8087
-fi
+JAR_NAME="${project.build.finalName}.jar"
 
 OLD_PID=
 if [ -f starter.pid ]; then
@@ -186,21 +180,19 @@ if [ -f starter.pid ]; then
 else
   # `mvn clean` wipes target/ (starter.pid included) before every rebuild, so a pipeline
   # that always runs `mvn clean install` never finds the previous run's PID file here even
-  # though that previous instance may still be running. Fall back to asking the OS what's
-  # actually bound to the app's port instead, trying whichever lookup tool is available.
-  # lsof is tried first, but it can come back empty even when installed and even when a
-  # process genuinely holds the port (seen in practice: permission/namespace quirks, a stale
-  # lsof device cache) — ss reads the same information straight from the kernel and doesn't
-  # share that failure mode, so it's always tried too whenever lsof didn't turn up a PID,
-  # not just when lsof itself is missing.
-  if command -v lsof > /dev/null 2>&amp;1; then
-    OLD_PID=$(lsof -t -i TCP:"$APP_PORT" -sTCP:LISTEN 2>/dev/null | head -n 1)
-  fi
-  if [ -z "$OLD_PID" ] &amp;&amp; command -v ss > /dev/null 2>&amp;1; then
-    OLD_PID=$(ss -ltnp 2>/dev/null | grep ":$APP_PORT " | grep -oP 'pid=\K[0-9]+' | head -n 1)
-  fi
+  # though that previous instance may still be running. Fall back to searching the process
+  # table for the java process running the jar instead of relying on which port it's bound to
+  # (lsof/ss both proved unreliable in practice — permission/namespace quirks, a stale lsof
+  # device cache — coming back empty even when a process genuinely held the port). Matched by
+  # "lasform*.jar" rather than this build's exact $JAR_NAME: the version (and so the built
+  # jar's exact filename) can change between deploys, but a still-running OLDER-versioned
+  # instance needs to be found and stopped too, not just one matching today's jar name
+  # exactly. "lasform" and ".jar" are the only parts guaranteed not to change. Bracketing the
+  # pattern's first character (e.g. "[l]asform") is the usual trick to keep this grep from
+  # matching its own invocation, the way `| grep -v grep` would otherwise be needed to.
+  OLD_PID=$(ps -ef | grep '[l]asform.*\.jar' | awk '{print $2}' | head -n 1)
   if [ -n "$OLD_PID" ]; then
-    echo "No starter.pid found; found PID $OLD_PID listening on port $APP_PORT instead."
+    echo "No starter.pid found; found PID $OLD_PID running a lasform*.jar process instead."
   fi
 fi
 
@@ -235,9 +227,9 @@ if [ "$1" = "--config" ]; then
 fi
 
 if [ -n "$CONFIG_ARG" ]; then
-  nohup java -jar ${project.build.finalName}.jar "$CONFIG_ARG" "$@" > starter.log 2>&amp;1 &amp;
+  nohup java -jar "$JAR_NAME" "$CONFIG_ARG" "$@" > starter.log 2>&amp;1 &amp;
 else
-  nohup java -jar ${project.build.finalName}.jar "$@" > starter.log 2>&amp;1 &amp;
+  nohup java -jar "$JAR_NAME" "$@" > starter.log 2>&amp;1 &amp;
 fi
 echo $! > starter.pid
 echo "Started with PID $(cat starter.pid)"
