@@ -408,6 +408,40 @@ $radius: 8px;
   }
 }
 
+/* .icon-action-button is transparent by default, which disappears against a busy cover photo
+   (see .details-cover-image above) instead of the panel's own plain background — this gives each
+   button a translucent white backdrop whenever a cover image is present so it stays legible over
+   any photo. The .active/.open states already paint an opaque background of their own regardless
+   (the live-tracking toggle's accent color, the entity menu's open highlight), so both are
+   re-declared here rather than left to selector specificity — this block's selector is otherwise
+   specific enough to win over their plain (no-cover-image) rules and wash them out to translucent
+   white too. */
+.details-top-actions.has-cover-image {
+  .icon-action-button {
+    background: rgba(255, 255, 255, 0.75);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    &.active {
+      background: var(--accent-bg);
+
+      &:hover {
+        background: var(--accent-bg-hover);
+      }
+    }
+  }
+
+  .entity-menu-wrapper.open .entity-menu-trigger {
+    background: var(--hover);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
+}
+
 .entity-menu-backdrop {
   position: fixed;
   inset: 0;

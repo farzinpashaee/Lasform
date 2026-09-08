@@ -57,10 +57,20 @@ const DRAFT_GEOFENCE_ID = '__draft__';
 const MAX_DEVICE_TRAIL_POINTS = 10;
 
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
+/** Where the map's last-seen center/zoom/type is persisted (see loadStoredMapView()/saveMapView()) so a round trip through the management pages or a login/logout doesn't reset the view to the hardcoded defaults below. */
+const MAP_VIEW_STORAGE_KEY = 'lasform.mapView';
 
-/** The map's view on load — also where closeSearch() returns it to. */
+/** The map's view on first-ever load (no stored view yet) — also where closeSearch() returns it to. */
 const DEFAULT_MAP_CENTER = { lat: 43.8628, lng: -79.4308 };
 const DEFAULT_MAP_ZOOM = 14;
+const DEFAULT_MAP_TYPE: MapType = 'roadmap';
+const MAP_TYPES: MapType[] = ['roadmap', 'satellite', 'terrain'];
+
+interface StoredMapView {
+  center: { lat: number; lng: number };
+  zoom: number;
+  type: MapType;
+}
 
 interface GeofenceFormTarget {
   mode: 'create' | 'edit-shape';
@@ -178,7 +188,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly liveEnabled = signal(false);
   /** Whether the currently-selected device (its details card) is being individually live-tracked. */
   protected readonly deviceLiveActive = signal(false);
-  protected readonly mapType = signal<MapType>('roadmap');
+  protected readonly mapType = signal<MapType>(DEFAULT_MAP_TYPE);
   protected readonly mapTypeMenuOpen = signal(false);
   protected readonly mapTypeOptions: { type: MapType; labelKey: string; icon: string }[] = [
     { type: 'roadmap', labelKey: 'map.mapView', icon: 'map' },
@@ -289,10 +299,17 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private editingGeofenceOriginal: Geofence | null = null;
 
   async ngAfterViewInit(): Promise<void> {
+    const storedView = this.loadStoredMapView();
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
-      center: DEFAULT_MAP_CENTER,
-      zoom: DEFAULT_MAP_ZOOM,
+      center: storedView?.center ?? DEFAULT_MAP_CENTER,
+      zoom: storedView?.zoom ?? DEFAULT_MAP_ZOOM,
     });
+    // initialize() itself has no map-type option — roadmap is always what it renders first — so a
+    // stored non-default type is applied as a separate step right after.
+    if (storedView && storedView.type !== DEFAULT_MAP_TYPE) {
+      this.mapType.set(storedView.type);
+      this.mapProvider.setMapType(storedView.type);
+    }
 
     this.loadLocationMarkers();
     this.loadCategories();
@@ -306,6 +323,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     // one — see loadLocationMarkers()'s doc comment. Skipped entirely while a text search is
     // active: renderSearchMarkers() (not bounds) owns the marker set until the search is cleared.
     this.boundsChangedSubscription = this.boundsChanged$.pipe(debounceTime(300)).subscribe((bounds) => {
+      this.saveMapView();
       if (!this.hasSearched()) {
         this.loadLocationMarkers(bounds);
       }
@@ -314,6 +332,43 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.jumpToQueryLocation();
     this.jumpToQueryGeofence();
     this.jumpToDrawGeofence();
+  }
+
+  /**
+   * Reads back the map view saved by saveMapView() on a previous visit, or null on a first-ever
+   * visit, after clearing storage, or if the saved value is malformed (e.g. an incompatible shape
+   * left over from an older build) — callers fall back to DEFAULT_MAP_CENTER/ZOOM/TYPE in that case.
+   */
+  private loadStoredMapView(): StoredMapView | null {
+    const raw = localStorage.getItem(MAP_VIEW_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      const { center, zoom, type } = parsed ?? {};
+      if (typeof center?.lat === 'number' && typeof center?.lng === 'number' && typeof zoom === 'number') {
+        return { center: { lat: center.lat, lng: center.lng }, zoom, type: MAP_TYPES.includes(type) ? type : DEFAULT_MAP_TYPE };
+      }
+    } catch {
+      // Malformed JSON (e.g. hand-edited or corrupted storage) — fall through to null below.
+    }
+    return null;
+  }
+
+  /**
+   * Persists the map's current center/zoom/type so the next visit (see loadStoredMapView()) picks
+   * up where the user left off instead of resetting to DEFAULT_MAP_CENTER/ZOOM/TYPE — e.g. after a
+   * trip through the management pages or a login/logout. No-op before the map has finished
+   * initializing.
+   */
+  private saveMapView(): void {
+    const center = this.mapProvider.getCenter();
+    const zoom = this.mapProvider.getZoom();
+    if (center && zoom !== null) {
+      const view: StoredMapView = { center, zoom, type: this.mapType() };
+      localStorage.setItem(MAP_VIEW_STORAGE_KEY, JSON.stringify(view));
+    }
   }
 
   /** Handles ?locationId=... deep links (e.g. the "View on map" action from the Locations table). */
@@ -716,6 +771,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.mapType.set(type);
     this.mapProvider.setMapType(type);
     this.closeMapTypeMenu();
+    this.saveMapView();
   }
 
   protected toggleDarkMode(): void {
