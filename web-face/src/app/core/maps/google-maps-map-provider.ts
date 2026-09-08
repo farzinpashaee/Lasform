@@ -24,6 +24,108 @@ const GEOFENCE_SHAPE_OPTIONS = { strokeColor: '#da5050', strokeWeight: 3, fillCo
  */
 const DEFAULT_CIRCLE_RADIUS_METERS = 150;
 
+/** Diameter of the round "live device" badge itself, excluding the heading arrow. */
+const DEVICE_BADGE_DIAMETER = 26;
+const DEVICE_BADGE_RADIUS = DEVICE_BADGE_DIAMETER / 2;
+/** Empty space left between the badge's edge and the arrow's (nearest) base. */
+const DEVICE_ARROW_GAP = 2;
+/** How far the heading arrow's tip sticks out beyond the badge's edge, past DEVICE_ARROW_GAP. */
+const DEVICE_ARROW_LENGTH = 8;
+/** Half of the icon's total footprint (badge + gap + arrow at any rotation) — the radius from center out to the arrow's tip. */
+const DEVICE_ICON_RADIUS = DEVICE_BADGE_RADIUS + DEVICE_ARROW_GAP + DEVICE_ARROW_LENGTH;
+const DEVICE_ICON_DIAMETER = DEVICE_ICON_RADIUS * 2;
+/** Heading is rounded to the nearest multiple of this before generating/caching a rotated icon — re-rendering a canvas for every trivial fluctuation buys nothing visible. */
+const HEADING_BUCKET_DEGREES = 5;
+
+/** `null` keys the no-heading-known variant (badge only, no arrow at all). */
+const deviceIconsByHeadingBucket = new Map<number | null, google.maps.Icon>();
+
+function normalizeHeadingDegrees(degrees: number): number {
+  const wrapped = degrees % 360;
+  return wrapped < 0 ? wrapped + 360 : wrapped;
+}
+
+/** The round badge's fixed circle + signal glyph, identical in every cached icon regardless of heading — echoes the Material Symbols `sensors` glyph used for the equivalent Leaflet marker (see .device-marker-badge in styles.scss), redrawn as plain vector shapes since a canvas has no access to that icon font. */
+function drawDeviceBadge(context: CanvasRenderingContext2D, center: number): void {
+  context.save();
+  context.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  context.shadowBlur = 4;
+  context.shadowOffsetY = 2;
+  context.beginPath();
+  context.arc(center, center, DEVICE_BADGE_RADIUS, 0, Math.PI * 2);
+  context.fillStyle = '#da5050';
+  context.fill();
+  context.restore();
+
+  context.save();
+  context.strokeStyle = '#fff';
+  context.fillStyle = '#fff';
+  context.lineWidth = 1.8;
+  context.lineCap = 'round';
+  const originX = center - 4;
+  const originY = center + 4;
+  context.beginPath();
+  context.arc(originX, originY, 1.6, 0, Math.PI * 2);
+  context.fill();
+  for (const radius of [5, 8.5]) {
+    context.beginPath();
+    context.arc(originX, originY, radius, (-125 * Math.PI) / 180, (-35 * Math.PI) / 180);
+    context.stroke();
+  }
+  context.restore();
+}
+
+/** The heading arrow, filled in pointing straight up then rotated around the badge's own center — same shape/placement as .device-marker-arrow's CSS triangle in the Leaflet version. */
+function drawDeviceArrow(context: CanvasRenderingContext2D, center: number, headingDegrees: number): void {
+  context.save();
+  context.translate(center, center);
+  context.rotate((headingDegrees * Math.PI) / 180);
+  const baseRadius = DEVICE_BADGE_RADIUS + DEVICE_ARROW_GAP;
+  context.beginPath();
+  context.moveTo(0, -(baseRadius + DEVICE_ARROW_LENGTH));
+  context.lineTo(-5, -baseRadius);
+  context.lineTo(5, -baseRadius);
+  context.closePath();
+  context.fillStyle = '#da5050';
+  context.fill();
+  context.restore();
+}
+
+/**
+ * google.maps.Marker's classic Icon interface is a single flat image with no way to layer or
+ * independently rotate a child element the way a DOM-based divIcon can — so unlike the Leaflet
+ * version (a fixed badge with a separately-rotating arrow element), here the *whole bitmap* is
+ * regenerated per heading. The badge itself is still drawn identically, at the same fixed center,
+ * in every variant — only the arrow actually differs between them — so it reads as the same
+ * requirement (a static badge, a rotating arrow), just achieved by re-rendering rather than by
+ * rotating a separate element. `headingDegrees` undefined renders the badge with no arrow at all
+ * (heading not known yet). Cached per heading "bucket" (nearest 5°) rather than regenerated on
+ * every fluctuation.
+ */
+function deviceIcon(headingDegrees?: number): google.maps.Icon {
+  const bucket = headingDegrees === undefined ? null : Math.round(normalizeHeadingDegrees(headingDegrees) / HEADING_BUCKET_DEGREES) * HEADING_BUCKET_DEGREES;
+  const key = bucket === null ? null : bucket % 360;
+  let icon = deviceIconsByHeadingBucket.get(key);
+  if (!icon) {
+    const size = DEVICE_ICON_DIAMETER;
+    const center = DEVICE_ICON_RADIUS;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return { url: '', scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(center, center) };
+    }
+    drawDeviceBadge(context, center);
+    if (key !== null) {
+      drawDeviceArrow(context, center, key);
+    }
+    icon = { url: canvas.toDataURL(), scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(center, center) };
+    deviceIconsByHeadingBucket.set(key, icon);
+  }
+  return icon;
+}
+
 export class GoogleMapsMapProvider implements MapProvider {
   private map?: google.maps.Map;
   private infoWindow?: google.maps.InfoWindow;
@@ -63,7 +165,8 @@ export class GoogleMapsMapProvider implements MapProvider {
       // provider itself owns adding markers to the map.
       const marker = new google.maps.Marker({
         position: { lat: markerData.lat, lng: markerData.lng },
-        icon: markerData.kind === 'device' ? this.deviceMarkerIcon() : undefined,
+        icon: markerData.kind === 'device' ? deviceIcon(markerData.heading) : this.locationMarkerIcon(),
+        label: markerData.kind !== 'device' && markerData.categoryEmoji ? { text: markerData.categoryEmoji, fontSize: '13px' } : undefined,
       });
       if (markerData.title || markerData.id) {
         marker.addListener('click', () => {
@@ -84,13 +187,13 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.applyClustering();
   }
 
-  // Built lazily (not a module-level constant) since google.maps.Size/Point only exist once
-  // loadGoogleMaps() has resolved — same pin size/anchor as the default red-pin icon.
-  private deviceMarkerIcon(): google.maps.Icon {
+  /** Lasform's branded pin — replaces Google's default red pin for location markers. Sized to the SVG's 140x200 (0.7:1) viewBox, anchored at its tip. labelOrigin centers a category emoji label (see setMarkers) in the pin's circular head instead of Google's default (the icon's dead center). */
+  private locationMarkerIcon(): google.maps.Icon {
     return {
-      url: 'lasform/assets/images/markers/device-marker-icon.png',
-      scaledSize: new google.maps.Size(25, 41),
-      anchor: new google.maps.Point(12, 41),
+      url: 'lasform/assets/images/markers/lasform-base-marker_140X200.svg',
+      scaledSize: new google.maps.Size(23, 33),
+      anchor: new google.maps.Point(12, 33),
+      labelOrigin: new google.maps.Point(11, 11),
     };
   }
 
@@ -113,12 +216,22 @@ export class GoogleMapsMapProvider implements MapProvider {
     this.infoWindow.open(this.map, entry.marker);
   }
 
-  moveMarker(id: string, lat: number, lng: number): void {
+  // id is unused: this.infoWindow is a single instance shared across every marker (see
+  // openMarkerPopup), so closing it always closes whichever marker's popup is currently open —
+  // the id param exists only to match MapProvider's per-marker-id shape.
+  closeMarkerPopup(_id: string): void {
+    this.infoWindow?.close();
+  }
+
+  moveMarker(id: string, lat: number, lng: number, headingDegrees?: number): void {
     const entry = this.markersById.get(id);
     if (!entry) {
       return;
     }
     entry.marker.setPosition({ lat, lng });
+    if (headingDegrees !== undefined) {
+      entry.marker.setIcon(deviceIcon(headingDegrees));
+    }
     // Unlike Leaflet's cluster plugin, @googlemaps/markerclusterer doesn't watch marker
     // position on its own — render() is its documented "recalculate and redraw" call.
     this.clusterer?.render();

@@ -58,6 +58,10 @@ const MAX_DEVICE_TRAIL_POINTS = 10;
 
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
 
+/** The map's view on load — also where closeSearch() returns it to. */
+const DEFAULT_MAP_CENTER = { lat: 43.8628, lng: -79.4308 };
+const DEFAULT_MAP_ZOOM = 14;
+
 interface GeofenceFormTarget {
   mode: 'create' | 'edit-shape';
   geofenceId?: string;
@@ -139,6 +143,28 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly coverImageUrl = signal<string | null>(null);
   protected readonly selectedGeofence = signal<Geofence | null>(null);
   protected readonly entityMenuOpen = signal(false);
+  /**
+   * Viewport coordinates for the open entity-menu dropdown, computed from its trigger button's
+   * position — see toggleEntityMenu(). The dropdown renders `position: fixed` at these
+   * coordinates instead of being anchored via CSS `position: absolute` relative to the trigger,
+   * so it isn't clipped by .results-card's `overflow: hidden` (needed elsewhere, for the
+   * search/details slide transition) when the details panel is short — e.g. minimized.
+   */
+  protected readonly entityMenuPosition = signal<{ top: number; left: number } | null>(null);
+  /**
+   * The edit/delete actions for whichever entity the open entity-menu is for — set by
+   * toggleEntityMenu(), read by the single shared dropdown markup at the root of the template
+   * (see map-page.html, right after the closing </div> of .top-bar). That markup has to live
+   * there, outside .results-slider, rather than inline next to each trigger button the way the
+   * rest of .details-top-actions does: .results-slider has a permanent `transform` (for the
+   * results/details slide animation) which — per the CSS spec — makes it the containing block for
+   * any `position: fixed` descendant, silently defeating the dropdown's whole reason for being
+   * `position: fixed` in the first place (escaping .results-card's `overflow: hidden`; see
+   * entityMenuPosition's doc comment above). Being outside .results-slider entirely is what
+   * actually avoids that, at the cost of not having direct template access to `hit`/`geofence`
+   * anymore — hence capturing the two callbacks up front instead.
+   */
+  protected readonly entityMenuActions = signal<{ onEdit: () => void; onDelete: () => void } | null>(null);
   /** Collapses the open details panel down to just its title bar — see toggleDetailsMinimized().
    *  Mainly for mobile, where the full panel can cover most of the map in live mode. */
   protected readonly detailsMinimized = signal(false);
@@ -160,6 +186,35 @@ export class MapPage implements AfterViewInit, OnDestroy {
     { type: 'terrain', labelKey: 'map.terrainView', icon: 'terrain' },
   ];
   protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
+
+  /**
+   * How many of the bottom-right map controls beyond "layers" and "my location" (clustering,
+   * geofences-visible, live) are actually enabled for this user/deployment right now — each is
+   * independently gated by a feature flag or permission, so the count varies. A computed (not a
+   * plain getter) so it's read the same way in the template as any other reactive state here,
+   * and only recomputes when the flags/permissions it reads actually change.
+   */
+  protected readonly extraMapControlsCount = computed(() => {
+    let count = 0;
+    if (this.featureFlags.isEnabled(FEATURE_FLAGS.mapClustering)) {
+      count++;
+    }
+    if (this.authService.hasPermission('geofence:read')) {
+      count++;
+    }
+    if (this.authService.hasPermission('device:read')) {
+      count++;
+    }
+    return count;
+  });
+  /**
+   * Past 2, those controls clutter the corner enough to be worth tucking behind a "more" toggle
+   * instead of always showing every one inline — see extraMapControlsOpen and the #extraMapControls
+   * template.
+   */
+  protected readonly groupExtraMapControls = computed(() => this.extraMapControlsCount() > 2);
+  /** Whether the grouped controls (see groupExtraMapControls) are currently expanded. Irrelevant, and left as-is, when groupExtraMapControls() is false — they're just always shown inline then. */
+  protected readonly extraMapControlsOpen = signal(false);
 
   protected readonly mapContextMenu = signal<MapContextMenuState | null>(null);
   protected readonly newLocationTarget = signal<{ lat: number; lng: number } | null>(null);
@@ -235,8 +290,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   async ngAfterViewInit(): Promise<void> {
     await this.mapProvider.initialize(this.mapContainer().nativeElement, {
-      center: { lat: 43.8628, lng: -79.4308 },
-      zoom: 14,
+      center: DEFAULT_MAP_CENTER,
+      zoom: DEFAULT_MAP_ZOOM,
     });
 
     this.loadLocationMarkers();
@@ -400,12 +455,53 @@ export class MapPage implements AfterViewInit, OnDestroy {
     return this.authService.hasPermission(hit.type === 'LOCATION' ? 'location:write' : 'device:write');
   }
 
-  protected toggleEntityMenu(): void {
-    this.entityMenuOpen.update((open) => !open);
+  // The next four just curry hit/geofence into a () => void for toggleEntityMenu's onEdit/onDelete
+  // params — template expressions can't write an arrow function literal directly (e.g.
+  // `() => openEditModal(hit)` isn't valid Angular template syntax), so this is the call site's
+  // only way to hand over "do this, later, with this specific hit" without also giving the
+  // now-offsite shared dropdown direct template access to `hit`/`geofence` (it has none — see
+  // entityMenuActions' doc comment).
+  protected openEditModalFn(hit: SearchHit): () => void {
+    return () => this.openEditModal(hit);
+  }
+
+  protected openDeleteConfirmFn(hit: SearchHit): () => void {
+    return () => this.openDeleteConfirm(hit);
+  }
+
+  protected editGeofenceFromDetailsFn(geofence: Geofence): () => void {
+    return () => this.editGeofenceFromDetails(geofence);
+  }
+
+  protected openDeleteConfirmGeofenceFn(geofence: Geofence): () => void {
+    return () => this.openDeleteConfirmGeofence(geofence);
+  }
+
+  /**
+   * event.currentTarget is the trigger button — its position drives entityMenuPosition (see doc
+   * comment there). onEdit/onDelete are captured now (into entityMenuActions), rather than the
+   * shared dropdown markup calling back into `hit`/`geofence` directly, because that markup lives
+   * outside .results-slider and so has no template access to either — see entityMenuActions' doc
+   * comment for why it has to live out there.
+   */
+  protected toggleEntityMenu(event: MouseEvent, onEdit: () => void, onDelete: () => void): void {
+    if (this.entityMenuOpen()) {
+      this.closeEntityMenu();
+      return;
+    }
+    const trigger = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    // Right-edge-aligned under the trigger, matching the old CSS `right: 0` anchoring — the
+    // dropdown and trigger are both a plain 28px icon-button-wide column, so same-left-edge
+    // achieves the same alignment without needing the dropdown's own rendered width up front.
+    this.entityMenuPosition.set({ top: trigger.bottom + 4, left: trigger.left });
+    this.entityMenuActions.set({ onEdit, onDelete });
+    this.entityMenuOpen.set(true);
   }
 
   protected closeEntityMenu(): void {
     this.entityMenuOpen.set(false);
+    this.entityMenuPosition.set(null);
+    this.entityMenuActions.set(null);
   }
 
   /** Tag chips shown under the name in the details panel. */
@@ -463,14 +559,24 @@ export class MapPage implements AfterViewInit, OnDestroy {
     const markers = [...this.loadedLocationsById.values()].map((hit) => {
       const location = hit.data as Location;
       const [lng, lat] = location.point.coordinates;
-      return { id: location.id, lat, lng, title: location.name };
+      return { id: location.id, lat, lng, title: location.name, categoryEmoji: this.categoryEmoji(location.categoryIds) };
     });
     this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
+  }
+
+  /** The marker emoji (e.g. "🏥") of a location's first category, if it has one and the category defines one. */
+  private categoryEmoji(categoryIds?: string[]): string | undefined {
+    const categoryId = categoryIds?.[0];
+    return categoryId ? this.categoryMap().get(categoryId)?.marker : undefined;
   }
 
   private loadCategories(): void {
     this.categoryService.findAll({ size: 100, sort: 'name,asc' }).subscribe((page) => {
       this.categories.set(page.content);
+      // Categories load independently of (and often after) the markers themselves — refresh
+      // whichever marker set is currently shown so their emoji isn't stuck missing until the
+      // next unrelated re-render (e.g. a pan/zoom).
+      this.refreshMapMarkers();
     });
   }
 
@@ -577,7 +683,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     }
     if (device.lastKnownPoint) {
       const [lng, lat] = device.lastKnownPoint.coordinates;
-      this.mapProvider.moveMarker(device.id, lat, lng);
+      this.mapProvider.moveMarker(device.id, lat, lng, device.heading);
       if (device.id === this.liveTrackedDeviceId) {
         this.pushDeviceTrailPoint(device.id, lat, lng);
       }
@@ -600,6 +706,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected closeMapTypeMenu(): void {
     this.mapTypeMenuOpen.set(false);
+  }
+
+  protected toggleExtraMapControls(): void {
+    this.extraMapControlsOpen.update((open) => !open);
   }
 
   protected selectMapType(type: MapType): void {
@@ -1040,6 +1150,23 @@ export class MapPage implements AfterViewInit, OnDestroy {
     });
   }
 
+  /**
+   * Dismisses the search results card entirely — clears the query and results, and refreshes the
+   * markers for whatever view the map is already on (no pan/zoom change). Only shown while
+   * looking at the results list itself (searching/error/empty/list — not the details sub-view,
+   * which already has its own, narrower close button that just backs out to the list without
+   * losing the search).
+   */
+  protected closeSearch(): void {
+    this.closeDetails();
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+    this.hasSearched.set(false);
+    this.searching.set(false);
+    this.searchError.set(null);
+    this.loadLocationMarkers();
+  }
+
   protected selectResult(hit: SearchHit): void {
     this.selectedGeofence.set(null);
     this.selectedResult.set(hit);
@@ -1065,8 +1192,24 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.stopDeviceLive();
   }
 
+  /**
+   * Minimizing is meant to shrink the details panel out of the way so more of the map is visible
+   * (see the CSS's doc comment on .details-panel.minimized) — leaving the selected marker's popup
+   * bubble open would defeat that, covering map area with a second, redundant copy of the same
+   * name shown in the (still-visible, even minimized) panel title. Restored on expand so it's
+   * back exactly as selectResult() first left it.
+   */
   protected toggleDetailsMinimized(): void {
     this.detailsMinimized.update((minimized) => !minimized);
+    const id = this.selectedResult()?.data.id;
+    if (!id) {
+      return;
+    }
+    if (this.detailsMinimized()) {
+      this.mapProvider.closeMarkerPopup(id);
+    } else {
+      this.mapProvider.openMarkerPopup(id);
+    }
   }
 
   protected selectDetailsTab(tab: DetailsTab, hit: SearchHit): void {
@@ -1361,7 +1504,16 @@ export class MapPage implements AfterViewInit, OnDestroy {
         continue;
       }
       const [lng, lat] = point.coordinates;
-      markers.push({ id: hit.data.id, lat, lng, title: this.resultTitle(hit), kind: hit.type === 'DEVICE' ? 'device' : 'location' });
+      const categoryIds = hit.type === 'LOCATION' ? (hit.data as Location).categoryIds : undefined;
+      markers.push({
+        id: hit.data.id,
+        lat,
+        lng,
+        title: this.resultTitle(hit),
+        kind: hit.type === 'DEVICE' ? 'device' : 'location',
+        categoryEmoji: this.categoryEmoji(categoryIds),
+        heading: hit.type === 'DEVICE' ? (hit.data as Device).heading : undefined,
+      });
     }
     this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
     return markers;
