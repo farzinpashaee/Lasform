@@ -51,6 +51,96 @@ app-root {
     'opsz' 20;
 }
 
+/* Location marker pin with a category emoji layered on top — rendered by Leaflet outside Angular's
+   view (dynamically created DOM via a divIcon), so this has to live in the global stylesheet, not a
+   component one. Leaflet's default divIcon styling (white box + border) is reset here since our
+   className replaces it entirely; the shadow/pin images reproduce what a plain L.icon + shadowUrl
+   would otherwise render in Leaflet's separate icon/shadow panes. */
+.location-marker-icon {
+  background: transparent;
+  border: none;
+}
+.location-marker-icon .location-marker-shadow,
+.location-marker-icon .location-marker-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+.location-marker-icon .location-marker-shadow {
+  width: 33px;
+  height: 33px;
+}
+.location-marker-icon .location-marker-pin {
+  width: 23px;
+  height: 33px;
+}
+/* Centered on the pin's circular head (roughly a third of the way down from its tip-anchored top). */
+.location-marker-icon .location-marker-emoji {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Live-tracked device marker: a round badge (never rotates) plus a small arrow that swings around
+   it to point in the device's heading (see LeafletMapProvider#setMarkerRotation) — rendered by
+   Leaflet outside Angular's view (dynamically created DOM via a divIcon), so this has to live in
+   the global stylesheet, not a component one. Leaflet's default divIcon styling (white box +
+   border) is reset here since our className replaces it entirely. */
+.device-marker-icon {
+  background: transparent;
+  border: none;
+}
+.device-marker-badge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #da5050;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.device-marker-badge .material-symbols-outlined {
+  font-size: 15px;
+  color: #fff;
+}
+/* Zero-size pivot sitting exactly at the icon's center (== the badge's center), so rotating it
+   swings only the arrow below around that fixed point instead of dragging the badge with it.
+   Hidden until a heading is actually known — see LeafletMapProvider#setMarkerRotation. */
+.device-marker-arrow-pivot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  display: none;
+}
+/* Points straight up (i.e. 0° heading) by default, its base a small gap out from the badge's edge
+   and its tip further out still — rotating the pivot above turns this to point whichever way the
+   device is actually heading. */
+.device-marker-arrow {
+  position: absolute;
+  left: -5px;
+  top: -23px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid #da5050;
+}
+
 /* Geofence name label centered on its shape — rendered by Leaflet/Google Maps outside Angular's
    view (dynamically created DOM), so this has to live in the global stylesheet, not a component one. */
 .geofence-label {

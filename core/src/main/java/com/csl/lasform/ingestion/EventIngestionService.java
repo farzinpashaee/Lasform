@@ -54,6 +54,7 @@ public class EventIngestionService {
             device.setLastKnownPoint(event.getPoint());
             device.setLastSeenAt(event.getOccurredAt());
             batteryLevel(event, device);
+            headingAndSpeed(event, device);
             // Spring Data's auditing only *sets* @LastModifiedBy when an auditor is present — it
             // never clears a field for an absent one, so a device whose only prior write was an
             // authenticated admin edit would otherwise keep that admin's id as updatedBy forever,
@@ -69,6 +70,20 @@ public class EventIngestionService {
         Object batteryLevel = event.getPayload() == null ? null : event.getPayload().get("batteryLevel");
         if (batteryLevel instanceof Number number) {
             device.setBatteryLevel(number.intValue());
+        }
+    }
+
+    /**
+     * Only overwrites when this event actually reports a value: both fields are optional per
+     * Event, and a later event that simply doesn't carry one (e.g. a source that never reports
+     * speed) shouldn't erase a perfectly good last-known reading from an earlier one.
+     */
+    private void headingAndSpeed(Event event, Device device) {
+        if (event.getHeading() != null) {
+            device.setHeading(event.getHeading());
+        }
+        if (event.getSpeed() != null) {
+            device.setSpeed(event.getSpeed());
         }
     }
 }

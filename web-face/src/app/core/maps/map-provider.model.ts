@@ -29,6 +29,10 @@ export interface MapMarkerData {
   title?: string;
   /** Which icon to render — defaults to the location pin when omitted. */
   kind?: 'location' | 'device';
+  /** The location's first category's marker emoji (e.g. "🏥"), if any — rendered on top of the pin. */
+  categoryEmoji?: string;
+  /** A device's last-known heading in degrees clockwise from north — orients its marker on initial render. Ignored for 'location' markers. */
+  heading?: number;
 }
 
 /** A visible-map rectangle in plain lon/lat, vendor-agnostic (mirrors both Leaflet's LatLngBounds and google.maps.LatLngBounds). */
@@ -80,8 +84,12 @@ export interface MapProvider {
   /** Closes the tooltip/info window for the marker with the given id, if it's currently open. */
   closeMarkerPopup(id: string): void;
 
-  /** Moves an existing marker to a new position, if one exists under this id. Never adds a marker. */
-  moveMarker(id: string, lat: number, lng: number): void;
+  /**
+   * Moves an existing marker straight to a new position, if one exists under this id — always the
+   * latest location event, never an animated glide toward it. `headingDegrees`, if given, turns the
+   * marker's heading arrow (device markers only) to face that direction. Never adds a marker.
+   */
+  moveMarker(id: string, lat: number, lng: number, headingDegrees?: number): void;
 
   /**
    * Renders a live-tracked device's recent path as connected, fading dots — oldest first, newest

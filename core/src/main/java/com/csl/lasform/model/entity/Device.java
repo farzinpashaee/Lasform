@@ -66,6 +66,12 @@ public class Device extends Auditable implements Identifiable, Imageable {
 
     private Instant lastSeenAt;
 
+    /** Denormalized from the most recent {@link Event} that reported one — degrees clockwise from north. */
+    private Double heading;
+
+    /** Denormalized from the most recent {@link Event} that reported one, in meters/second. */
+    private Double speed;
+
     private Integer batteryLevel;
 
     /** {@link Category} ids this device is classified under; a device may have several. */

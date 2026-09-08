@@ -73,7 +73,9 @@ const TERRAIN_MAX_ZOOM = 17;
 
 // Leaflet's default icon resolves its image URLs relative to the stylesheet that
 // declared it, which esbuild's bundling breaks — markers render as a broken-image
-// icon unless the URLs are pointed at the assets explicitly, once, up front.
+// icon unless the URLs are pointed at the assets explicitly, once, up front. Left in
+// place (rather than removed) because leaflet-draw's vertex/edit handles fall back to
+// this same default icon and would otherwise render as broken images too.
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: 'lasform/assets/images/markers/marker-icon.png',
@@ -81,14 +83,82 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'lasform/assets/images/markers/marker-shadow.png',
 });
 
-/** Same pin silhouette/size as the default icon, so it drops in with the same anchor/shadow. */
-const DEVICE_ICON = L.icon({
-  iconUrl: 'lasform/assets/images/markers/device-marker-icon.png',
-  shadowUrl: 'lasform/assets/images/markers/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const LOCATION_ICON_URL = 'lasform/assets/images/markers/lasform-base-marker_140X200.svg';
+const LOCATION_SHADOW_URL = 'lasform/assets/images/markers/marker-shadow.png';
+/** Sized to the SVG's 140x200 (0.7:1) viewBox, anchored at its tip. Shared by both LOCATION_ICON and locationIconWithEmoji() below, so the pin sits identically whether or not it carries an emoji. */
+const LOCATION_ICON_SIZE: L.PointTuple = [23, 33];
+const LOCATION_ICON_ANCHOR: L.PointTuple = [12, 33];
+const LOCATION_POPUP_ANCHOR: L.PointTuple = [0, -30];
+const LOCATION_SHADOW_SIZE: L.PointTuple = [33, 33];
+
+/** Lasform's branded pin — replaces Leaflet's default red pin for location markers with no category emoji, with the same drop shadow as the default/device pins. */
+const LOCATION_ICON = L.icon({
+  iconUrl: LOCATION_ICON_URL,
+  shadowUrl: LOCATION_SHADOW_URL,
+  iconSize: LOCATION_ICON_SIZE,
+  iconAnchor: LOCATION_ICON_ANCHOR,
+  popupAnchor: LOCATION_POPUP_ANCHOR,
+  shadowSize: LOCATION_SHADOW_SIZE,
+});
+
+/** One divIcon per distinct category emoji, built on first use and reused for every marker in that category rather than rebuilding identical HTML per marker. */
+const locationIconsByEmoji = new Map<string, L.DivIcon>();
+
+/**
+ * Same pin/shadow as LOCATION_ICON, but built as a divIcon so a category's emoji can be layered
+ * centered in the pin's circular head — a plain L.icon can only ever show a single flat image, with
+ * nowhere to composite a second one on top. The shadow and pin are plain <img>s stacked via CSS
+ * (see .location-marker-icon in styles.scss) rather than Leaflet's own icon/shadow panes, since a
+ * divIcon has no shadow slot of its own.
+ */
+function locationIconWithEmoji(emoji: string): L.DivIcon {
+  let icon = locationIconsByEmoji.get(emoji);
+  if (!icon) {
+    icon = L.divIcon({
+      className: 'location-marker-icon',
+      html: `<img class="location-marker-shadow" src="${LOCATION_SHADOW_URL}"><img class="location-marker-pin" src="${LOCATION_ICON_URL}"><span class="location-marker-emoji">${escapeHtml(emoji)}</span>`,
+      iconSize: LOCATION_ICON_SIZE,
+      iconAnchor: LOCATION_ICON_ANCHOR,
+      popupAnchor: LOCATION_POPUP_ANCHOR,
+    });
+    locationIconsByEmoji.set(emoji, icon);
+  }
+  return icon;
+}
+
+/** Diameter of the round "live device" badge itself, excluding the heading arrow. */
+const DEVICE_BADGE_DIAMETER = 26;
+/** Empty space left between the badge's edge and the arrow's (nearest) base. */
+const DEVICE_ARROW_GAP = 2;
+/** How far the heading arrow's tip sticks out beyond the badge's edge, past DEVICE_ARROW_GAP. */
+const DEVICE_ARROW_LENGTH = 8;
+/** Half of the icon's total footprint (badge + gap + arrow at any rotation) — the radius from center out to the arrow's tip. */
+const DEVICE_ICON_RADIUS = DEVICE_BADGE_DIAMETER / 2 + DEVICE_ARROW_GAP + DEVICE_ARROW_LENGTH;
+const DEVICE_ICON_SIZE: L.PointTuple = [DEVICE_ICON_RADIUS * 2, DEVICE_ICON_RADIUS * 2];
+/** The device's actual geo position is the badge's center, not a pin tip — this is a "here it is" marker, not a pointer. */
+const DEVICE_ICON_ANCHOR: L.PointTuple = [DEVICE_ICON_RADIUS, DEVICE_ICON_RADIUS];
+const DEVICE_POPUP_ANCHOR: L.PointTuple = [0, -DEVICE_BADGE_DIAMETER / 2];
+
+/**
+ * A round "live device" badge (Material Symbols' `sensors` glyph — concentric broadcast arcs —
+ * on a solid circle) with a small arrow that swings around it to point in the device's heading,
+ * per the reference design: the badge itself must stay upright and only the arrow rotates. Built
+ * as a divIcon (rather than a plain L.icon image) both to render the badge from CSS/an icon
+ * glyph instead of a raster asset, and so the arrow can carry its own independent CSS
+ * `transform: rotate(...)` (see setMarkerRotation) — Leaflet positions a marker by setting
+ * `transform: translate3d(...)` directly on the icon element itself, so rotating that same
+ * element (or one sized/positioned to affect the badge along with it) would either fight that
+ * positioning transform or rotate the badge too; a separate, zero-size pivot element at the
+ * icon's exact center, rotated independently, turns only the arrow around a fixed badge.
+ */
+const DEVICE_ICON = L.divIcon({
+  className: 'device-marker-icon',
+  html:
+    '<div class="device-marker-badge"><span class="material-symbols-outlined">sensors</span></div>' +
+    '<div class="device-marker-arrow-pivot"><div class="device-marker-arrow"></div></div>',
+  iconSize: DEVICE_ICON_SIZE,
+  iconAnchor: DEVICE_ICON_ANCHOR,
+  popupAnchor: DEVICE_POPUP_ANCHOR,
 });
 
 /** Undocumented internals of leaflet-draw's shared Polyline/Polygon draw handler that the closing-click patch below needs. */
@@ -247,7 +317,9 @@ private map?: L.Map;
     const chunk: L.Marker[] = [];
     for (let i = offset; i < end; i++) {
       const marker = markers[i];
-      const leafletMarker = L.marker([marker.lat, marker.lng], marker.kind === 'device' ? { icon: DEVICE_ICON } : undefined);
+      const icon =
+        marker.kind === 'device' ? DEVICE_ICON : marker.categoryEmoji ? locationIconWithEmoji(marker.categoryEmoji) : LOCATION_ICON;
+      const leafletMarker = L.marker([marker.lat, marker.lng], { icon });
       if (marker.title) {
         leafletMarker.bindPopup(marker.title);
       }
@@ -255,6 +327,14 @@ private map?: L.Map;
         this.markersById.set(marker.id, leafletMarker);
         if (onMarkerClick) {
           leafletMarker.on('click', () => onMarkerClick(marker.id!));
+        }
+        if (marker.kind === 'device' && marker.heading !== undefined) {
+          const heading = marker.heading;
+          // The arrow's pivot element only exists once Leaflet actually creates the marker's DOM
+          // element, which for a clustered layer can happen well after this chunk is built (or
+          // never, while it stays bundled inside an unopened cluster) — 'add' fires exactly when
+          // that element is created, whether that's now or much later.
+          leafletMarker.once('add', () => this.setMarkerRotation(leafletMarker, heading));
         }
       }
       chunk.push(leafletMarker);
@@ -293,10 +373,32 @@ private map?: L.Map;
     this.markersById.get(id)?.closePopup();
   }
 
-  moveMarker(id: string, lat: number, lng: number): void {
+  moveMarker(id: string, lat: number, lng: number, headingDegrees?: number): void {
+    const marker = this.markersById.get(id);
+    if (!marker) {
+      return;
+    }
     // setLatLng alone is enough even when clustered: MarkerClusterGroup binds its own 'move'
     // handler to every child marker and re-buckets it internally — no manual remove/re-add.
-    this.markersById.get(id)?.setLatLng([lat, lng]);
+    marker.setLatLng([lat, lng]);
+    if (headingDegrees !== undefined) {
+      this.setMarkerRotation(marker, headingDegrees);
+    }
+  }
+
+  /**
+   * Turns a device marker's heading arrow to point in the given direction — the badge itself
+   * never rotates, only this separate pivot element (hidden until the first known heading; see
+   * .device-marker-arrow-pivot in styles.scss). A no-op for anything without one — a location
+   * marker, or a device marker whose DOM element hasn't been created yet (e.g. still bundled
+   * inside an unopened cluster).
+   */
+  private setMarkerRotation(marker: L.Marker, angleDegrees: number): void {
+    const pivot = marker.getElement()?.querySelector<HTMLElement>('.device-marker-arrow-pivot');
+    if (pivot) {
+      pivot.style.display = 'block';
+      pivot.style.transform = `rotate(${angleDegrees}deg)`;
+    }
   }
 
   setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {

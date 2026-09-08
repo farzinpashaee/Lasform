@@ -559,14 +559,24 @@ export class MapPage implements AfterViewInit, OnDestroy {
     const markers = [...this.loadedLocationsById.values()].map((hit) => {
       const location = hit.data as Location;
       const [lng, lat] = location.point.coordinates;
-      return { id: location.id, lat, lng, title: location.name };
+      return { id: location.id, lat, lng, title: location.name, categoryEmoji: this.categoryEmoji(location.categoryIds) };
     });
     this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
+  }
+
+  /** The marker emoji (e.g. "🏥") of a location's first category, if it has one and the category defines one. */
+  private categoryEmoji(categoryIds?: string[]): string | undefined {
+    const categoryId = categoryIds?.[0];
+    return categoryId ? this.categoryMap().get(categoryId)?.marker : undefined;
   }
 
   private loadCategories(): void {
     this.categoryService.findAll({ size: 100, sort: 'name,asc' }).subscribe((page) => {
       this.categories.set(page.content);
+      // Categories load independently of (and often after) the markers themselves — refresh
+      // whichever marker set is currently shown so their emoji isn't stuck missing until the
+      // next unrelated re-render (e.g. a pan/zoom).
+      this.refreshMapMarkers();
     });
   }
 
@@ -673,7 +683,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     }
     if (device.lastKnownPoint) {
       const [lng, lat] = device.lastKnownPoint.coordinates;
-      this.mapProvider.moveMarker(device.id, lat, lng);
+      this.mapProvider.moveMarker(device.id, lat, lng, device.heading);
       if (device.id === this.liveTrackedDeviceId) {
         this.pushDeviceTrailPoint(device.id, lat, lng);
       }
@@ -1141,13 +1151,11 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Dismisses the search results card entirely — clears the query and results, and returns the
-   * map to its default view/markers, as if the app had just been opened. Only shown while looking
-   * at the results list itself (searching/error/empty/list — not the details sub-view, which
-   * already has its own, narrower close button that just backs out to the list without losing the
-   * search). loadLocationMarkers() in the panTo callback (not immediately) so it reads the
-   * default view's bounds once the map has actually finished moving there, not wherever it
-   * happened to be a moment ago.
+   * Dismisses the search results card entirely — clears the query and results, and refreshes the
+   * markers for whatever view the map is already on (no pan/zoom change). Only shown while
+   * looking at the results list itself (searching/error/empty/list — not the details sub-view,
+   * which already has its own, narrower close button that just backs out to the list without
+   * losing the search).
    */
   protected closeSearch(): void {
     this.closeDetails();
@@ -1156,7 +1164,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.hasSearched.set(false);
     this.searching.set(false);
     this.searchError.set(null);
-    this.mapProvider.panTo(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng, DEFAULT_MAP_ZOOM, () => this.loadLocationMarkers());
+    this.loadLocationMarkers();
   }
 
   protected selectResult(hit: SearchHit): void {
@@ -1496,7 +1504,16 @@ export class MapPage implements AfterViewInit, OnDestroy {
         continue;
       }
       const [lng, lat] = point.coordinates;
-      markers.push({ id: hit.data.id, lat, lng, title: this.resultTitle(hit), kind: hit.type === 'DEVICE' ? 'device' : 'location' });
+      const categoryIds = hit.type === 'LOCATION' ? (hit.data as Location).categoryIds : undefined;
+      markers.push({
+        id: hit.data.id,
+        lat,
+        lng,
+        title: this.resultTitle(hit),
+        kind: hit.type === 'DEVICE' ? 'device' : 'location',
+        categoryEmoji: this.categoryEmoji(categoryIds),
+        heading: hit.type === 'DEVICE' ? (hit.data as Device).heading : undefined,
+      });
     }
     this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
     return markers;
