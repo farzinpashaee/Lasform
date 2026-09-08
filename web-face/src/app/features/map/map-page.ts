@@ -683,7 +683,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     }
     if (device.lastKnownPoint) {
       const [lng, lat] = device.lastKnownPoint.coordinates;
-      this.mapProvider.moveMarker(device.id, lat, lng, device.heading, device.speed);
+      this.mapProvider.moveMarker(device.id, lat, lng, device.heading);
       if (device.id === this.liveTrackedDeviceId) {
         this.pushDeviceTrailPoint(device.id, lat, lng);
       }
