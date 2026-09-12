@@ -42,6 +42,7 @@ public class JwtService {
     private static final String CLAIM_MUST_RESET_PASSWORD = "mustResetPassword";
     private static final String CLAIM_EMAIL = "email";
     private static final String CLAIM_DISPLAY_NAME = "displayName";
+    private static final String CLAIM_AVATAR_URL = "avatarUrl";
     private static final String CLAIM_TYPE = "type";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
@@ -75,7 +76,13 @@ public class JwtService {
     }
 
     public String generateAccessToken(
-            String userId, String orgId, Set<String> permissions, boolean mustResetPassword, String email, String displayName) {
+            String userId,
+            String orgId,
+            Set<String> permissions,
+            boolean mustResetPassword,
+            String email,
+            String displayName,
+            String avatarUrl) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId)
@@ -84,6 +91,7 @@ public class JwtService {
                 .claim(CLAIM_MUST_RESET_PASSWORD, mustResetPassword)
                 .claim(CLAIM_EMAIL, email)
                 .claim(CLAIM_DISPLAY_NAME, displayName)
+                .claim(CLAIM_AVATAR_URL, avatarUrl)
                 .claim(CLAIM_TYPE, TYPE_ACCESS)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(accessTokenTtl)))
@@ -115,7 +123,8 @@ public class JwtService {
                     permissions == null ? Set.of() : Set.copyOf(permissions),
                     mustResetPassword,
                     claims.get(CLAIM_EMAIL, String.class),
-                    claims.get(CLAIM_DISPLAY_NAME, String.class));
+                    claims.get(CLAIM_DISPLAY_NAME, String.class),
+                    claims.get(CLAIM_AVATAR_URL, String.class));
         });
     }
 

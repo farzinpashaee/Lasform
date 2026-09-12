@@ -16,6 +16,8 @@ export interface JwtClaims {
   email: string;
   /** null until the user sets one via the profile page. */
   displayName: string | null;
+  /** Set from Google's `picture` claim on Google sign-up; null for password accounts. */
+  avatarUrl: string | null;
   type: 'access' | 'refresh';
   iat: number;
   exp: number;
@@ -28,6 +30,7 @@ export interface CurrentUser {
   mustResetPassword: boolean;
   email: string;
   displayName: string | null;
+  avatarUrl: string | null;
 }
 
 /** Mirrors com.csl.lasform.auth.infrastructure.web.dto.GoogleAuthResponse. Token fields are absent when pendingApproval is true. */

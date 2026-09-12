@@ -47,6 +47,7 @@ export class AuthService {
           mustResetPassword: claims.mustResetPassword,
           email: claims.email,
           displayName: claims.displayName,
+          avatarUrl: claims.avatarUrl,
         }
       : null;
   });

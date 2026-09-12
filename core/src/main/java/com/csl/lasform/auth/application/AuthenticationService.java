@@ -70,7 +70,13 @@ public class AuthenticationService {
 
         Set<String> permissions = permissionResolutionService.resolveForUser(user.getId());
         String accessToken = jwtService.generateAccessToken(
-                user.getId(), user.getOrgId(), permissions, user.isMustResetPassword(), user.getEmail(), user.getDisplayName());
+                user.getId(),
+                user.getOrgId(),
+                permissions,
+                user.isMustResetPassword(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getAvatarUrl());
         return new AccessTokenResult(accessToken, jwtService.getAccessTokenTtl().toSeconds());
     }
 
@@ -117,7 +123,13 @@ public class AuthenticationService {
 
         Set<String> permissions = permissionResolutionService.resolveForUser(user.getId());
         String accessToken = jwtService.generateAccessToken(
-                user.getId(), user.getOrgId(), permissions, user.isMustResetPassword(), user.getEmail(), user.getDisplayName());
+                user.getId(),
+                user.getOrgId(),
+                permissions,
+                user.isMustResetPassword(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getAvatarUrl());
         String refreshToken = jwtService.generateRefreshToken(user.getId(), persisted.getId(), refreshExpiresAt);
 
         return new LoginResult(accessToken, refreshToken, jwtService.getAccessTokenTtl().toSeconds());

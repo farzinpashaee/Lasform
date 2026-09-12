@@ -28,6 +28,9 @@ export class AccountMenu {
     return source ? source.charAt(0).toUpperCase() : '?';
   });
 
+  /** Google's profile picture, when the account has one (Google sign-up only) — shown instead of the letter avatar. */
+  protected readonly avatarUrl = computed(() => this.authService.currentUser()?.avatarUrl ?? null);
+
   @HostListener('document:keydown.escape')
   protected closeMenu(): void {
     this.menuOpen.set(false);
