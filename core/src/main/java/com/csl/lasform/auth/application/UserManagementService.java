@@ -1,5 +1,15 @@
 package com.csl.lasform.auth.application;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Base64;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.imageio.ImageIO;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +32,13 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class UserManagementService {
+
+    /** Matches a `data:image/<type>;base64,<payload>` URL, capturing the base64 payload. */
+    private static final Pattern AVATAR_DATA_URL =
+            Pattern.compile("^data:image/(?:png|jpe?g|gif|webp);base64,([A-Za-z0-9+/]+={0,2})$");
+
+    private static final int MAX_AVATAR_DIMENSION_PX = 512;
+    private static final long MAX_AVATAR_SIZE_BYTES = 1024 * 1024;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -117,6 +134,57 @@ public class UserManagementService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("error.user.notFound", userId));
         user.setDisplayName(displayName);
         return userRepository.save(user);
+    }
+
+    /**
+     * Self-service only. {@code avatarImage} is a client-supplied data URL — never trust its
+     * claimed size or format, so this re-derives both from the decoded bytes before accepting it.
+     * A validated custom avatar takes priority over {@link User#getAvatarUrl()} (Google's photo)
+     * everywhere it's rendered — see AuthenticationService's JWT claims.
+     */
+    public User updateOwnAvatar(String userId, String avatarImage) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("error.user.notFound", userId));
+        user.setCustomAvatarImage(validateAvatarImage(avatarImage));
+        return userRepository.save(user);
+    }
+
+    /** Self-service only — reverts display back to the Google photo (if any) or the letter avatar. */
+    public User removeOwnAvatar(String userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("error.user.notFound", userId));
+        user.setCustomAvatarImage(null);
+        return userRepository.save(user);
+    }
+
+    private static String validateAvatarImage(String avatarImage) {
+        Matcher matcher = AVATAR_DATA_URL.matcher(avatarImage);
+        if (!matcher.matches()) {
+            throw new BadRequestException("error.user.avatar.invalidFormat");
+        }
+
+        byte[] decoded;
+        try {
+            decoded = Base64.getDecoder().decode(matcher.group(1));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("error.user.avatar.invalidFormat");
+        }
+        if (decoded.length > MAX_AVATAR_SIZE_BYTES) {
+            throw new BadRequestException("error.user.avatar.tooLarge", MAX_AVATAR_SIZE_BYTES / (1024 * 1024));
+        }
+
+        BufferedImage decodedImage;
+        try {
+            decodedImage = ImageIO.read(new ByteArrayInputStream(decoded));
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read uploaded avatar image", e);
+        }
+        if (decodedImage == null) {
+            throw new BadRequestException("error.user.avatar.corruptOrUnsupported");
+        }
+        if (decodedImage.getWidth() > MAX_AVATAR_DIMENSION_PX || decodedImage.getHeight() > MAX_AVATAR_DIMENSION_PX) {
+            throw new BadRequestException("error.user.avatar.dimensionsTooLarge", MAX_AVATAR_DIMENSION_PX);
+        }
+
+        return avatarImage;
     }
 
     /**

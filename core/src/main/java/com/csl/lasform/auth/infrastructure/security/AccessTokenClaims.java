@@ -9,5 +9,6 @@ public record AccessTokenClaims(
         boolean mustResetPassword,
         String email,
         String displayName,
-        String avatarUrl) {
+        String avatarUrl,
+        boolean hasCustomAvatar) {
 }

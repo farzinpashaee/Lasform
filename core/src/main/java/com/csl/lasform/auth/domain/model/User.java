@@ -35,6 +35,9 @@ public class User {
     /** Optional — populated from the provider's profile photo for Google-signed-up accounts; null otherwise. */
     private String avatarUrl;
 
+    /** Optional — a user-uploaded photo as a data URL ({@code data:image/png;base64,...}); takes priority over {@link #avatarUrl} when set. */
+    private String customAvatarImage;
+
     /** Null for accounts created via Google sign-in/sign-up — there's no local password to check against. */
     private String passwordHash;
 

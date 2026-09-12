@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { UserService } from '../services/user.service';
 import { CurrentUser, GoogleAuthResponse, JwtClaims, TokenResponse } from './auth.model';
 import { decodeJwtPayload } from './jwt.util';
 
@@ -26,11 +27,14 @@ const PROACTIVE_REFRESH_SKEW_SECONDS = 60;
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly userService = inject(UserService);
 
   private readonly authUrl = `${environment.authApiUrl}/auth`;
 
   private readonly accessTokenSignal = signal<string | null>(null);
   private readonly claimsSignal = signal<JwtClaims | null>(null);
+  /** The uploaded avatar's data URL, warmed from the server whenever a token carrying hasCustomAvatar=true is applied; null otherwise. */
+  private readonly customAvatarSignal = signal<string | null>(null);
 
   private refreshInFlight: Observable<string> | null = null;
   private proactiveRefreshTimer?: ReturnType<typeof setTimeout>;
@@ -48,9 +52,13 @@ export class AuthService {
           email: claims.email,
           displayName: claims.displayName,
           avatarUrl: claims.avatarUrl,
+          hasCustomAvatar: claims.hasCustomAvatar,
         }
       : null;
   });
+
+  /** The uploaded avatar's data URL, when the current user has one — takes priority over currentUser().avatarUrl wherever an avatar is shown. */
+  readonly customAvatarImage = this.customAvatarSignal.asReadonly();
 
   /** Set on a 403 response by the auth interceptor; a banner (see App) shows/clears it. Cosmetic — the backend already refused the request. */
   readonly forbiddenNotice = signal<string | null>(null);
@@ -180,6 +188,24 @@ export class AuthService {
       localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, response.refreshToken);
     }
     this.scheduleProactiveRefresh(claims);
+    this.syncCustomAvatar(claims);
+  }
+
+  /** Only fetches the (potentially ~1MB) avatar payload when the token actually says there is one — most users never pay for this request. */
+  private syncCustomAvatar(claims: JwtClaims | null): void {
+    if (!claims?.hasCustomAvatar) {
+      this.customAvatarSignal.set(null);
+      return;
+    }
+    this.userService.getOwnAvatar().subscribe({
+      next: (response) => this.customAvatarSignal.set(response.avatarImage),
+      error: () => this.customAvatarSignal.set(null),
+    });
+  }
+
+  /** Lets the profile page reflect an upload/removal immediately, without waiting on a token refresh + re-fetch. */
+  setCustomAvatarImage(avatarImage: string | null): void {
+    this.customAvatarSignal.set(avatarImage);
   }
 
   private scheduleProactiveRefresh(claims: JwtClaims | null): void {
@@ -203,6 +229,7 @@ export class AuthService {
     clearTimeout(this.proactiveRefreshTimer);
     this.accessTokenSignal.set(null);
     this.claimsSignal.set(null);
+    this.customAvatarSignal.set(null);
     localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
   }
 

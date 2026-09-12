@@ -76,7 +76,8 @@ public class AuthenticationService {
                 user.isMustResetPassword(),
                 user.getEmail(),
                 user.getDisplayName(),
-                user.getAvatarUrl());
+                user.getAvatarUrl(),
+                user.getCustomAvatarImage() != null);
         return new AccessTokenResult(accessToken, jwtService.getAccessTokenTtl().toSeconds());
     }
 
@@ -129,7 +130,8 @@ public class AuthenticationService {
                 user.isMustResetPassword(),
                 user.getEmail(),
                 user.getDisplayName(),
-                user.getAvatarUrl());
+                user.getAvatarUrl(),
+                user.getCustomAvatarImage() != null);
         String refreshToken = jwtService.generateRefreshToken(user.getId(), persisted.getId(), refreshExpiresAt);
 
         return new LoginResult(accessToken, refreshToken, jwtService.getAccessTokenTtl().toSeconds());

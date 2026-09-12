@@ -18,6 +18,8 @@ export interface JwtClaims {
   displayName: string | null;
   /** Set from Google's `picture` claim on Google sign-up; null for password accounts. */
   avatarUrl: string | null;
+  /** True once the user has uploaded a custom avatar (see UserService.uploadOwnAvatar) — takes priority over avatarUrl. */
+  hasCustomAvatar: boolean;
   type: 'access' | 'refresh';
   iat: number;
   exp: number;
@@ -31,6 +33,7 @@ export interface CurrentUser {
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
+  hasCustomAvatar: boolean;
 }
 
 /** Mirrors com.csl.lasform.auth.infrastructure.web.dto.GoogleAuthResponse. Token fields are absent when pendingApproval is true. */

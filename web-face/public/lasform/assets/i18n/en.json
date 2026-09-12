@@ -386,7 +386,14 @@
     "displayName": "Display name",
     "displayNamePlaceholder": "e.g. Farzin",
     "saved": "Saved.",
-    "saveFailed": "Failed to save your profile. Please try again."
+    "saveFailed": "Failed to save your profile. Please try again.",
+    "changePhoto": "Change photo",
+    "removePhoto": "Remove photo",
+    "avatarHint": "PNG, JPEG, GIF, or WEBP — up to 512×512 pixels and 1MB.",
+    "avatarInvalidType": "Please choose a PNG, JPEG, GIF, or WEBP image.",
+    "avatarTooLarge": "Image must be smaller than 1MB.",
+    "avatarDimensionsTooLarge": "Image must be no larger than 512×512 pixels.",
+    "avatarSaveFailed": "Failed to save your photo. Please try again."
   },
   "users": {
     "title": "Users",
