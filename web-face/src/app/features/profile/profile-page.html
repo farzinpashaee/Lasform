@@ -7,6 +7,31 @@
 
     <h1 class="auth-title">{{ 'profile.title' | transloco }}</h1>
 
+    <div class="avatar-section">
+      <div class="avatar-preview">
+        @if (avatarPreview()) {
+          <img [src]="avatarPreview()" alt="" referrerpolicy="no-referrer" />
+        } @else {
+          <span>{{ accountLetter() }}</span>
+        }
+      </div>
+      <div class="avatar-actions">
+        <label class="avatar-upload-button" [class.disabled]="avatarSaving()">
+          {{ (avatarSaving() ? 'common.saving' : 'profile.changePhoto') | transloco }}
+          <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" [disabled]="avatarSaving()" (change)="onAvatarFileSelected($event)" hidden />
+        </label>
+        @if (hasCustomAvatar()) {
+          <button type="button" class="avatar-remove-button" [disabled]="avatarSaving()" (click)="removeAvatar()">
+            {{ 'profile.removePhoto' | transloco }}
+          </button>
+        }
+      </div>
+      <p class="avatar-hint">{{ 'profile.avatarHint' | transloco }}</p>
+      @if (avatarError()) {
+        <p class="auth-error">{{ avatarError() }}</p>
+      }
+    </div>
+
     <label class="auth-field">
       <span>{{ 'common.email' | transloco }}</span>
       <input type="email" [value]="email()" disabled />

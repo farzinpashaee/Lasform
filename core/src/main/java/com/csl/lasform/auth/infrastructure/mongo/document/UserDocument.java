@@ -41,6 +41,8 @@ public class UserDocument {
 
     private String avatarUrl;
 
+    private String customAvatarImage;
+
     private String passwordHash;
 
     private UserStatus status;

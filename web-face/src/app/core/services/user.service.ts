@@ -22,6 +22,11 @@ export interface UpdateUserRequest {
   status: UserStatus;
 }
 
+/** `avatarImage` is null when the user has no custom avatar. */
+export interface AvatarResponse {
+  avatarImage: string | null;
+}
+
 /**
  * Lives under {@link environment.authApiUrl} (`/api/users`), not `/api/v1` like CrudService's
  * resources — this is part of the auth module, not the versioned entity API.
@@ -54,6 +59,21 @@ export class UserService {
   /** No special permission — any authenticated user may edit their own displayName. */
   updateOwnProfile(displayName: string): Observable<User> {
     return this.http.patch<User>(`${this.resourceUrl}/me`, { displayName });
+  }
+
+  /** The custom avatar's data URL, or null if none has been uploaded — not part of `User` since it's excluded from every UserResponse. */
+  getOwnAvatar(): Observable<AvatarResponse> {
+    return this.http.get<AvatarResponse>(`${this.resourceUrl}/me/avatar`);
+  }
+
+  /** `avatarImage` must be a `data:image/...;base64,...` URL no larger than 512x512/1MB — the backend re-validates both regardless. */
+  uploadOwnAvatar(avatarImage: string): Observable<User> {
+    return this.http.put<User>(`${this.resourceUrl}/me/avatar`, { avatarImage });
+  }
+
+  /** Reverts display back to the Google photo (if any) or the letter avatar. */
+  deleteOwnAvatar(): Observable<User> {
+    return this.http.delete<User>(`${this.resourceUrl}/me/avatar`);
   }
 
   /** Requires user:write. Admin editing another user's info/status; the backend rejects disabling yourself this way. */

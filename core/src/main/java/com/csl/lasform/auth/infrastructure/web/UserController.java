@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,8 +29,10 @@ import com.csl.lasform.auth.domain.repository.UserRepository;
 import com.csl.lasform.auth.domain.repository.UserRoleRepository;
 import com.csl.lasform.auth.infrastructure.security.JwtPrincipal;
 import com.csl.lasform.auth.infrastructure.web.dto.AssignRoleRequest;
+import com.csl.lasform.auth.infrastructure.web.dto.AvatarResponse;
 import com.csl.lasform.auth.infrastructure.web.dto.CreateUserRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.SignUpRequest;
+import com.csl.lasform.auth.infrastructure.web.dto.UpdateAvatarRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.UpdateProfileRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.UpdateUserRequest;
 import com.csl.lasform.auth.infrastructure.web.dto.UserResponse;
@@ -127,6 +130,40 @@ public class UserController {
             throw new BadCredentialsException("Authentication is required.");
         }
         User updated = userManagementService.updateOwnProfile(principal.userId(), request.displayName());
+        return UserResponse.from(updated);
+    }
+
+    /**
+     * No {@code @PreAuthorize}, same reasoning as {@link #updateOwnProfile} — returns just the data
+     * URL rather than the full {@code UserResponse} since that's excluded from it (see
+     * UserResponse's javadoc); {@code avatarImage} is null when the user has no custom avatar.
+     */
+    @GetMapping("/me/avatar")
+    public AvatarResponse getOwnAvatar(Authentication authentication) {
+        if (!(authentication.getPrincipal() instanceof JwtPrincipal principal)) {
+            throw new BadCredentialsException("Authentication is required.");
+        }
+        User user = userRepository.findById(principal.userId()).orElseThrow(() -> new BadCredentialsException("Authentication is required."));
+        return new AvatarResponse(user.getCustomAvatarImage());
+    }
+
+    /** No {@code @PreAuthorize}, same reasoning as {@link #updateOwnProfile}. Validation (format/size/dimensions) happens in the service. */
+    @PutMapping("/me/avatar")
+    public UserResponse updateOwnAvatar(@Valid @RequestBody UpdateAvatarRequest request, Authentication authentication) {
+        if (!(authentication.getPrincipal() instanceof JwtPrincipal principal)) {
+            throw new BadCredentialsException("Authentication is required.");
+        }
+        User updated = userManagementService.updateOwnAvatar(principal.userId(), request.avatarImage());
+        return UserResponse.from(updated);
+    }
+
+    /** No {@code @PreAuthorize}, same reasoning as {@link #updateOwnProfile}. Reverts display back to the Google photo (if any) or the letter avatar. */
+    @DeleteMapping("/me/avatar")
+    public UserResponse removeOwnAvatar(Authentication authentication) {
+        if (!(authentication.getPrincipal() instanceof JwtPrincipal principal)) {
+            throw new BadCredentialsException("Authentication is required.");
+        }
+        User updated = userManagementService.removeOwnAvatar(principal.userId());
         return UserResponse.from(updated);
     }
 

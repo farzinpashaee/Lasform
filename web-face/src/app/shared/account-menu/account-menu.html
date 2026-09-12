@@ -7,7 +7,11 @@
     (click)="onAvatarClick()"
   >
     @if (authService.isAuthenticated()) {
-      {{ accountLetter() }}
+      @if (avatarUrl()) {
+        <img class="avatar-image" [src]="avatarUrl()" alt="" referrerpolicy="no-referrer" />
+      } @else {
+        {{ accountLetter() }}
+      }
     } @else {
       <span class="material-symbols-outlined" aria-hidden="true">person</span>
     }
@@ -21,7 +25,13 @@
       </button>
 
       <div class="account-menu-body">
-        <div class="account-menu-avatar">{{ accountLetter() }}</div>
+        <div class="account-menu-avatar">
+          @if (avatarUrl()) {
+            <img class="avatar-image" [src]="avatarUrl()" alt="" referrerpolicy="no-referrer" />
+          } @else {
+            {{ accountLetter() }}
+          }
+        </div>
         <div class="account-menu-info">
           <p class="account-menu-name">{{ authService.currentUser()?.displayName || authService.currentUser()?.email }}</p>
           @if (authService.currentUser()?.displayName) {

@@ -6,13 +6,21 @@ import java.util.List;
 import com.csl.lasform.auth.domain.model.User;
 import com.csl.lasform.auth.domain.model.UserStatus;
 
-/** {@code passwordHash} is deliberately excluded — never serialized back to a client. */
+/**
+ * {@code passwordHash} is deliberately excluded — never serialized back to a client. {@code
+ * customAvatarImage} itself (up to ~1.4MB of base64 once a data URL's overhead is counted) is
+ * excluded too, for every response this DTO backs — including the user list an admin's management
+ * page loads for everyone at once, which is exactly where embedding it would hurt most; only
+ * {@code hasCustomAvatar} is exposed, and the actual image is fetched separately (see
+ * UserController#getOwnAvatar) only by whoever actually needs to render it.
+ */
 public record UserResponse(
         String id,
         String orgId,
         String email,
         String displayName,
         String avatarUrl,
+        boolean hasCustomAvatar,
         UserStatus status,
         boolean mustResetPassword,
         Instant createdAt,
@@ -32,6 +40,7 @@ public record UserResponse(
                 user.getEmail(),
                 user.getDisplayName(),
                 user.getAvatarUrl(),
+                user.getCustomAvatarImage() != null,
                 user.getStatus(),
                 user.isMustResetPassword(),
                 user.getCreatedAt(),
