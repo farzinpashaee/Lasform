@@ -107,6 +107,12 @@ export interface MapProvider {
   /** The currently visible map area, or null before initialize() has resolved. */
   getBounds(): MapBounds | null;
 
+  /** The map's current center point, or null before initialize() has resolved. */
+  getCenter(): { lat: number; lng: number } | null;
+
+  /** The map's current zoom level, or null before initialize() has resolved. */
+  getZoom(): number | null;
+
   /** Registers the handler fired once a pan or zoom settles (not on every intermediate frame while dragging/animating). */
   onBoundsChanged(handler: (bounds: MapBounds) => void): void;
 

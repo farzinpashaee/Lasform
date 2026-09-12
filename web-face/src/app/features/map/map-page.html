@@ -190,7 +190,7 @@
               </button>
             </div>
           }
-          <div class="details-top-actions">
+          <div class="details-top-actions" [class.has-cover-image]="!!coverImageUrl()">
             @if (canEditHit(hit)) {
               <div class="entity-menu-wrapper" [class.open]="entityMenuOpen()">
                 <button

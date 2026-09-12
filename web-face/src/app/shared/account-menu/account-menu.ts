@@ -28,6 +28,11 @@ export class AccountMenu {
     return source ? source.charAt(0).toUpperCase() : '?';
   });
 
+  /** A user-uploaded photo takes priority over Google's profile picture; falls back to the letter avatar when neither is set. */
+  protected readonly avatarUrl = computed(
+    () => this.authService.customAvatarImage() ?? this.authService.currentUser()?.avatarUrl ?? null,
+  );
+
   @HostListener('document:keydown.escape')
   protected closeMenu(): void {
     this.menuOpen.set(false);

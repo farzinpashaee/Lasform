@@ -584,6 +584,18 @@ private map?: L.Map;
     return { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() };
   }
 
+  getCenter(): { lat: number; lng: number } | null {
+    if (!this.map) {
+      return null;
+    }
+    const center = this.map.getCenter();
+    return { lat: center.lat, lng: center.lng };
+  }
+
+  getZoom(): number | null {
+    return this.map?.getZoom() ?? null;
+  }
+
   onBoundsChanged(handler: (bounds: MapBounds) => void): void {
     // 'moveend' fires once a pan OR a zoom has finished settling — covers both without a
     // separate 'zoomend' listener (zooming always ends in a moveend too).
