@@ -23,6 +23,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/api/**")
                 .allowedOrigins("http://localhost:4200")
                 .allowedMethods("GET", "POST", "PATCH", "PUT", "DELETE");
+        // Actuator endpoints (e.g. /actuator/info, read by the map page's "About" panel) are
+        // dispatched through their own HandlerMapping, not the RequestMappingHandlerMapping this
+        // CorsRegistry configures — a mapping here for "/actuator/**" would silently do nothing.
+        // Their CORS is configured separately via management.endpoints.web.cors in application.yml.
     }
 
     @Override

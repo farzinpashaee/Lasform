@@ -420,6 +420,19 @@
     </div>
   }
 
+  <div class="bottom-left">
+    <button
+      class="icon-button round"
+      type="button"
+      [attr.aria-label]="'map.appInfo' | transloco"
+      [class.active]="appInfoOpen()"
+      [attr.aria-expanded]="appInfoOpen()"
+      (click)="openAppInfo()"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">info</span>
+    </button>
+  </div>
+
   <div class="bottom-right controls">
     <button
       class="icon-button round"
@@ -830,6 +843,63 @@
         >
           {{ (deletingGeofence() ? 'common.deleting' : 'common.delete') | transloco }}
         </button>
+      </div>
+    </div>
+  }
+
+  @if (appInfoOpen()) {
+    <div class="modal-backdrop" (click)="closeAppInfo()"></div>
+    <div class="modal app-info-modal">
+      <div class="details-top-actions app-info-close">
+        <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeAppInfo()">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <h2 class="modal-title">{{ 'map.appInfoTitle' | transloco }}</h2>
+
+      @if (appInfoLoading()) {
+        <div class="results-status">{{ 'map.appInfoLoading' | transloco }}</div>
+      } @else if (appInfoError()) {
+        <div class="results-status results-error">{{ appInfoError() }}</div>
+      } @else if (appInfo(); as info) {
+        <dl class="details-fields app-info-fields">
+          <div class="details-field">
+            <dt>{{ 'map.appInfoVersion' | transloco }}</dt>
+            <dd>{{ info.version ?? ('map.appInfoUnknown' | transloco) }}</dd>
+          </div>
+          <div class="details-field">
+            <dt>{{ 'map.appInfoCutoverId' | transloco }}</dt>
+            <dd class="app-info-commit-row">
+              <span class="app-info-commit-id">{{ info.commitId ?? info.commitIdAbbrev ?? ('map.appInfoUnknown' | transloco) }}</span>
+              @if (info.commitId) {
+                <button
+                  type="button"
+                  class="icon-action-button"
+                  [attr.aria-label]="'map.appInfoCopyCutoverId' | transloco"
+                  (click)="copyCommitId(info.commitId)"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ appInfoCopied() ? 'check' : 'content_copy' }}</span>
+                </button>
+              }
+            </dd>
+          </div>
+        </dl>
+      }
+
+      <div class="app-info-license">
+        <p class="app-info-license-title">{{ 'map.appInfoLicense' | transloco }}</p>
+        <p class="app-info-license-text">{{ 'map.appInfoLicenseText' | transloco }}</p>
+      </div>
+
+      <div class="app-info-links">
+        <a class="app-info-link" [href]="gitRepositoryUrl" target="_blank" rel="noopener noreferrer">
+          <span class="material-symbols-outlined" aria-hidden="true">code</span>
+          <span>{{ 'map.appInfoRepository' | transloco }}</span>
+        </a>
+        <a class="app-info-link" [href]="projectWebsiteUrl" target="_blank" rel="noopener noreferrer">
+          <span class="material-symbols-outlined" aria-hidden="true">language</span>
+          <span>{{ 'map.appInfoWebsite' | transloco }}</span>
+        </a>
       </div>
     </div>
   }
