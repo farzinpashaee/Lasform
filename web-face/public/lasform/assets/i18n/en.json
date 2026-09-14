@@ -93,6 +93,18 @@
     "geofenceSaveFailed": "Failed to save the geofence. Please try again.",
     "deleteGeofenceTitle": "Delete geofence?",
     "deleteGeofenceFailed": "Failed to delete the geofence. Please try again.",
+    "appInfo": "About",
+    "appInfoTitle": "About Lasform",
+    "appInfoLoading": "Loading…",
+    "appInfoLoadFailed": "Failed to load application info.",
+    "appInfoUnknown": "Unknown",
+    "appInfoVersion": "Version",
+    "appInfoCutoverId": "Cutover ID",
+    "appInfoCopyCutoverId": "Copy cutover ID",
+    "appInfoLicense": "License",
+    "appInfoLicenseText": "Dual-licensed: free for noncommercial use under the PolyForm Noncommercial License 1.0.0; commercial use requires a separate Lasform Commercial License.",
+    "appInfoRepository": "View source on GitHub",
+    "appInfoWebsite": "codestreamlab.com",
     "account": {
       "greeting": "Hi, {{name}}!",
       "viewProfile": "Manage your profile"

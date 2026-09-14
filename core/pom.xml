@@ -119,6 +119,43 @@
 						</exclude>
 					</excludes>
 				</configuration>
+				<executions>
+					<!-- Writes target/classes/META-INF/build-info.properties (artifact id, group,
+					     name, version from this POM, plus build time). Spring Boot's actuator
+					     auto-configures a BuildInfoContributor from it, so it shows up under
+					     /actuator/info as soon as the file is on the classpath, no extra code. -->
+					<execution>
+						<id>build-info</id>
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Writes target/classes/git.properties (commit id, branch, build/commit time, etc.)
+			     from the local repo's HEAD at build time. Spring Boot's actuator auto-configures a
+			     GitInfoContributor from it, so it shows up under /actuator/info alongside the
+			     build info above, no extra code needed. -->
+			<plugin>
+				<groupId>io.github.git-commit-id</groupId>
+				<artifactId>git-commit-id-maven-plugin</artifactId>
+				<version>9.0.2</version>
+				<executions>
+					<execution>
+						<id>get-the-git-infos</id>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<generateGitPropertiesFile>true</generateGitPropertiesFile>
+					<generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+					<!-- The build works fine from a source tarball/CI checkout with no .git dir;
+					     failing the whole build over a missing repo would be worse than just
+					     omitting git info from /actuator/info in that case. -->
+					<failOnNoGitDirectory>false</failOnNoGitDirectory>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

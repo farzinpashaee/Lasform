@@ -36,6 +36,7 @@ import { Geofence } from '../../core/models/geofence.model';
 import { Location } from '../../core/models/location.model';
 import { Review } from '../../core/models/review.model';
 import { SearchHit } from '../../core/models/search.model';
+import { AppInfo, AppInfoService } from '../../core/services/app-info.service';
 import { CategoryService } from '../../core/services/category.service';
 import { DeviceLiveService } from '../../core/services/device-live.service';
 import { DeviceService } from '../../core/services/device.service';
@@ -55,6 +56,10 @@ const GEOFENCE_STATUSES: GeofenceStatus[] = ['ACTIVE', 'INACTIVE'];
 const DRAFT_GEOFENCE_ID = '__draft__';
 /** How many of the most recent positions the individually-tracked device's breadcrumb trail keeps. */
 const MAX_DEVICE_TRAIL_POINTS = 10;
+
+/** Shown as links in the "About" panel (see openAppInfo()) — not user-configurable, so kept as plain constants rather than backend/env config. */
+const GIT_REPOSITORY_URL = 'https://github.com/farzinpashaee/Lasform';
+const PROJECT_WEBSITE_URL = 'http://codestreamlab.com';
 
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
 /** Where the map's last-seen center/zoom/type is persisted (see loadStoredMapView()/saveMapView()) so a round trip through the management pages or a login/logout doesn't reset the view to the hardcoded defaults below. */
@@ -100,6 +105,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private readonly locationService = inject(LocationService);
   private readonly deviceService = inject(DeviceService);
   private readonly deviceLiveService = inject(DeviceLiveService);
+  private readonly appInfoService = inject(AppInfoService);
   private readonly categoryService = inject(CategoryService);
   private readonly tagService = inject(TagService);
   private readonly searchService = inject(SearchService);
@@ -108,6 +114,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
   protected readonly featureFlags = inject(FeatureFlagsService);
   protected readonly FEATURE_FLAGS = FEATURE_FLAGS;
+  protected readonly gitRepositoryUrl = GIT_REPOSITORY_URL;
+  protected readonly projectWebsiteUrl = PROJECT_WEBSITE_URL;
 
   private readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
 
@@ -196,6 +204,13 @@ export class MapPage implements AfterViewInit, OnDestroy {
     { type: 'terrain', labelKey: 'map.terrainView', icon: 'terrain' },
   ];
   protected readonly darkMode = signal(localStorage.getItem(DARK_MODE_STORAGE_KEY) === 'true');
+
+  /** The "About" panel opened from the bottom-left info button — fetched lazily on first open (see openAppInfo()) rather than on page load, since it's rarely used. */
+  protected readonly appInfoOpen = signal(false);
+  protected readonly appInfo = signal<AppInfo | null>(null);
+  protected readonly appInfoLoading = signal(false);
+  protected readonly appInfoError = signal<string | null>(null);
+  protected readonly appInfoCopied = signal(false);
 
   /**
    * How many of the bottom-right map controls beyond "layers" and "my location" (clustering,
@@ -486,6 +501,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.closeEditModal();
     this.closeDeleteConfirm();
     this.closeDeleteConfirmGeofence();
+    this.closeAppInfo();
     if (this.geofenceFormTarget()) {
       this.cancelGeofenceForm();
     }
@@ -777,6 +793,42 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected toggleDarkMode(): void {
     this.darkMode.update((enabled) => !enabled);
     localStorage.setItem(DARK_MODE_STORAGE_KEY, String(this.darkMode()));
+  }
+
+  /** Fetches once per app session rather than on every open — the running build/commit can't change without a redeploy, so a stale cached copy is never actually stale. */
+  protected openAppInfo(): void {
+    this.appInfoOpen.set(true);
+    if (this.appInfo() || this.appInfoLoading()) {
+      return;
+    }
+    this.appInfoLoading.set(true);
+    this.appInfoError.set(null);
+    this.appInfoService.get().subscribe({
+      next: (info) => {
+        this.appInfoLoading.set(false);
+        this.appInfo.set(info);
+      },
+      error: () => {
+        this.appInfoLoading.set(false);
+        this.appInfoError.set(this.transloco.translate('map.appInfoLoadFailed'));
+      },
+    });
+  }
+
+  protected closeAppInfo(): void {
+    this.appInfoOpen.set(false);
+  }
+
+  protected copyCommitId(commitId: string): void {
+    navigator.clipboard?.writeText(commitId).then(
+      () => {
+        this.appInfoCopied.set(true);
+        setTimeout(() => this.appInfoCopied.set(false), 1500);
+      },
+      () => {
+        // Clipboard access can be denied (permissions, insecure context, ...); not worth surfacing to the user.
+      },
+    );
   }
 
   protected zoomIn(): void {

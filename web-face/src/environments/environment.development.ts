@@ -5,6 +5,8 @@ export const environment = {
   apiUrl: 'http://localhost:8078/api/v1',
   /** Auth endpoints (login/refresh/reset-password, users, roles) live under /api, not /api/v1. */
   authApiUrl: 'http://localhost:8078/api',
+  /** Spring Boot Actuator, mounted at the server root (not under /api/v1) — see AppInfoService. */
+  actuatorUrl: 'http://localhost:8078/actuator',
   /** Which MapProvider implementation to use; see core/maps. See environment.ts for why the
    * Google Maps API key and OAuth Client ID aren't here anymore. */
   mapProvider: 'leaflet' as MapProviderKind,

@@ -5,6 +5,8 @@ export const environment = {
   apiUrl: '/api/v1',
   /** Auth endpoints (login/refresh/reset-password, users, roles) live under /api, not /api/v1. */
   authApiUrl: '/api',
+  /** Spring Boot Actuator, mounted at the server root (not under /api/v1) — see AppInfoService. */
+  actuatorUrl: '/actuator',
   /**
    * Which MapProvider implementation to use; see core/maps. The Google Maps API key itself
    * (required when this is 'google') and the Google OAuth Client ID for Sign in with Google are
