@@ -1,4 +1,5 @@
 export * from './alert.service';
+export * from './app-info.service';
 export * from './category.service';
 export * from './config.service';
 export * from './crud.service';

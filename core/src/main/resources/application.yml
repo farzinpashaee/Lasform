@@ -40,15 +40,30 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-# Only 'health' is exposed — SecurityConfig's anyRequest().permitAll() means anything listed here is
-# publicly reachable with no auth, same as every other endpoint in this app. Never add 'env', 'beans',
-# 'configprops', etc. here: they'd leak lasform.jwt.secret / the Mongo URI to anyone. show-details
-# defaults to 'never' for the same reason — left unset deliberately, don't override it to 'always'.
+# Only 'health' and 'info' are exposed — SecurityConfig's anyRequest().permitAll() means anything
+# listed here is publicly reachable with no auth, same as every other endpoint in this app. Never
+# add 'env', 'beans', 'configprops', etc. here: they'd leak lasform.jwt.secret / the Mongo URI to
+# anyone. show-details defaults to 'never' for the same reason — left unset deliberately, don't
+# override it to 'always'. 'info' only ever surfaces the POM version and git commit (from the
+# build-info.properties / git.properties generated at build time by the plugins in pom.xml), which
+# isn't sensitive.
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info
+      # WebConfig's CorsRegistry (for the Angular dev server, a different origin) doesn't reach
+      # actuator endpoints — they're dispatched through their own HandlerMapping, not the
+      # RequestMappingHandlerMapping CorsRegistry configures — so /actuator/info needs its own
+      # CORS config here for the map page's "About" panel to read it in development.
+      cors:
+        allowed-origins: http://localhost:4200
+        allowed-methods: GET
+  info:
+    git:
+      # 'full' instead of the default 'simple' so the complete commit id is exposed, not just its
+      # abbreviated form.
+      mode: full
 
 lasform:
   storage:
