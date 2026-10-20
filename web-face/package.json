@@ -17,7 +17,7 @@
     "@angular/core": "^22.1.0",
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
-    "@angular/router": "^22.0.0",
+    "@angular/router": "^22.2.1",
     "@googlemaps/markerclusterer": "^2.6.2",
     "@jsverse/transloco": "^8.4.0",
     "leaflet": "^1.9.4",
