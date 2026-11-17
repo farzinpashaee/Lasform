@@ -29,6 +29,9 @@ services:
       LASFORM_ADMIN_PASSWORD: ${LASFORM_ADMIN_PASSWORD:-}
       LASFORM_CONFIG_DEFAULTS_GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
       LASFORM_CONFIG_DEFAULTS_GOOGLE_SSO_CLIENT_ID: ${GOOGLE_SSO_CLIENT_ID:-}
+      # Defaults to the Spring-side default (dev-server-only) when unset in .env, rather than an
+      # empty string, which would otherwise override that default to "no origins allowed".
+      LASFORM_CORS_ALLOWED_ORIGINS: ${LASFORM_CORS_ALLOWED_ORIGINS:-http://localhost:4200}
       LASFORM_STORAGE_IMAGES_BASE_PATH: /app/data/images
       JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx768m}
     ports:

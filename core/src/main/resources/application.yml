@@ -52,12 +52,13 @@ management:
     web:
       exposure:
         include: health,info
-      # WebConfig's CorsRegistry (for the Angular dev server, a different origin) doesn't reach
-      # actuator endpoints — they're dispatched through their own HandlerMapping, not the
-      # RequestMappingHandlerMapping CorsRegistry configures — so /actuator/info needs its own
-      # CORS config here for the map page's "About" panel to read it in development.
+      # WebConfig's CorsRegistry doesn't reach actuator endpoints — they're dispatched through
+      # their own HandlerMapping, not the RequestMappingHandlerMapping CorsRegistry configures —
+      # so /actuator/info needs its own CORS config here for the map page's "About" panel to read
+      # it. Shares lasform.cors.allowed-origins (see below) rather than hardcoding its own origin
+      # list, so a deployed instance only has to set LASFORM_CORS_ALLOWED_ORIGINS once.
       cors:
-        allowed-origins: http://localhost:4200
+        allowed-origins: ${lasform.cors.allowed-origins}
         allowed-methods: GET
   info:
     git:
@@ -66,6 +67,14 @@ management:
       mode: full
 
 lasform:
+  cors:
+    # Comma-separated list of origins the Angular frontend may call the API from (see WebConfig).
+    # The jar normally serves both the API and the built frontend from one origin, but the
+    # browser still sends an Origin header on non-GET requests even then, and any origin not
+    # listed here gets a flat 403 ("Invalid CORS request") — so a deployed instance's own public
+    # URL must be added here via LASFORM_CORS_ALLOWED_ORIGINS, e.g. https://lasform.example.com.
+    allowed-origins: http://localhost:4200
+
   storage:
     images:
       # Factory defaults only — an admin can override all three from the General Settings page
