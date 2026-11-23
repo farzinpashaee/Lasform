@@ -42,7 +42,8 @@
         @for (link of navLinks; track link.path) {
           <li *hasPermission="link.permission ? [link.permission] : []">
             <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" (click)="closeSidebar()">
-              {{ link.labelKey | transloco }}
+              <span class="material-symbols-outlined nav-link-icon" aria-hidden="true">{{ link.icon }}</span>
+              <span>{{ link.labelKey | transloco }}</span>
             </a>
           </li>
         }
@@ -56,7 +57,10 @@
             [attr.aria-expanded]="group.expanded()"
             (click)="toggleGroup(group)"
           >
-            <span>{{ group.labelKey | transloco }}</span>
+            <span class="nav-group-label-text">
+              <span class="material-symbols-outlined nav-link-icon" aria-hidden="true">{{ group.icon }}</span>
+              <span>{{ group.labelKey | transloco }}</span>
+            </span>
             <span class="material-symbols-outlined nav-group-chevron" [class.collapsed]="!group.expanded()" aria-hidden="true">
               expand_more
             </span>
@@ -66,7 +70,8 @@
               @for (child of group.children; track child.path) {
                 <li *hasPermission="child.permission ? [child.permission] : []">
                   <a class="nav-link nav-link-child" [routerLink]="child.path" routerLinkActive="active" (click)="closeSidebar()">
-                    {{ child.labelKey | transloco }}
+                    <span class="material-symbols-outlined nav-link-icon" aria-hidden="true">{{ child.icon }}</span>
+                    <span>{{ child.labelKey | transloco }}</span>
                   </a>
                 </li>
               }

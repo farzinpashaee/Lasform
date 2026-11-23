@@ -179,6 +179,12 @@ $radius: 8px;
   }
 }
 
+.nav-group-label-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .nav-group-chevron {
   font-size: 18px;
   color: var(--text-secondary);
@@ -196,7 +202,9 @@ $radius: 8px;
 }
 
 .nav-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 8px 20px;
   font-size: 13px;
   color: var(--text-secondary);
@@ -213,6 +221,15 @@ $radius: 8px;
     font-weight: 500;
     background: var(--accent-bg);
   }
+}
+
+/* Inherits the link's own (or active/hover) color rather than a fixed one — matching .nav-link's
+   own text, same pattern as .back-button's icon above but without that one's permanent
+   text-secondary override, since here the icon should recolor along with the active label. */
+.nav-link-icon {
+  flex: 0 0 auto;
+  font-size: 18px;
+  color: inherit;
 }
 
 .nav-link-child {
