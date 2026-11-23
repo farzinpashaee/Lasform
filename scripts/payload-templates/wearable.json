@@ -1,0 +1,5 @@
+{
+  "heartRateBpm": "<int:55-160>",
+  "stepsSinceLastReport": "<int:0-20>",
+  "batteryLevel": "<drift:0-100:1>"
+}

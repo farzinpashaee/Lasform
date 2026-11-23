@@ -1,0 +1,5 @@
+{
+  "flowRateLpm": "<float:0-40:2>",
+  "totalLiters": "<sequence:1000:0.75>",
+  "leakDetected": "<bool:0.02>"
+}
