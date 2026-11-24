@@ -423,15 +423,70 @@ $radius: 8px;
 
 .payload-cell {
   white-space: normal;
-  max-width: 320px;
+  max-width: 480px;
 
   code {
-    display: inline-block;
+    // JsonPipe already pretty-prints (JSON.stringify(value, null, 2)) — `pre` is what makes that
+    // indentation/line breaks actually render instead of collapsing to one line. overflow-x
+    // rather than wrapping/breaking mid-token keeps a long value's own line scrollable instead of
+    // mangled.
+    display: block;
+    white-space: pre;
+    overflow-x: auto;
     font-size: 12px;
     font-family: monospace;
-    color: var(--text-secondary, #5f6368);
-    word-break: break-word;
+    line-height: 1.5;
+    color: var(--text-primary, #202124);
+    background: var(--hover, #f1f3f4);
+    border-radius: 4px;
+    padding: 8px 10px;
   }
+}
+
+.event-row {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hover, #f1f3f4);
+  }
+}
+
+.payload-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary, #5f6368);
+  font-size: 12px;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+}
+
+.event-details-modal {
+  width: 480px;
+}
+
+.event-details-payload-title {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #202124);
+}
+
+.event-details-payload {
+  display: block;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+  font-size: 12px;
+  font-family: monospace;
+  line-height: 1.5;
+  color: var(--text-primary, #202124);
+  background: var(--hover, #f1f3f4);
+  border-radius: 4px;
+  padding: 8px 10px;
 }
 
 .category-chip {

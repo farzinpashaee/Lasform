@@ -263,7 +263,10 @@
     "eventsRange30d": "Last 30 days",
     "eventsRangeCustom": "Custom range",
     "eventsRangeFrom": "From",
-    "eventsRangeTo": "To"
+    "eventsRangeTo": "To",
+    "eventsShowPayload": "View payload ({{count}} fields)",
+    "eventDetailsTitle": "Event details",
+    "eventsPayloadEmpty": "This event has no payload."
   },
   "locations": {
     "title": "Locations",

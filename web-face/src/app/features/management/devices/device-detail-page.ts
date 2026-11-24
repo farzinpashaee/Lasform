@@ -192,6 +192,8 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
   protected readonly events = signal<Event[]>([]);
   protected readonly eventsLoading = signal(false);
   protected readonly eventsError = signal<string | null>(null);
+  /** The event whose details modal is open — clicking any row opens it, null closes it. */
+  protected readonly eventDetailsTarget = signal<Event | null>(null);
 
   protected readonly timeRangeOptions = TIME_RANGE_OPTIONS;
   protected readonly selectedRangeKey = signal<string>('all');
@@ -389,6 +391,18 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
 
   protected hasPayload(event: Event): boolean {
     return !!event.payload && Object.keys(event.payload).length > 0;
+  }
+
+  protected payloadFieldCount(event: Event): number {
+    return Object.keys(event.payload ?? {}).length;
+  }
+
+  protected openEventDetails(event: Event): void {
+    this.eventDetailsTarget.set(event);
+  }
+
+  protected closeEventDetails(): void {
+    this.eventDetailsTarget.set(null);
   }
 
   protected selectMetric(key: string): void {

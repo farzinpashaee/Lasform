@@ -280,14 +280,17 @@
               </thead>
               <tbody>
                 @for (event of filteredEvents(); track event.id) {
-                  <tr>
+                  <tr class="event-row" (click)="openEventDetails(event)">
                     <td>{{ event.occurredAt | date: 'short' }}</td>
                     <td>{{ event.type }}</td>
                     <td>{{ event.speed != null ? event.speed + ' m/s' : '—' }}</td>
                     <td>{{ event.heading != null ? event.heading + '°' : '—' }}</td>
                     <td class="payload-cell">
                       @if (hasPayload(event)) {
-                        <code>{{ event.payload | json }}</code>
+                        <span class="payload-hint">
+                          <span class="material-symbols-outlined" aria-hidden="true">data_object</span>
+                          {{ 'devices.eventsShowPayload' | transloco: { count: payloadFieldCount(event) } }}
+                        </span>
                       } @else {
                         <span class="muted">—</span>
                       }
@@ -428,6 +431,50 @@
       </button>
       <button type="button" class="modal-button modal-button-danger" [disabled]="deletingDevice()" (click)="confirmDelete()">
         {{ (deletingDevice() ? 'common.deleting' : 'common.delete') | transloco }}
+      </button>
+    </div>
+  </div>
+}
+
+@if (eventDetailsTarget(); as detailEvent) {
+  <div class="modal-backdrop" (click)="closeEventDetails()"></div>
+  <div class="modal event-details-modal">
+    <h2 class="modal-title">{{ 'devices.eventDetailsTitle' | transloco }}</h2>
+    <dl class="detail-fields">
+      <div class="detail-field">
+        <dt>{{ 'devices.eventsColOccurredAt' | transloco }}</dt>
+        <dd>{{ detailEvent.occurredAt | date: 'medium' }}</dd>
+      </div>
+      <div class="detail-field">
+        <dt>{{ 'devices.eventsColType' | transloco }}</dt>
+        <dd>{{ detailEvent.type }}</dd>
+      </div>
+      <div class="detail-field">
+        <dt>{{ 'devices.eventsColSpeed' | transloco }}</dt>
+        <dd>{{ detailEvent.speed != null ? detailEvent.speed + ' m/s' : '—' }}</dd>
+      </div>
+      <div class="detail-field">
+        <dt>{{ 'devices.eventsColHeading' | transloco }}</dt>
+        <dd>{{ detailEvent.heading != null ? detailEvent.heading + '°' : '—' }}</dd>
+      </div>
+      <div class="detail-field">
+        <dt>{{ 'devices.fieldAccuracy' | transloco }}</dt>
+        <dd>{{ detailEvent.accuracy != null ? detailEvent.accuracy + ' m' : '—' }}</dd>
+      </div>
+      <div class="detail-field">
+        <dt>{{ 'devices.fieldLastKnownLocation' | transloco }}</dt>
+        <dd>{{ formatPoint(detailEvent.point) }}</dd>
+      </div>
+    </dl>
+    <h3 class="event-details-payload-title">{{ 'devices.eventsColPayload' | transloco }}</h3>
+    @if (hasPayload(detailEvent)) {
+      <code class="event-details-payload">{{ detailEvent.payload | json }}</code>
+    } @else {
+      <p class="state-message">{{ 'devices.eventsPayloadEmpty' | transloco }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeEventDetails()">
+        {{ 'common.close' | transloco }}
       </button>
     </div>
   </div>
