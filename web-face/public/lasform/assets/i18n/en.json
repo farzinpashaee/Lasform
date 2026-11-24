@@ -32,7 +32,8 @@
     "email": "Email",
     "logout": "Log out",
     "togglePasswordVisibility": "Toggle password visibility",
-    "moreActions": "More actions"
+    "moreActions": "More actions",
+    "apply": "Apply"
   },
   "map": {
     "searchPlaceholder": "Search Lasform Maps",
@@ -252,7 +253,17 @@
     "eventsColHeading": "Heading",
     "eventsColPayload": "Payload",
     "fieldAccuracy": "Accuracy",
-    "eventsChartMetric": "Metric"
+    "eventsChartMetric": "Metric",
+    "eventsNoneInRange": "No events in this time range.",
+    "eventsRangeAll": "All",
+    "eventsRange15m": "Last 15 minutes",
+    "eventsRange1h": "Last 1 hour",
+    "eventsRange24h": "Last 24 hours",
+    "eventsRange7d": "Last 7 days",
+    "eventsRange30d": "Last 30 days",
+    "eventsRangeCustom": "Custom range",
+    "eventsRangeFrom": "From",
+    "eventsRangeTo": "To"
   },
   "locations": {
     "title": "Locations",

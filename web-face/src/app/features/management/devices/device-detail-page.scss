@@ -127,6 +127,9 @@ $radius: 8px;
    series, and keeps this page dependency-free like the rest of this codebase. */
 .chart-controls {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -150,6 +153,157 @@ $radius: 8px;
       outline: none;
       border-color: var(--accent, #da5050);
     }
+  }
+}
+
+/* Kibana-style time range picker: a button naming the current range, opening a dropdown of
+   relative presets (rows, not a calendar grid — nobody fights a grid for "last 7 days") plus a
+   custom range tucked behind a hairline in its own footer, per the dataviz skill's date-picker
+   spec. */
+.time-range-picker {
+  position: relative;
+}
+
+.time-range-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-primary, #202124);
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+    color: var(--text-secondary, #5f6368);
+  }
+
+  &:hover {
+    background: var(--hover, #f1f3f4);
+  }
+
+  &.active {
+    border-color: var(--accent, #da5050);
+  }
+}
+
+.time-range-caret {
+  margin-left: 2px;
+}
+
+.dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.time-range-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 901;
+  width: 220px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.3));
+  padding: 4px 0;
+}
+
+.time-range-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.time-range-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-primary, #202124);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hover, #f1f3f4);
+  }
+
+  &.selected {
+    font-weight: 600;
+  }
+}
+
+.time-range-check {
+  flex: 0 0 auto;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent, #da5050);
+}
+
+/* Keeps the label text aligned whether or not this row is the selected one. */
+.time-range-check-spacer {
+  flex: 0 0 auto;
+  width: 16px;
+}
+
+.time-range-custom {
+  border-top: 1px solid var(--border, #e8eaed);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.time-range-custom-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 12px 10px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-secondary, #5f6368);
+  }
+
+  input {
+    font: inherit;
+    font-size: 13px;
+    color: var(--text-primary, #202124);
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #e8eaed);
+    border-radius: 4px;
+    padding: 6px 8px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #da5050);
+    }
+  }
+}
+
+.time-range-apply {
+  align-self: flex-end;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent, #da5050);
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.92;
   }
 }
 

@@ -65,9 +65,33 @@ interface ChartGeometry {
 }
 
 const CHART_WIDTH = 640;
-const CHART_HEIGHT = 200;
+const CHART_HEIGHT = 160;
 const CHART_PADDING = { left: 48, right: 12, top: 12, bottom: 24 };
 const CHART_Y_TICK_COUNT = 4;
+
+interface TimeRangeOption {
+  key: string;
+  labelKey: string;
+  /** Milliseconds back from now; null means "all loaded events" (today's default — the full,
+   *  already-bounded RECENT_EVENTS_LIMIT page, not an unbounded history). */
+  durationMs: number | null;
+}
+
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+/** Quick-select presets, Kibana-style — "All" first since that's today's existing behavior and
+ *  the sensible default for a capped 20-event page; "Custom range" is appended separately in the
+ *  template so it can sit behind its own hairline, per the dataviz skill's date-picker spec. */
+const TIME_RANGE_OPTIONS: TimeRangeOption[] = [
+  { key: 'all', labelKey: 'devices.eventsRangeAll', durationMs: null },
+  { key: '15m', labelKey: 'devices.eventsRange15m', durationMs: 15 * MINUTE },
+  { key: '1h', labelKey: 'devices.eventsRange1h', durationMs: HOUR },
+  { key: '24h', labelKey: 'devices.eventsRange24h', durationMs: DAY },
+  { key: '7d', labelKey: 'devices.eventsRange7d', durationMs: 7 * DAY },
+  { key: '30d', labelKey: 'devices.eventsRange30d', durationMs: 30 * DAY },
+];
 
 /**
  * Pure layout math for the time-series chart — no Angular/DOM here, so it's trivial to unit test
@@ -169,13 +193,52 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
   protected readonly eventsLoading = signal(false);
   protected readonly eventsError = signal<string | null>(null);
 
+  protected readonly timeRangeOptions = TIME_RANGE_OPTIONS;
+  protected readonly selectedRangeKey = signal<string>('all');
+  protected readonly rangeMenuOpen = signal(false);
+  protected readonly customRangeFrom = signal('');
+  protected readonly customRangeTo = signal('');
+
+  /** Everything below (the metric list, the chart, the table) reacts to this, not to events()
+   *  directly — "filters scope everything below them" (dataviz skill). */
+  protected readonly filteredEvents = computed(() => {
+    const events = this.events();
+    const key = this.selectedRangeKey();
+    if (key === 'all') {
+      return events;
+    }
+    if (key === 'custom') {
+      const from = this.customRangeFrom() ? new Date(this.customRangeFrom()).getTime() : null;
+      const to = this.customRangeTo() ? new Date(this.customRangeTo()).getTime() : null;
+      return events.filter((event) => {
+        const time = new Date(event.occurredAt).getTime();
+        return (from == null || time >= from) && (to == null || time <= to);
+      });
+    }
+    const option = this.timeRangeOptions.find((o) => o.key === key);
+    if (!option?.durationMs) {
+      return events;
+    }
+    const cutoff = Date.now() - option.durationMs;
+    return events.filter((event) => new Date(event.occurredAt).getTime() >= cutoff);
+  });
+
+  protected readonly currentRangeLabel = computed(() => {
+    const key = this.selectedRangeKey();
+    if (key === 'custom') {
+      return this.transloco.translate('devices.eventsRangeCustom');
+    }
+    const option = this.timeRangeOptions.find((o) => o.key === key);
+    return this.transloco.translate(option?.labelKey ?? 'devices.eventsRangeAll');
+  });
+
   protected readonly selectedMetricKey = signal<string>(DEFAULT_CHART_METRIC);
   protected readonly hoveredIndex = signal<number | null>(null);
 
-  /** Only metrics at least one loaded event actually reports — a stationary IOT_SENSOR's events
-   *  may have no heading at all, and most payload keys are device-specific. */
+  /** Only metrics at least one event *in the current time range* actually reports — a stationary
+   *  IOT_SENSOR's events may have no heading at all, and most payload keys are device-specific. */
   protected readonly availableMetrics = computed<ChartMetricOption[]>(() => {
-    const events = this.events();
+    const events = this.filteredEvents();
     const metrics: ChartMetricOption[] = [];
     for (const field of CHART_FIELD_METRICS) {
       if (events.some((event) => typeof event[field.key] === 'number')) {
@@ -337,14 +400,31 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
     const isPayloadMetric = metricKey.startsWith('payload:');
     const payloadKey = isPayloadMetric ? metricKey.slice('payload:'.length) : null;
     const points: ChartPoint[] = [];
-    for (const event of this.events()) {
+    for (const event of this.filteredEvents()) {
       const raw = isPayloadMetric ? event.payload?.[payloadKey!] : (event as unknown as Record<string, unknown>)[metricKey];
       if (typeof raw === 'number' && Number.isFinite(raw)) {
         points.push({ time: new Date(event.occurredAt).getTime(), value: raw });
       }
     }
-    // events() is newest-first (see loadEvents); a left-to-right time series reads oldest -> newest.
+    // Events are newest-first (see loadEvents); a left-to-right time series reads oldest -> newest.
     return points.sort((a, b) => a.time - b.time);
+  }
+
+  protected toggleRangeMenu(): void {
+    this.rangeMenuOpen.update((open) => !open);
+  }
+
+  protected closeRangeMenu(): void {
+    this.rangeMenuOpen.set(false);
+  }
+
+  protected selectRange(key: string): void {
+    this.selectedRangeKey.set(key);
+    this.hoveredIndex.set(null);
+    // Custom stays open so the from/to inputs are reachable; every other preset is a one-click pick.
+    if (key !== 'custom') {
+      this.rangeMenuOpen.set(false);
+    }
   }
 
   /** The SVG's own pointermove, not a per-point listener — the crosshair just needs the nearest
