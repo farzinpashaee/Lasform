@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { CategoriesPage } from './features/management/categories/categories-page';
+import { DeviceDetailPage } from './features/management/devices/device-detail-page';
 import { DevicesPage } from './features/management/devices/devices-page';
 import { GeofencesPage } from './features/management/geofences/geofences-page';
 import { LocationsPage } from './features/management/locations/locations-page';
@@ -58,6 +59,7 @@ export const routes: Routes = [
           { path: 'users', component: UsersPage, data: { permissions: 'user:read' } },
           { path: 'locations', component: LocationsPage, data: { permissions: 'location:read' } },
           { path: 'devices', component: DevicesPage, data: { permissions: 'device:read' } },
+          { path: 'devices/:id', component: DeviceDetailPage, data: { permissions: 'device:read' } },
           { path: 'categories', component: CategoriesPage },
           { path: 'geofences', component: GeofencesPage, data: { permissions: 'geofence:read' } },
         ],

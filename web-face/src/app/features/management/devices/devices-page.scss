@@ -116,6 +116,10 @@ $radius: 8px;
   tbody tr:hover {
     background: var(--hover, #f1f3f4);
   }
+
+  tbody tr.clickable-row {
+    cursor: pointer;
+  }
 }
 
 .sort-header {

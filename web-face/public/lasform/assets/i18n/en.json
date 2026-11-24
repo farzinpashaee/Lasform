@@ -235,7 +235,22 @@
     "showQrCode": "Show as QR code",
     "qrModalTitle": "Device identifier QR code",
     "qrGenerating": "Generating…",
-    "qrGenerateFailed": "Failed to generate the QR code."
+    "qrGenerateFailed": "Failed to generate the QR code.",
+    "backToList": "Back to Devices",
+    "overviewTitle": "Overview",
+    "fieldBatteryLevel": "Battery level",
+    "fieldSpeed": "Speed",
+    "fieldHeading": "Heading",
+    "fieldLastKnownLocation": "Last known location",
+    "recentEventsTitle": "Recent events",
+    "eventsLoading": "Loading events…",
+    "eventsEmpty": "No events recorded for this device yet.",
+    "eventsLoadFailed": "Failed to load events. Please try again.",
+    "eventsColOccurredAt": "Occurred At",
+    "eventsColType": "Type",
+    "eventsColSpeed": "Speed",
+    "eventsColHeading": "Heading",
+    "eventsColPayload": "Payload"
   },
   "locations": {
     "title": "Locations",
