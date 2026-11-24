@@ -1,0 +1,6 @@
+{
+  "fuelLevelPercent": "<drift:10-100:2>",
+  "engineTempC": "<drift:70-110:1>",
+  "odometerKm": "<sequence:50000:0.05>",
+  "doorOpen": "<bool:0.05>"
+}

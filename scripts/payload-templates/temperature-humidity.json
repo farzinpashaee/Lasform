@@ -1,0 +1,5 @@
+{
+  "temperature": "<float:2-15:1>",
+  "humidity": "<float:30-90:0>",
+  "unit": "celsius"
+}

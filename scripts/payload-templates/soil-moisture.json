@@ -1,0 +1,5 @@
+{
+  "soilMoisturePercent": "<drift:10-60:2:1>",
+  "soilTempC": "<drift:5-35:1>",
+  "batteryLevel": "<drift:0-100:1>"
+}

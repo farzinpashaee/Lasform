@@ -1,0 +1,5 @@
+{
+  "pm25": "<drift:0-150:5:1>",
+  "co2ppm": "<int:400-2000>",
+  "aqi": "<enum:GOOD|MODERATE|UNHEALTHY|HAZARDOUS>"
+}

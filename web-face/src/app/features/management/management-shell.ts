@@ -13,12 +13,15 @@ interface NavLeaf {
   /** A transloco translation key, not display text — resolved in the template via the transloco pipe. */
   labelKey: string;
   path: string;
+  /** Material Symbols Outlined icon name, shown before the label. */
+  icon: string;
   /** Omitted for leaves that only require being logged in (enforced by the route's canActivateChild already). */
   permission?: string;
 }
 
 interface NavGroup {
   labelKey: string;
+  icon: string;
   children: NavLeaf[];
   /** Whether the group's children are shown; toggled by clicking the group header. */
   expanded: WritableSignal<boolean>;
@@ -44,21 +47,27 @@ export class ManagementShell {
   protected readonly navGroups: NavGroup[] = [
     {
       labelKey: 'management.settingsGroup',
+      icon: 'settings',
       expanded: signal(false),
       children: [
-        { labelKey: 'management.navGeneralSettings', path: 'settings/general', permission: 'config:write' },
-        { labelKey: 'management.navMapProvider', path: 'settings/map-provider', permission: 'config:write' },
-        { labelKey: 'management.navFeaturesManagement', path: 'settings/features-management', permission: 'config:write' },
+        { labelKey: 'management.navGeneralSettings', path: 'settings/general', icon: 'tune', permission: 'config:write' },
+        { labelKey: 'management.navMapProvider', path: 'settings/map-provider', icon: 'map', permission: 'config:write' },
+        {
+          labelKey: 'management.navFeaturesManagement',
+          path: 'settings/features-management',
+          icon: 'toggle_on',
+          permission: 'config:write',
+        },
       ],
     },
   ];
 
   protected readonly navLinks: NavLeaf[] = [
-    { labelKey: 'management.navLocations', path: 'locations', permission: 'location:read' },
-    { labelKey: 'management.navDevices', path: 'devices', permission: 'device:read' },
-    { labelKey: 'management.navCategories', path: 'categories' },
-    { labelKey: 'management.navUsers', path: 'users', permission: 'user:read' },
-    { labelKey: 'management.navGeofences', path: 'geofences', permission: 'geofence:read' },
+    { labelKey: 'management.navLocations', path: 'locations', icon: 'location_on', permission: 'location:read' },
+    { labelKey: 'management.navDevices', path: 'devices', icon: 'smartphone', permission: 'device:read' },
+    { labelKey: 'management.navCategories', path: 'categories', icon: 'category' },
+    { labelKey: 'management.navUsers', path: 'users', icon: 'group', permission: 'user:read' },
+    { labelKey: 'management.navGeofences', path: 'geofences', icon: 'draw', permission: 'geofence:read' },
   ];
 
   protected toggleGroup(group: NavGroup): void {

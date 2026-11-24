@@ -1,0 +1,5 @@
+{
+  "cargoTempC": "<drift:-25--15:0.5:1>",
+  "doorOpen": "<bool:0.03>",
+  "humidity": "<float:40-70:0>"
+}

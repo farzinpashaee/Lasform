@@ -123,7 +123,7 @@
         </tr>
       } @else {
         @for (device of devices(); track device.id) {
-          <tr>
+          <tr class="clickable-row" (click)="openDetail(device)">
             <td>
               <div class="name-cell">{{ device.name || ('devices.unnamed' | transloco) }}</div>
             </td>
@@ -157,7 +157,7 @@
                 <span class="muted">—</span>
               }
             </td>
-            <td class="actions-column">
+            <td class="actions-column" (click)="$event.stopPropagation()">
               <button
                 type="button"
                 class="icon-action-button"

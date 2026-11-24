@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { toDataURL } from 'qrcode';
 
@@ -37,6 +38,7 @@ const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINT
   styleUrl: './devices-page.scss',
 })
 export class DevicesPage implements OnInit, OnDestroy {
+  private readonly router = inject(Router);
   private readonly deviceService = inject(DeviceService);
   private readonly categoryService = inject(CategoryService);
   private readonly tagService = inject(TagService);
@@ -229,6 +231,12 @@ export class DevicesPage implements OnInit, OnDestroy {
     }
     this.page.set(page);
     this.loadDevices();
+  }
+
+  protected openDetail(device: Device): void {
+    if (device.id) {
+      this.router.navigate(['/management/devices', device.id]);
+    }
   }
 
   protected categoryLabel(categoryId: string): string {

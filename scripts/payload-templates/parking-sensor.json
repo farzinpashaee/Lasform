@@ -1,0 +1,5 @@
+{
+  "occupied": "<bool:0.4>",
+  "status": "<enum:OK|FAULT|LOW_BATTERY>",
+  "batteryLevel": "<int:0-100>"
+}
