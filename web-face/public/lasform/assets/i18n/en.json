@@ -250,7 +250,9 @@
     "eventsColType": "Type",
     "eventsColSpeed": "Speed",
     "eventsColHeading": "Heading",
-    "eventsColPayload": "Payload"
+    "eventsColPayload": "Payload",
+    "fieldAccuracy": "Accuracy",
+    "eventsChartMetric": "Metric"
   },
   "locations": {
     "title": "Locations",

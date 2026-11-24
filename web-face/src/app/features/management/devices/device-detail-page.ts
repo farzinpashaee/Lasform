@@ -24,6 +24,111 @@ const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINT
  *  this caps what's actually rendered rather than adding pagination for a secondary panel. */
 const RECENT_EVENTS_LIMIT = 20;
 
+interface ChartMetricOption {
+  /** A top-level Event field name, or `payload:<key>` for a numeric payload field. */
+  key: string;
+  label: string;
+  unit: string;
+}
+
+/** The three numeric top-level Event fields worth charting — offered only when at least one
+ *  loaded event actually reports that field (e.g. a stationary sensor never reports heading). */
+const CHART_FIELD_METRICS: { key: 'speed' | 'heading' | 'accuracy'; labelKey: string; unit: string }[] = [
+  { key: 'speed', labelKey: 'devices.eventsColSpeed', unit: ' m/s' },
+  { key: 'heading', labelKey: 'devices.eventsColHeading', unit: '°' },
+  { key: 'accuracy', labelKey: 'devices.fieldAccuracy', unit: ' m' },
+];
+
+const DEFAULT_CHART_METRIC = 'speed';
+
+interface ChartPoint {
+  time: number;
+  value: number;
+}
+
+interface ChartCoord extends ChartPoint {
+  x: number;
+  y: number;
+}
+
+interface ChartGeometry {
+  width: number;
+  height: number;
+  paddingLeft: number;
+  paddingTop: number;
+  plotHeight: number;
+  linePath: string;
+  areaPath: string;
+  coords: ChartCoord[];
+  yTicks: { y: number; label: string }[];
+  last: ChartCoord;
+}
+
+const CHART_WIDTH = 640;
+const CHART_HEIGHT = 200;
+const CHART_PADDING = { left: 48, right: 12, top: 12, bottom: 24 };
+const CHART_Y_TICK_COUNT = 4;
+
+/**
+ * Pure layout math for the time-series chart — no Angular/DOM here, so it's trivial to unit test
+ * and doesn't need to re-run except when the plotted points actually change (it's called from
+ * inside a `computed`, see chartGeometry below).
+ */
+function buildChartGeometry(points: ChartPoint[]): ChartGeometry {
+  const plotWidth = CHART_WIDTH - CHART_PADDING.left - CHART_PADDING.right;
+  const plotHeight = CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
+
+  const minTime = points[0].time;
+  const maxTime = points[points.length - 1].time;
+  const timeSpan = Math.max(maxTime - minTime, 1);
+
+  const values = points.map((p) => p.value);
+  let minValue = Math.min(...values);
+  let maxValue = Math.max(...values);
+  if (minValue === maxValue) {
+    // A flat line (or a single point) has no natural range — widen it so the line doesn't sit
+    // exactly on an axis edge.
+    minValue -= 1;
+    maxValue += 1;
+  }
+  const headroom = (maxValue - minValue) * 0.1;
+  minValue -= headroom;
+  maxValue += headroom;
+  const valueSpan = maxValue - minValue;
+
+  const xFor = (time: number) => CHART_PADDING.left + ((time - minTime) / timeSpan) * plotWidth;
+  const yFor = (value: number) => CHART_PADDING.top + plotHeight - ((value - minValue) / valueSpan) * plotHeight;
+
+  const coords: ChartCoord[] = points.map((p) => ({ ...p, x: xFor(p.time), y: yFor(p.value) }));
+  const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(' ');
+  const baseline = CHART_PADDING.top + plotHeight;
+  const areaPath = `${linePath} L${coords[coords.length - 1].x.toFixed(2)},${baseline.toFixed(2)} L${coords[0].x.toFixed(2)},${baseline.toFixed(2)} Z`;
+
+  const yTicks = Array.from({ length: CHART_Y_TICK_COUNT + 1 }, (_, i) => {
+    const value = minValue + (valueSpan * i) / CHART_Y_TICK_COUNT;
+    return { y: yFor(value), label: formatAxisValue(value) };
+  });
+
+  return {
+    width: CHART_WIDTH,
+    height: CHART_HEIGHT,
+    paddingLeft: CHART_PADDING.left,
+    paddingTop: CHART_PADDING.top,
+    plotHeight,
+    linePath,
+    areaPath,
+    coords,
+    yTicks,
+    last: coords[coords.length - 1],
+  };
+}
+
+/** Clean, short axis tick labels — a trailing ".0" is dropped, otherwise one decimal place. */
+function formatAxisValue(value: number): string {
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 @Component({
   selector: 'app-device-detail-page',
   imports: [FormsModule, DatePipe, JsonPipe, TranslocoPipe, RouterLink, HasPermissionDirective],
@@ -63,6 +168,62 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
   protected readonly events = signal<Event[]>([]);
   protected readonly eventsLoading = signal(false);
   protected readonly eventsError = signal<string | null>(null);
+
+  protected readonly selectedMetricKey = signal<string>(DEFAULT_CHART_METRIC);
+  protected readonly hoveredIndex = signal<number | null>(null);
+
+  /** Only metrics at least one loaded event actually reports — a stationary IOT_SENSOR's events
+   *  may have no heading at all, and most payload keys are device-specific. */
+  protected readonly availableMetrics = computed<ChartMetricOption[]>(() => {
+    const events = this.events();
+    const metrics: ChartMetricOption[] = [];
+    for (const field of CHART_FIELD_METRICS) {
+      if (events.some((event) => typeof event[field.key] === 'number')) {
+        metrics.push({ key: field.key, label: this.transloco.translate(field.labelKey), unit: field.unit });
+      }
+    }
+    const payloadKeys = new Set<string>();
+    for (const event of events) {
+      for (const [key, value] of Object.entries(event.payload ?? {})) {
+        if (typeof value === 'number') {
+          payloadKeys.add(key);
+        }
+      }
+    }
+    for (const key of [...payloadKeys].sort()) {
+      metrics.push({ key: `payload:${key}`, label: key, unit: '' });
+    }
+    return metrics;
+  });
+
+  /** Falls back to whatever IS available when selectedMetricKey (default: speed) isn't reported
+   *  by this device's events, rather than silently charting nothing. */
+  protected readonly activeMetricKey = computed(() => {
+    const available = this.availableMetrics();
+    if (available.some((metric) => metric.key === this.selectedMetricKey())) {
+      return this.selectedMetricKey();
+    }
+    return available[0]?.key ?? null;
+  });
+
+  protected readonly activeMetric = computed(
+    () => this.availableMetrics().find((metric) => metric.key === this.activeMetricKey()) ?? null,
+  );
+
+  protected readonly chartGeometry = computed<ChartGeometry | null>(() => {
+    const metricKey = this.activeMetricKey();
+    if (!metricKey) {
+      return null;
+    }
+    const points = this.extractChartPoints(metricKey);
+    return points.length > 0 ? buildChartGeometry(points) : null;
+  });
+
+  protected readonly hoveredCoord = computed(() => {
+    const index = this.hoveredIndex();
+    const geometry = this.chartGeometry();
+    return index != null && geometry ? geometry.coords[index] : null;
+  });
 
   protected readonly formOpen = signal(false);
   protected readonly formSaving = signal(false);
@@ -125,12 +286,16 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
     // event:read is independent of device:read (which the route itself already requires) —
     // *hasPermission on the panel hides it the same way, this just skips the otherwise-guaranteed
     // 403 from even attempting the request.
-    if (!device.id || !this.authService.hasPermission('event:read')) {
+    if (!device.deviceIdentifier || !this.authService.hasPermission('event:read')) {
       return;
     }
     this.eventsLoading.set(true);
     this.eventsError.set(null);
-    this.eventService.search({ deviceId: device.id }).subscribe({
+    // Event.deviceId is the reporting device's deviceIdentifier (what a real device/the
+    // simulator sends), never the Mongo _id — see EventIngestionService.syncDeviceState and
+    // scripts/README.md's "Connecting it to a real device record". Querying by device.id here
+    // silently matched nothing.
+    this.eventService.search({ deviceId: device.deviceIdentifier }).subscribe({
       next: (events) => {
         this.eventsLoading.set(false);
         this.events.set(events.slice(0, RECENT_EVENTS_LIMIT));
@@ -161,6 +326,56 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
 
   protected hasPayload(event: Event): boolean {
     return !!event.payload && Object.keys(event.payload).length > 0;
+  }
+
+  protected selectMetric(key: string): void {
+    this.selectedMetricKey.set(key);
+    this.hoveredIndex.set(null);
+  }
+
+  private extractChartPoints(metricKey: string): ChartPoint[] {
+    const isPayloadMetric = metricKey.startsWith('payload:');
+    const payloadKey = isPayloadMetric ? metricKey.slice('payload:'.length) : null;
+    const points: ChartPoint[] = [];
+    for (const event of this.events()) {
+      const raw = isPayloadMetric ? event.payload?.[payloadKey!] : (event as unknown as Record<string, unknown>)[metricKey];
+      if (typeof raw === 'number' && Number.isFinite(raw)) {
+        points.push({ time: new Date(event.occurredAt).getTime(), value: raw });
+      }
+    }
+    // events() is newest-first (see loadEvents); a left-to-right time series reads oldest -> newest.
+    return points.sort((a, b) => a.time - b.time);
+  }
+
+  /** The SVG's own pointermove, not a per-point listener — the crosshair just needs the nearest
+   *  X, same as any line-chart hover (see the dataviz skill's interaction notes). */
+  protected onChartPointerMove(event: PointerEvent): void {
+    const geometry = this.chartGeometry();
+    const svg = event.currentTarget as SVGSVGElement;
+    const rect = svg.getBoundingClientRect();
+    if (!geometry || rect.width === 0) {
+      return;
+    }
+    const viewBoxX = ((event.clientX - rect.left) / rect.width) * geometry.width;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+    geometry.coords.forEach((coord, index) => {
+      const distance = Math.abs(coord.x - viewBoxX);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+    this.hoveredIndex.set(nearestIndex);
+  }
+
+  protected onChartPointerLeave(): void {
+    this.hoveredIndex.set(null);
+  }
+
+  protected formatMetricValue(value: number): string {
+    const unit = this.activeMetric()?.unit ?? '';
+    return `${Math.round(value * 100) / 100}${unit}`;
   }
 
   protected openEditModal(): void {

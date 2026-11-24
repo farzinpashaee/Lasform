@@ -121,6 +121,121 @@ $radius: 8px;
   }
 }
 
+/* Time-series chart — one row of filters (the metric picker) above the chart, per the dataviz
+   skill's interaction rules; a single series needs no legend since the picker/axis already name
+   what's plotted. No charting library: a small inline SVG line+area chart is plenty for one
+   series, and keeps this page dependency-free like the rest of this codebase. */
+.chart-controls {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.chart-metric-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+
+  select {
+    font: inherit;
+    font-size: 13px;
+    color: var(--text-primary, #202124);
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #e8eaed);
+    border-radius: 4px;
+    padding: 6px 8px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #da5050);
+    }
+  }
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* Hairline, solid, one step off the surface — never dashed (reads as a threshold/projection). */
+.chart-gridline {
+  stroke: var(--border, #e8eaed);
+  stroke-width: 1;
+}
+
+.chart-axis-label {
+  font-size: 10px;
+  fill: var(--text-secondary, #5f6368);
+}
+
+.chart-area {
+  fill: var(--accent, #da5050);
+  fill-opacity: 0.1;
+  stroke: none;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--accent, #da5050);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* Lines -> value at the end: a small persistent marker on the latest point, surface-ring so it
+   stays legible where the line itself sits right under it. */
+.chart-end-dot {
+  fill: var(--accent, #da5050);
+  stroke: var(--surface, #fff);
+  stroke-width: 2;
+}
+
+.chart-crosshair {
+  stroke: var(--text-secondary, #5f6368);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.chart-hover-dot {
+  fill: var(--accent, #da5050);
+  stroke: var(--surface, #fff);
+  stroke-width: 2;
+}
+
+/* Positioned by percentage of the wrapper, which shares the SVG's own aspect ratio — stays
+   aligned with the hovered point regardless of the SVG's actual rendered pixel size. */
+.chart-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%) translateY(-10px);
+  pointer-events: none;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.3));
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.chart-tooltip-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #202124);
+}
+
+.chart-tooltip-time {
+  font-size: 11px;
+  color: var(--text-secondary, #5f6368);
+}
+
 .events-table-wrapper {
   overflow-x: auto;
 }

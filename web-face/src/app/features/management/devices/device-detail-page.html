@@ -132,6 +132,57 @@
       } @else if (events().length === 0) {
         <p class="state-message">{{ 'devices.eventsEmpty' | transloco }}</p>
       } @else {
+        @if (availableMetrics().length > 0) {
+          <div class="chart-controls">
+            <label class="chart-metric-select">
+              <span>{{ 'devices.eventsChartMetric' | transloco }}</span>
+              <select [ngModel]="activeMetricKey()" (ngModelChange)="selectMetric($event)" name="chartMetric">
+                @for (metric of availableMetrics(); track metric.key) {
+                  <option [value]="metric.key">{{ metric.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          @if (chartGeometry(); as geometry) {
+            <div class="chart-wrapper" [style.aspect-ratio]="geometry.width + ' / ' + geometry.height">
+              <svg
+                class="chart-svg"
+                [attr.viewBox]="'0 0 ' + geometry.width + ' ' + geometry.height"
+                preserveAspectRatio="none"
+                (pointermove)="onChartPointerMove($event)"
+                (pointerleave)="onChartPointerLeave()"
+              >
+                @for (tick of geometry.yTicks; track tick.y) {
+                  <line class="chart-gridline" [attr.x1]="geometry.paddingLeft" [attr.x2]="geometry.width - 12" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+                  <text class="chart-axis-label" [attr.x]="geometry.paddingLeft - 8" [attr.y]="tick.y" text-anchor="end" dominant-baseline="middle">
+                    {{ tick.label }}
+                  </text>
+                }
+                <path class="chart-area" [attr.d]="geometry.areaPath" />
+                <path class="chart-line" [attr.d]="geometry.linePath" />
+                <circle class="chart-end-dot" [attr.cx]="geometry.last.x" [attr.cy]="geometry.last.y" r="4" />
+                @if (hoveredCoord(); as hovered) {
+                  <line
+                    class="chart-crosshair"
+                    [attr.x1]="hovered.x"
+                    [attr.x2]="hovered.x"
+                    [attr.y1]="geometry.paddingTop"
+                    [attr.y2]="geometry.paddingTop + geometry.plotHeight"
+                  />
+                  <circle class="chart-hover-dot" [attr.cx]="hovered.x" [attr.cy]="hovered.y" r="4" />
+                }
+              </svg>
+              @if (hoveredCoord(); as hovered) {
+                <div class="chart-tooltip" [style.left.%]="(hovered.x / geometry.width) * 100" [style.top.%]="(hovered.y / geometry.height) * 100">
+                  <div class="chart-tooltip-value">{{ formatMetricValue(hovered.value) }}</div>
+                  <div class="chart-tooltip-time">{{ hovered.time | date: 'short' }}</div>
+                </div>
+              }
+            </div>
+          }
+        }
+
         <div class="events-table-wrapper">
           <table class="events-table">
             <thead>
