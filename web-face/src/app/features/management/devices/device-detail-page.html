@@ -132,36 +132,172 @@
       } @else if (events().length === 0) {
         <p class="state-message">{{ 'devices.eventsEmpty' | transloco }}</p>
       } @else {
-        <div class="events-table-wrapper">
-          <table class="events-table">
-            <thead>
-              <tr>
-                <th>{{ 'devices.eventsColOccurredAt' | transloco }}</th>
-                <th>{{ 'devices.eventsColType' | transloco }}</th>
-                <th>{{ 'devices.eventsColSpeed' | transloco }}</th>
-                <th>{{ 'devices.eventsColHeading' | transloco }}</th>
-                <th>{{ 'devices.eventsColPayload' | transloco }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (event of events(); track event.id) {
-                <tr>
-                  <td>{{ event.occurredAt | date: 'short' }}</td>
-                  <td>{{ event.type }}</td>
-                  <td>{{ event.speed != null ? event.speed + ' m/s' : '—' }}</td>
-                  <td>{{ event.heading != null ? event.heading + '°' : '—' }}</td>
-                  <td class="payload-cell">
-                    @if (hasPayload(event)) {
-                      <code>{{ event.payload | json }}</code>
+        <div class="chart-controls">
+          @if (availableMetrics().length > 0) {
+            <label class="chart-metric-select">
+              <span>{{ 'devices.eventsChartMetric' | transloco }}</span>
+              <select [ngModel]="activeMetricKey()" (ngModelChange)="selectMetric($event)" name="chartMetric">
+                @for (metric of availableMetrics(); track metric.key) {
+                  <option [value]="metric.key">{{ metric.label }}</option>
+                }
+              </select>
+            </label>
+          } @else {
+            <span></span>
+          }
+
+          <div class="time-range-picker">
+            <button
+              type="button"
+              class="time-range-button"
+              [class.active]="rangeMenuOpen()"
+              [attr.aria-expanded]="rangeMenuOpen()"
+              (click)="toggleRangeMenu()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+              <span>{{ currentRangeLabel() }}</span>
+              <span class="material-symbols-outlined time-range-caret" aria-hidden="true">expand_more</span>
+            </button>
+
+            @if (rangeMenuOpen()) {
+              <div class="dropdown-backdrop" (click)="closeRangeMenu()" (contextmenu)="closeRangeMenu()"></div>
+              <div class="time-range-menu">
+                <ul class="time-range-options">
+                  @for (option of timeRangeOptions; track option.key) {
+                    <li>
+                      <button
+                        type="button"
+                        class="time-range-option"
+                        [class.selected]="selectedRangeKey() === option.key"
+                        (click)="selectRange(option.key)"
+                      >
+                        @if (selectedRangeKey() === option.key) {
+                          <span class="material-symbols-outlined time-range-check" aria-hidden="true">check</span>
+                        } @else {
+                          <span class="time-range-check-spacer"></span>
+                        }
+                        <span>{{ option.labelKey | transloco }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+                <div class="time-range-custom">
+                  <button
+                    type="button"
+                    class="time-range-option"
+                    [class.selected]="selectedRangeKey() === 'custom'"
+                    (click)="selectRange('custom')"
+                  >
+                    @if (selectedRangeKey() === 'custom') {
+                      <span class="material-symbols-outlined time-range-check" aria-hidden="true">check</span>
                     } @else {
-                      <span class="muted">—</span>
+                      <span class="time-range-check-spacer"></span>
                     }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                    <span>{{ 'devices.eventsRangeCustom' | transloco }}</span>
+                  </button>
+                  @if (selectedRangeKey() === 'custom') {
+                    <div class="time-range-custom-fields">
+                      <label>
+                        <span>{{ 'devices.eventsRangeFrom' | transloco }}</span>
+                        <input
+                          type="datetime-local"
+                          [ngModel]="customRangeFrom()"
+                          (ngModelChange)="customRangeFrom.set($event)"
+                          name="rangeFrom"
+                        />
+                      </label>
+                      <label>
+                        <span>{{ 'devices.eventsRangeTo' | transloco }}</span>
+                        <input
+                          type="datetime-local"
+                          [ngModel]="customRangeTo()"
+                          (ngModelChange)="customRangeTo.set($event)"
+                          name="rangeTo"
+                        />
+                      </label>
+                      <button type="button" class="time-range-apply" (click)="closeRangeMenu()">
+                        {{ 'common.apply' | transloco }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
         </div>
+
+        @if (filteredEvents().length === 0) {
+          <p class="state-message">{{ 'devices.eventsNoneInRange' | transloco }}</p>
+        } @else {
+          @if (chartGeometry(); as geometry) {
+            <div class="chart-wrapper" [style.aspect-ratio]="geometry.width + ' / ' + geometry.height">
+              <svg
+                class="chart-svg"
+                [attr.viewBox]="'0 0 ' + geometry.width + ' ' + geometry.height"
+                preserveAspectRatio="none"
+                (pointermove)="onChartPointerMove($event)"
+                (pointerleave)="onChartPointerLeave()"
+              >
+                @for (tick of geometry.yTicks; track tick.y) {
+                  <line class="chart-gridline" [attr.x1]="geometry.paddingLeft" [attr.x2]="geometry.width - 12" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+                  <text class="chart-axis-label" [attr.x]="geometry.paddingLeft - 8" [attr.y]="tick.y" text-anchor="end" dominant-baseline="middle">
+                    {{ tick.label }}
+                  </text>
+                }
+                <path class="chart-area" [attr.d]="geometry.areaPath" />
+                <path class="chart-line" [attr.d]="geometry.linePath" />
+                <circle class="chart-end-dot" [attr.cx]="geometry.last.x" [attr.cy]="geometry.last.y" r="4" />
+                @if (hoveredCoord(); as hovered) {
+                  <line
+                    class="chart-crosshair"
+                    [attr.x1]="hovered.x"
+                    [attr.x2]="hovered.x"
+                    [attr.y1]="geometry.paddingTop"
+                    [attr.y2]="geometry.paddingTop + geometry.plotHeight"
+                  />
+                  <circle class="chart-hover-dot" [attr.cx]="hovered.x" [attr.cy]="hovered.y" r="4" />
+                }
+              </svg>
+              @if (hoveredCoord(); as hovered) {
+                <div class="chart-tooltip" [style.left.%]="(hovered.x / geometry.width) * 100" [style.top.%]="(hovered.y / geometry.height) * 100">
+                  <div class="chart-tooltip-value">{{ formatMetricValue(hovered.value) }}</div>
+                  <div class="chart-tooltip-time">{{ hovered.time | date: 'short' }}</div>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="events-table-wrapper">
+            <table class="events-table">
+              <thead>
+                <tr>
+                  <th>{{ 'devices.eventsColOccurredAt' | transloco }}</th>
+                  <th>{{ 'devices.eventsColType' | transloco }}</th>
+                  <th>{{ 'devices.eventsColSpeed' | transloco }}</th>
+                  <th>{{ 'devices.eventsColHeading' | transloco }}</th>
+                  <th>{{ 'devices.eventsColPayload' | transloco }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (event of filteredEvents(); track event.id) {
+                  <tr>
+                    <td>{{ event.occurredAt | date: 'short' }}</td>
+                    <td>{{ event.type }}</td>
+                    <td>{{ event.speed != null ? event.speed + ' m/s' : '—' }}</td>
+                    <td>{{ event.heading != null ? event.heading + '°' : '—' }}</td>
+                    <td class="payload-cell">
+                      @if (hasPayload(event)) {
+                        <code>{{ event.payload | json }}</code>
+                      } @else {
+                        <span class="muted">—</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       }
     }
   </div>
