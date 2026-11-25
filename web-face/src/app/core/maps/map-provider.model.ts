@@ -33,6 +33,10 @@ export interface MapMarkerData {
   categoryEmoji?: string;
   /** A device's last-known heading in degrees clockwise from north — orients its marker on initial render. Ignored for 'location' markers. */
   heading?: number;
+  /** Whether this device is currently live-tracked — shows the "sensors" broadcast glyph on its
+   *  badge instead of a plain solid circle. Ignored for 'location' markers. See setMarkerLive to
+   *  update this after the marker already exists, without a full setMarkers() re-render. */
+  live?: boolean;
 }
 
 /** A visible-map rectangle in plain lon/lat, vendor-agnostic (mirrors both Leaflet's LatLngBounds and google.maps.LatLngBounds). */
@@ -100,6 +104,11 @@ export interface MapProvider {
 
   /** Removes a device's trail, if one is currently shown. */
   clearDeviceTrail(id: string): void;
+
+  /** Toggles a device marker's "live" badge — the sensors/broadcast glyph is shown only while
+   *  it's actually being live-tracked; otherwise the badge is a plain solid circle. No-op for a
+   *  marker that doesn't currently exist (e.g. it scrolled out of the last search results). */
+  setMarkerLive(id: string, live: boolean): void;
 
   /** Toggles grouping nearby markers into cluster badges; re-applies to whatever markers are current. */
   setClusteringEnabled(enabled: boolean): void;

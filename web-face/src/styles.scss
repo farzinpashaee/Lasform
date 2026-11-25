@@ -111,9 +111,16 @@ app-root {
   justify-content: center;
   pointer-events: none;
 }
+/* Hidden by default — a device marker is a plain solid circle until it's actually being
+   live-tracked (see LeafletMapProvider#setMarkerLive), at which point the '.live' class shows the
+   broadcast glyph. */
 .device-marker-badge .material-symbols-outlined {
+  display: none;
   font-size: 15px;
   color: #fff;
+}
+.device-marker-badge.live .material-symbols-outlined {
+  display: block;
 }
 /* Zero-size pivot sitting exactly at the icon's center (== the badge's center), so rotating it
    swings only the arrow below around that fixed point instead of dragging the badge with it.

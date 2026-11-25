@@ -688,6 +688,13 @@ export class MapPage implements AfterViewInit, OnDestroy {
     } else {
       this.deviceLiveService.unsubscribe('global');
     }
+    // isDeviceMarkerLive() falls back to liveTrackedDeviceId, so a device individually tracked via
+    // the details panel stays live here even while this map-wide toggle turns off.
+    for (const hit of this.searchResults()) {
+      if (hit.type === 'DEVICE' && hit.data.id) {
+        this.mapProvider.setMarkerLive(hit.data.id, this.isDeviceMarkerLive(hit.data.id));
+      }
+    }
   }
 
   /** (Re)subscribes 'global' to whichever DEVICE hits are currently shown — a no-op if liveEnabled() is off. */
@@ -722,6 +729,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.deviceLiveActive.set(true);
     this.followingLiveDevice = true;
     this.deviceTrailPoints = [];
+    this.mapProvider.setMarkerLive(hit.data.id, true);
     const point = this.hitPoint(hit);
     if (point) {
       const [lng, lat] = point.coordinates;
@@ -761,6 +769,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (this.liveTrackedDeviceId) {
       this.deviceLiveService.unsubscribe(`device:${this.liveTrackedDeviceId}`);
       this.mapProvider.clearDeviceTrail(this.liveTrackedDeviceId);
+      // Falls back to the map-wide "Live" toggle's own state — this device's marker should only
+      // actually go non-live if that isn't *also* tracking it.
+      this.mapProvider.setMarkerLive(this.liveTrackedDeviceId, this.liveEnabled());
       this.liveTrackedDeviceId = null;
     }
     this.deviceLiveActive.set(false);
@@ -1683,10 +1694,17 @@ export class MapPage implements AfterViewInit, OnDestroy {
         kind: hit.type === 'DEVICE' ? 'device' : 'location',
         categoryEmoji: this.categoryEmoji(categoryIds),
         heading: hit.type === 'DEVICE' ? (hit.data as Device).heading : undefined,
+        live: hit.type === 'DEVICE' && hit.data.id ? this.isDeviceMarkerLive(hit.data.id) : undefined,
       });
     }
     this.mapProvider.setMarkers(markers, (id) => this.onMarkerClicked(id));
     return markers;
+  }
+
+  /** A device's marker shows the "live" badge while it's tracked either individually (the details
+   *  panel's own toggle) or as part of the map-wide "Live" toggle — whichever got it there. */
+  private isDeviceMarkerLive(deviceId: string): boolean {
+    return deviceId === this.liveTrackedDeviceId || this.liveEnabled();
   }
 
   private hitPoint(hit: SearchHit) {
