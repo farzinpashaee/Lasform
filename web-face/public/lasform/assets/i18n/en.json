@@ -112,7 +112,9 @@
     },
     "tabs": {
       "overview": "Overview",
-      "reviews": "Reviews"
+      "reviews": "Reviews",
+      "details": "Details",
+      "events": "Events"
     },
     "reviews": {
       "loading": "Loading reviews…",
@@ -134,6 +136,12 @@
       "lastLocation": "Last location",
       "shape": "Shape",
       "devices": "Devices"
+    },
+    "viewDeviceEvents": "View device events",
+    "deviceEvents": {
+      "loading": "Loading events…",
+      "empty": "No events recorded for this device yet.",
+      "loadFailed": "Failed to load events. Please try again."
     }
   },
   "management": {
@@ -243,7 +251,7 @@
     "fieldSpeed": "Speed",
     "fieldHeading": "Heading",
     "fieldLastKnownLocation": "Last known location",
-    "recentEventsTitle": "Recent events",
+    "recentEventsTitle": "Events",
     "eventsLoading": "Loading events…",
     "eventsEmpty": "No events recorded for this device yet.",
     "eventsLoadFailed": "Failed to load events. Please try again.",

@@ -216,6 +216,16 @@
                 <span class="material-symbols-outlined" aria-hidden="true">sensors</span>
               </button>
             }
+            @if (hit.type === 'DEVICE' && authService.hasPermission('device:read')) {
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'map.viewDeviceEvents' | transloco"
+                (click)="openDeviceEvents(hit)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">history</span>
+              </button>
+            }
             <button
               type="button"
               class="icon-action-button"
@@ -276,9 +286,51 @@
               {{ 'map.tabs.reviews' | transloco }}
             </button>
           </div>
+        } @else if (hit.type === 'DEVICE' && authService.hasPermission('event:read')) {
+          <div class="details-tabs" role="tablist">
+            <button
+              type="button"
+              class="details-tab"
+              role="tab"
+              [class.active]="detailsTab() === 'overview'"
+              (click)="selectDetailsTab('overview', hit)"
+            >
+              {{ 'map.tabs.details' | transloco }}
+            </button>
+            <button
+              type="button"
+              class="details-tab"
+              role="tab"
+              [class.active]="detailsTab() === 'events'"
+              (click)="selectDetailsTab('events', hit)"
+            >
+              {{ 'map.tabs.events' | transloco }}
+            </button>
+          </div>
         }
 
-        @if (hit.type !== 'LOCATION' || detailsTab() === 'overview' || !featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
+        @if (hit.type === 'DEVICE' && detailsTab() === 'events') {
+          <div class="device-events-panel">
+            @if (loadingDeviceEvents()) {
+              <div class="results-status">{{ 'map.deviceEvents.loading' | transloco }}</div>
+            } @else if (deviceEventsLoadError()) {
+              <div class="results-status results-error">{{ deviceEventsLoadError() }}</div>
+            } @else if (deviceEvents().length === 0) {
+              <div class="results-status">{{ 'map.deviceEvents.empty' | transloco }}</div>
+            } @else {
+              <ul class="device-events-list">
+                @for (event of deviceEvents(); track event.id) {
+                  <li class="device-event-item" (click)="openEventDetails(event)">
+                    <div class="device-event-meta">
+                      <span class="device-event-time">{{ event.occurredAt | date: 'short' }}</span>
+                      <span class="device-event-type">{{ event.type }}</span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        } @else if (hit.type !== 'LOCATION' || detailsTab() === 'overview' || !featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
           <div class="overview-panel">
             @if (locationDescription(hit); as description) {
               <p class="overview-description">{{ description }}</p>
@@ -901,6 +953,42 @@
           <span>{{ 'map.appInfoWebsite' | transloco }}</span>
         </a>
       </div>
+    </div>
+  }
+
+  @if (eventDetailsTarget(); as detailEvent) {
+    <div class="modal-backdrop" (click)="closeEventDetails()"></div>
+    <div class="modal event-details-modal">
+      <div class="details-top-actions app-info-close">
+        <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeEventDetails()">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <h2 class="modal-title">{{ 'devices.eventDetailsTitle' | transloco }}</h2>
+      <dl class="details-fields">
+        <div class="details-field">
+          <dt>{{ 'devices.eventsColOccurredAt' | transloco }}</dt>
+          <dd>{{ detailEvent.occurredAt | date: 'medium' }}</dd>
+        </div>
+        <div class="details-field">
+          <dt>{{ 'devices.eventsColType' | transloco }}</dt>
+          <dd>{{ detailEvent.type }}</dd>
+        </div>
+        <div class="details-field">
+          <dt>{{ 'devices.eventsColSpeed' | transloco }}</dt>
+          <dd>{{ detailEvent.speed != null ? detailEvent.speed + ' m/s' : '—' }}</dd>
+        </div>
+        <div class="details-field">
+          <dt>{{ 'devices.eventsColHeading' | transloco }}</dt>
+          <dd>{{ detailEvent.heading != null ? detailEvent.heading + '°' : '—' }}</dd>
+        </div>
+      </dl>
+      <h3 class="event-details-payload-title">{{ 'devices.eventsColPayload' | transloco }}</h3>
+      @if (hasEventPayload(detailEvent)) {
+        <code class="event-details-payload">{{ detailEvent.payload | json }}</code>
+      } @else {
+        <p class="results-status">{{ 'devices.eventsPayloadEmpty' | transloco }}</p>
+      }
     </div>
   }
 </div>

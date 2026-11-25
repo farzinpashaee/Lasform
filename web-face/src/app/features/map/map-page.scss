@@ -640,6 +640,90 @@ $radius: 8px;
   color: var(--text-secondary);
 }
 
+.device-events-panel {
+  padding: 12px 16px 16px;
+}
+
+.device-events-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+  @include thin-scrollbar;
+}
+
+.device-event-item {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+
+  &:first-child {
+    border-top: none;
+  }
+
+  &:hover {
+    background: var(--hover);
+  }
+}
+
+.device-event-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.device-event-time {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.device-event-type {
+  font-size: 11px;
+  color: var(--text-secondary);
+  // Breathing room before the list's own scrollbar (.device-events-list), which otherwise sits
+  // flush against this right-aligned text.
+  padding-right: 8px;
+}
+
+.event-details-modal {
+  width: 420px;
+
+  // .details-fields' own padding/max-height assumes it's flush against a side panel (see
+  // .overview-panel); inside a modal (which already has its own 20px padding — see .modal) it
+  // needs resetting, same as .app-info-fields does for the App info modal.
+  .details-fields {
+    padding: 0;
+    margin: 0;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+.event-details-payload-title {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.event-details-payload {
+  display: block;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+  font-size: 12px;
+  font-family: monospace;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--hover);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
 .result-item {
   display: flex;
   align-items: center;

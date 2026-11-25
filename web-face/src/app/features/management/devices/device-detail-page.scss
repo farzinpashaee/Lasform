@@ -394,6 +394,40 @@ $radius: 8px;
   overflow-x: auto;
 }
 
+/* Mirrors DevicesPage's pagination bar. */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.pagination-button {
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #202124);
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--hover, #f1f3f4);
+  }
+
+  &:disabled {
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+  }
+}
+
 .events-table {
   width: 100%;
   border-collapse: collapse;
@@ -465,6 +499,35 @@ $radius: 8px;
 
 .event-details-modal {
   width: 480px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.modal-close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary, #5f6368);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  &:hover {
+    background: var(--hover, #f1f3f4);
+    color: var(--text-primary, #202124);
+  }
 }
 
 .event-details-payload-title {

@@ -279,7 +279,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (event of filteredEvents(); track event.id) {
+                @for (event of pagedEvents(); track event.id) {
                   <tr class="event-row" (click)="openEventDetails(event)">
                     <td>{{ event.occurredAt | date: 'short' }}</td>
                     <td>{{ event.type }}</td>
@@ -300,6 +300,27 @@
               </tbody>
             </table>
           </div>
+
+          @if (eventsTotalPages() > 1) {
+            <div class="pagination-bar">
+              <span class="pagination-summary">
+                {{ 'common.pageSummary' | transloco: { page: eventsPage() + 1, totalPages: eventsTotalPages(), total: filteredEvents().length } }}
+              </span>
+              <div class="pagination-controls">
+                <button type="button" class="pagination-button" [disabled]="eventsPage() === 0" (click)="goToEventsPage(eventsPage() - 1)">
+                  {{ 'common.previous' | transloco }}
+                </button>
+                <button
+                  type="button"
+                  class="pagination-button"
+                  [disabled]="eventsPage() >= eventsTotalPages() - 1"
+                  (click)="goToEventsPage(eventsPage() + 1)"
+                >
+                  {{ 'common.next' | transloco }}
+                </button>
+              </div>
+            </div>
+          }
         }
       }
     }
@@ -439,6 +460,11 @@
 @if (eventDetailsTarget(); as detailEvent) {
   <div class="modal-backdrop" (click)="closeEventDetails()"></div>
   <div class="modal event-details-modal">
+    <div class="modal-close">
+      <button type="button" class="modal-close-button" [attr.aria-label]="'common.close' | transloco" (click)="closeEventDetails()">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
     <h2 class="modal-title">{{ 'devices.eventDetailsTitle' | transloco }}</h2>
     <dl class="detail-fields">
       <div class="detail-field">
@@ -472,10 +498,5 @@
     } @else {
       <p class="state-message">{{ 'devices.eventsPayloadEmpty' | transloco }}</p>
     }
-    <div class="modal-actions">
-      <button type="button" class="modal-button modal-button-secondary" (click)="closeEventDetails()">
-        {{ 'common.close' | transloco }}
-      </button>
-    </div>
   </div>
 }

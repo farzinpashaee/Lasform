@@ -9,7 +9,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, JsonPipe, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -32,6 +32,7 @@ import { geofenceToShapeData, shapeDataToGeofenceFields } from '../../core/maps/
 import { Category } from '../../core/models/category.model';
 import { Device } from '../../core/models/device.model';
 import { DeviceStatus, GeofenceStatus } from '../../core/models/enums';
+import { Event } from '../../core/models/event.model';
 import { Geofence } from '../../core/models/geofence.model';
 import { Location } from '../../core/models/location.model';
 import { Review } from '../../core/models/review.model';
@@ -40,6 +41,7 @@ import { AppInfo, AppInfoService } from '../../core/services/app-info.service';
 import { CategoryService } from '../../core/services/category.service';
 import { DeviceLiveService } from '../../core/services/device-live.service';
 import { DeviceService } from '../../core/services/device.service';
+import { EventService } from '../../core/services/event.service';
 import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { GeofenceService } from '../../core/services/geofence.service';
 import { LocationService } from '../../core/services/location.service';
@@ -48,7 +50,11 @@ import { SearchService } from '../../core/services/search.service';
 import { TagService } from '../../core/services/tag.service';
 import { AccountMenu } from '../../shared/account-menu/account-menu';
 
-type DetailsTab = 'overview' | 'reviews';
+type DetailsTab = 'overview' | 'reviews' | 'events';
+
+/** The events panel is a quick glance from the map, not a full history browser — mirrors
+ *  RECENT_EVENTS_LIMIT in the management device-detail page. */
+const DEVICE_EVENTS_LIMIT = 20;
 
 const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
 const GEOFENCE_STATUSES: GeofenceStatus[] = ['ACTIVE', 'INACTIVE'];
@@ -91,7 +97,7 @@ interface MapContextMenuState {
 
 @Component({
   selector: 'app-map-page',
-  imports: [FormsModule, NgTemplateOutlet, TranslocoPipe, AccountMenu, DatePipe],
+  imports: [FormsModule, NgTemplateOutlet, TranslocoPipe, AccountMenu, DatePipe, JsonPipe],
   templateUrl: './map-page.html',
   styleUrl: './map-page.scss',
 })
@@ -110,6 +116,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private readonly tagService = inject(TagService);
   private readonly searchService = inject(SearchService);
   private readonly reviewService = inject(ReviewService);
+  private readonly eventService = inject(EventService);
   private readonly geofenceService = inject(GeofenceService);
   private readonly mapProvider: MapProvider = inject(MAP_PROVIDER);
   protected readonly featureFlags = inject(FeatureFlagsService);
@@ -190,6 +197,11 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly reviews = signal<Review[]>([]);
   protected readonly loadingReviews = signal(false);
   protected readonly reviewsLoadError = signal<string | null>(null);
+  protected readonly deviceEvents = signal<Event[]>([]);
+  protected readonly loadingDeviceEvents = signal(false);
+  protected readonly deviceEventsLoadError = signal<string | null>(null);
+  /** The event whose details modal is open — clicking any row in the Events tab opens it. */
+  protected readonly eventDetailsTarget = signal<Event | null>(null);
   protected readonly locating = signal(false);
   protected readonly clusteringEnabled = signal(false);
   /** Map-wide "Live" toggle — live-tracks every DEVICE currently in searchResults(). */
@@ -687,6 +699,15 @@ export class MapPage implements AfterViewInit, OnDestroy {
       .filter((hit): hit is SearchHit & { type: 'DEVICE' } => hit.type === 'DEVICE' && !!hit.data.id)
       .map((hit) => hit.data.id!);
     this.deviceLiveService.subscribe('global', deviceIds, (device) => this.applyLiveDeviceUpdate(device));
+  }
+
+  /** Jumps to this device's Recent events tab in Management — same place the device-detail page
+   *  itself links back from. */
+  protected openDeviceEvents(hit: SearchHit): void {
+    if (hit.type !== 'DEVICE' || !hit.data.id) {
+      return;
+    }
+    this.router.navigate(['/management/devices', hit.data.id], { queryParams: { tab: 'events' } });
   }
 
   protected toggleDeviceLive(hit: SearchHit): void {
@@ -1325,6 +1346,44 @@ export class MapPage implements AfterViewInit, OnDestroy {
     if (tab === 'reviews' && hit.type === 'LOCATION' && hit.data.id) {
       this.loadReviews(hit.data.id);
     }
+    if (tab === 'events' && hit.type === 'DEVICE') {
+      const deviceIdentifier = (hit.data as Device).deviceIdentifier;
+      if (deviceIdentifier) {
+        this.loadDeviceEvents(deviceIdentifier);
+      }
+    }
+  }
+
+  /**
+   * deviceIdentifier here is the device's own reported identifier, not its Mongo _id — Event.deviceId
+   * is always the former (see EventIngestionService.syncDeviceState), same distinction the
+   * management device-detail page's loadEvents relies on.
+   */
+  private loadDeviceEvents(deviceIdentifier: string): void {
+    this.loadingDeviceEvents.set(true);
+    this.deviceEventsLoadError.set(null);
+    this.eventService.search({ deviceId: deviceIdentifier }).subscribe({
+      next: (events) => {
+        this.loadingDeviceEvents.set(false);
+        this.deviceEvents.set(events.slice(0, DEVICE_EVENTS_LIMIT));
+      },
+      error: () => {
+        this.loadingDeviceEvents.set(false);
+        this.deviceEventsLoadError.set(this.transloco.translate('map.deviceEvents.loadFailed'));
+      },
+    });
+  }
+
+  protected hasEventPayload(event: Event): boolean {
+    return !!event.payload && Object.keys(event.payload).length > 0;
+  }
+
+  protected openEventDetails(event: Event): void {
+    this.eventDetailsTarget.set(event);
+  }
+
+  protected closeEventDetails(): void {
+    this.eventDetailsTarget.set(null);
   }
 
   private loadReviews(locationId: string): void {
@@ -1480,6 +1539,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.detailsMinimized.set(false);
     this.reviews.set([]);
     this.reviewsLoadError.set(null);
+    this.deviceEvents.set([]);
+    this.deviceEventsLoadError.set(null);
+    this.eventDetailsTarget.set(null);
     if (hit.type === 'DEVICE' && hit.data.id && hit.data.id === this.liveTrackedDeviceId) {
       this.resumeFollowingLiveDevice();
     } else {
