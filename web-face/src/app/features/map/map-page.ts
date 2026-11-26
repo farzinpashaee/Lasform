@@ -1587,23 +1587,32 @@ export class MapPage implements AfterViewInit, OnDestroy {
       const [lng, lat] = event.point.coordinates;
       return { lat, lng };
     };
+    const currentPoint = toPoint(events[index]);
     // Both ordered farthest-from-the-current-step first, nearest last — trailPointOpacity() (used
     // inside setDeviceTrail) maps that to low-opacity-far/high-opacity-near for either trail alike.
-    const pastPoints = events.slice(Math.max(0, index - PLAYBACK_TRAIL_LENGTH), index).map(toPoint);
-    const futurePoints = events
+    // currentPoint is appended as each trail's own last point so the connecting line actually
+    // reaches the marker instead of stopping short at the nearest *other* event.
+    const pastEventPoints = events.slice(Math.max(0, index - PLAYBACK_TRAIL_LENGTH), index).map(toPoint);
+    const futureEventPoints = events
       .slice(index + 1, index + 1 + PLAYBACK_TRAIL_LENGTH)
       .reverse()
       .map(toPoint);
     const trailStyle = { oldestOpacity: PLAYBACK_TRAIL_MIN_OPACITY, newestOpacity: PLAYBACK_TRAIL_MAX_OPACITY };
     const pastTrailId = this.playbackPastTrailId(deviceId);
     const futureTrailId = this.playbackFutureTrailId(deviceId);
-    if (pastPoints.length > 0) {
-      this.mapProvider.setDeviceTrail(pastTrailId, pastPoints, { color: DEVICE_TRAIL_COLOR, ...trailStyle });
+    if (pastEventPoints.length > 0) {
+      this.mapProvider.setDeviceTrail(pastTrailId, [...pastEventPoints, currentPoint], {
+        color: DEVICE_TRAIL_COLOR,
+        ...trailStyle,
+      });
     } else {
       this.mapProvider.clearDeviceTrail(pastTrailId);
     }
-    if (futurePoints.length > 0) {
-      this.mapProvider.setDeviceTrail(futureTrailId, futurePoints, { color: PLAYBACK_FUTURE_TRAIL_COLOR, ...trailStyle });
+    if (futureEventPoints.length > 0) {
+      this.mapProvider.setDeviceTrail(futureTrailId, [...futureEventPoints, currentPoint], {
+        color: PLAYBACK_FUTURE_TRAIL_COLOR,
+        ...trailStyle,
+      });
     } else {
       this.mapProvider.clearDeviceTrail(futureTrailId);
     }
