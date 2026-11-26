@@ -19,6 +19,7 @@ import { Subject, Subscription, debounceTime } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { FEATURE_FLAGS } from '../../core/feature-flag-keys';
 import {
+  DEVICE_TRAIL_COLOR,
   GeofenceShapeData,
   GeofenceShapeKind,
   MAP_PROVIDER,
@@ -27,6 +28,7 @@ import {
   MapMarkerData,
   MapProvider,
   MapType,
+  PLAYBACK_FUTURE_TRAIL_COLOR,
 } from '../../core/maps';
 import { geofenceToShapeData, shapeDataToGeofenceFields } from '../../core/maps/geofence-geometry';
 import { Category } from '../../core/models/category.model';
@@ -52,9 +54,21 @@ import { AccountMenu } from '../../shared/account-menu/account-menu';
 
 type DetailsTab = 'overview' | 'reviews' | 'events';
 
-/** The events panel is a quick glance from the map, not a full history browser — mirrors
- *  RECENT_EVENTS_LIMIT in the management device-detail page. */
-const DEVICE_EVENTS_LIMIT = 20;
+/** How many of a device's events are shown at a time in the map's events panel — starts at one
+ *  page and grows by the same amount as the list is scrolled (see loadMoreDeviceEvents()), rather
+ *  than the management device-detail page's full prev/next pagination. */
+const DEVICE_EVENTS_PAGE_SIZE = 10;
+
+/** Milliseconds between automatic steps while playback is running — see togglePlayback(). */
+const PLAYBACK_STEP_MS = 1000;
+
+/** How many events on either side of the current playback step get their own trail — see
+ *  updatePlaybackTrails(). */
+const PLAYBACK_TRAIL_LENGTH = 10;
+/** Playback's two trails fade from this (farthest from the current step) up to 0.9 (closest to
+ *  it) — a narrower band than the live trail's own 0.1–1, so they read as distinct from it. */
+const PLAYBACK_TRAIL_MIN_OPACITY = 0;
+const PLAYBACK_TRAIL_MAX_OPACITY = 0.9;
 
 const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
 const GEOFENCE_STATUSES: GeofenceStatus[] = ['ACTIVE', 'INACTIVE'];
@@ -146,6 +160,8 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private followingLiveDevice = false;
   /** liveTrackedDeviceId's last MAX_DEVICE_TRAIL_POINTS positions, oldest first — the breadcrumb trail rendered behind it. */
   private deviceTrailPoints: { lat: number; lng: number }[] = [];
+  /** The device whose two playback trails (see updatePlaybackTrails()) are currently drawn, if any — tracked separately from playbackIndex() so clearPlaybackTrails() still knows which trails to remove after switching to a different hit. */
+  private playbackTrailDeviceId: string | null = null;
   private tagSuggestionTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly categories = signal<Category[]>([]);
@@ -197,11 +213,38 @@ export class MapPage implements AfterViewInit, OnDestroy {
   protected readonly reviews = signal<Review[]>([]);
   protected readonly loadingReviews = signal(false);
   protected readonly reviewsLoadError = signal<string | null>(null);
+  /** A device's full fetched event history, newest first — see loadDeviceEvents(). Only the first
+   *  visibleEventsCount() of these are actually rendered/reachable; see visibleDeviceEvents(). */
   protected readonly deviceEvents = signal<Event[]>([]);
   protected readonly loadingDeviceEvents = signal(false);
   protected readonly deviceEventsLoadError = signal<string | null>(null);
+  /** How many of deviceEvents() are currently shown — starts at one page, grows as the list is
+   *  scrolled (onDeviceEventsScroll) or as playback steps into events beyond it (movePlaybackMarker). */
+  protected readonly visibleEventsCount = signal(DEVICE_EVENTS_PAGE_SIZE);
+  protected readonly visibleDeviceEvents = computed(() => this.deviceEvents().slice(0, this.visibleEventsCount()));
+  protected readonly hasMoreDeviceEvents = computed(() => this.visibleEventsCount() < this.deviceEvents().length);
   /** The event whose details modal is open — clicking any row in the Events tab opens it. */
   protected readonly eventDetailsTarget = signal<Event | null>(null);
+  /** Index into playbackEvents() of the step currently shown on the map — null means playback is
+   *  closed and the marker/panel show the device's real, live state. See stepPlayback(). */
+  protected readonly playbackIndex = signal<number | null>(null);
+  protected readonly playbackPlaying = signal(false);
+  private playbackTimer?: ReturnType<typeof setInterval>;
+  /** deviceEvents() oldest-first, so scrubbing left-to-right reads as moving forward through history. */
+  protected readonly playbackEvents = computed(() => [...this.deviceEvents()].reverse());
+  protected readonly playbackEvent = computed<Event | null>(() => {
+    const index = this.playbackIndex();
+    const events = this.playbackEvents();
+    return index != null ? events[index] ?? null : null;
+  });
+  /** The scrub slider's range top — always the newest step, so the slider reaches its right end
+   *  exactly when playback catches up to "live". */
+  protected readonly playbackMaxIndex = computed(() => Math.max(this.playbackEvents().length - 1, 0));
+  /** The slider's current position — sits at its live/newest end whenever playback isn't active. */
+  protected readonly playbackSliderValue = computed(() => this.playbackIndex() ?? this.playbackMaxIndex());
+  /** Whether the current playback step's payload is expanded — collapsed by default so stepping
+   *  through history doesn't fill the panel with JSON; toggled by the row's expand/collapse icon. */
+  protected readonly playbackPayloadExpanded = signal(false);
   protected readonly locating = signal(false);
   protected readonly clusteringEnabled = signal(false);
   /** Map-wide "Live" toggle — live-tracks every DEVICE currently in searchResults(). */
@@ -524,6 +567,7 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.boundsChangedSubscription?.unsubscribe();
     this.revokeCoverImageUrl();
     this.deviceLiveService.unsubscribeAll();
+    this.stopPlaybackTimer();
   }
 
   protected openManagement(): void {
@@ -706,15 +750,6 @@ export class MapPage implements AfterViewInit, OnDestroy {
       .filter((hit): hit is SearchHit & { type: 'DEVICE' } => hit.type === 'DEVICE' && !!hit.data.id)
       .map((hit) => hit.data.id!);
     this.deviceLiveService.subscribe('global', deviceIds, (device) => this.applyLiveDeviceUpdate(device));
-  }
-
-  /** Jumps to this device's Recent events tab in Management — same place the device-detail page
-   *  itself links back from. */
-  protected openDeviceEvents(hit: SearchHit): void {
-    if (hit.type !== 'DEVICE' || !hit.data.id) {
-      return;
-    }
-    this.router.navigate(['/management/devices', hit.data.id], { queryParams: { tab: 'events' } });
   }
 
   protected toggleDeviceLive(hit: SearchHit): void {
@@ -1325,6 +1360,10 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   protected closeDetails(): void {
+    const hit = this.selectedResult();
+    if (hit && this.playbackIndex() != null) {
+      this.exitPlayback(hit);
+    }
     this.selectedResult.set(null);
     this.entityMenuOpen.set(false);
     this.detailsMinimized.set(false);
@@ -1353,6 +1392,9 @@ export class MapPage implements AfterViewInit, OnDestroy {
   }
 
   protected selectDetailsTab(tab: DetailsTab, hit: SearchHit): void {
+    if (tab !== 'events' && this.playbackIndex() != null) {
+      this.exitPlayback(hit);
+    }
     this.detailsTab.set(tab);
     if (tab === 'reviews' && hit.type === 'LOCATION' && hit.data.id) {
       this.loadReviews(hit.data.id);
@@ -1373,10 +1415,11 @@ export class MapPage implements AfterViewInit, OnDestroy {
   private loadDeviceEvents(deviceIdentifier: string): void {
     this.loadingDeviceEvents.set(true);
     this.deviceEventsLoadError.set(null);
+    this.visibleEventsCount.set(DEVICE_EVENTS_PAGE_SIZE);
     this.eventService.search({ deviceId: deviceIdentifier }).subscribe({
       next: (events) => {
         this.loadingDeviceEvents.set(false);
-        this.deviceEvents.set(events.slice(0, DEVICE_EVENTS_LIMIT));
+        this.deviceEvents.set(events);
       },
       error: () => {
         this.loadingDeviceEvents.set(false);
@@ -1385,8 +1428,41 @@ export class MapPage implements AfterViewInit, OnDestroy {
     });
   }
 
+  /** Reveals one more page of deviceEvents() in the list — bound to the list's own (scroll), so
+   *  more of an already-fetched history loads in as the user scrolls near the bottom. */
+  protected loadMoreDeviceEvents(): void {
+    this.visibleEventsCount.update((count) => Math.min(count + DEVICE_EVENTS_PAGE_SIZE, this.deviceEvents().length));
+  }
+
+  /** Parameter typed structurally (not as the DOM Event — that name is already taken in this file
+   *  by the device Event model) so it matches whatever event type (scroll) the template passes. */
+  protected onDeviceEventsScroll(event: { target: EventTarget | null }): void {
+    const list = event.target as HTMLElement;
+    const nearBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 40;
+    if (nearBottom && this.hasMoreDeviceEvents()) {
+      this.loadMoreDeviceEvents();
+    }
+  }
+
+  /** Grows visibleEventsCount() just enough to include `event`, if it isn't already — so scrubbing
+   *  or auto-playing past what the list has revealed so far lazy-loads more in lockstep instead of
+   *  highlighting a row that isn't rendered yet. No-op if `event` is already visible. */
+  private ensureDeviceEventVisible(event: Event): void {
+    const index = this.deviceEvents().indexOf(event);
+    if (index < 0 || index < this.visibleEventsCount()) {
+      return;
+    }
+    const pagesNeeded = Math.ceil((index + 1) / DEVICE_EVENTS_PAGE_SIZE) * DEVICE_EVENTS_PAGE_SIZE;
+    this.visibleEventsCount.set(Math.min(pagesNeeded, this.deviceEvents().length));
+  }
+
   protected hasEventPayload(event: Event): boolean {
     return !!event.payload && Object.keys(event.payload).length > 0;
+  }
+
+  /** Whether `event` is the step playback currently has the marker/panel sitting on. */
+  protected isPlaybackEvent(event: Event): boolean {
+    return this.playbackEvent() === event;
   }
 
   protected openEventDetails(event: Event): void {
@@ -1395,6 +1471,151 @@ export class MapPage implements AfterViewInit, OnDestroy {
 
   protected closeEventDetails(): void {
     this.eventDetailsTarget.set(null);
+  }
+
+  /** Steps playback by `delta` events (±1), entering it from the live view at either end. Repositions
+   *  the device marker to match — see movePlaybackMarker(). Clamped, so repeated calls past either
+   *  end just hold at that end instead of wrapping or exiting. */
+  protected stepPlayback(delta: number, hit: SearchHit): void {
+    const events = this.playbackEvents();
+    if (events.length === 0) {
+      return;
+    }
+    const current = this.playbackIndex();
+    const next =
+      current == null
+        ? delta >= 0
+          ? 0
+          : events.length - 1
+        : Math.min(Math.max(current + delta, 0), events.length - 1);
+    this.playbackIndex.set(next);
+    this.movePlaybackMarker(hit, events[next]);
+  }
+
+  /** Starts (or stops) auto-advancing one step every PLAYBACK_STEP_MS — stops itself once the end of
+   *  the history is reached. */
+  protected togglePlayback(hit: SearchHit): void {
+    if (this.playbackPlaying()) {
+      this.stopPlaybackTimer();
+      return;
+    }
+    if ((this.playbackIndex() ?? -1) >= this.playbackEvents().length - 1) {
+      this.playbackIndex.set(null);
+    }
+    this.playbackPlaying.set(true);
+    this.playbackTimer = setInterval(() => {
+      const events = this.playbackEvents();
+      const next = (this.playbackIndex() ?? -1) + 1;
+      if (next >= events.length) {
+        this.stopPlaybackTimer();
+        return;
+      }
+      this.playbackIndex.set(next);
+      this.movePlaybackMarker(hit, events[next]);
+    }, PLAYBACK_STEP_MS);
+  }
+
+  private stopPlaybackTimer(): void {
+    clearInterval(this.playbackTimer);
+    this.playbackTimer = undefined;
+    this.playbackPlaying.set(false);
+  }
+
+  /** Bound to the scrub slider — jumps straight to a step instead of walking through every one in between. */
+  protected onPlaybackScrub(index: number, hit: SearchHit): void {
+    const event = this.playbackEvents()[index];
+    if (!event) {
+      return;
+    }
+    this.playbackIndex.set(index);
+    this.movePlaybackMarker(hit, event);
+  }
+
+  protected togglePlaybackPayload(): void {
+    this.playbackPayloadExpanded.update((expanded) => !expanded);
+  }
+
+  /** Leaves playback and restores the device marker to its real, live position. */
+  protected exitPlayback(hit: SearchHit): void {
+    this.stopPlaybackTimer();
+    this.playbackIndex.set(null);
+    this.playbackPayloadExpanded.set(false);
+    this.clearPlaybackTrails();
+    const point = this.hitPoint(hit);
+    if (point && hit.data.id) {
+      const [lng, lat] = point.coordinates;
+      this.mapProvider.moveMarker(hit.data.id, lat, lng, (hit.data as Device).heading);
+      this.mapProvider.panTo(lat, lng);
+    }
+  }
+
+  /** Moves the marker to this playback step's position and recenters the map on it (no zoom change)
+   *  so the device stays in view while stepping/scrubbing/auto-playing through its history. */
+  private movePlaybackMarker(hit: SearchHit, event: Event): void {
+    this.ensureDeviceEventVisible(event);
+    this.updatePlaybackTrails(hit);
+    if (!hit.data.id) {
+      return;
+    }
+    const [lng, lat] = event.point.coordinates;
+    this.mapProvider.moveMarker(hit.data.id, lat, lng, event.heading);
+    this.mapProvider.panTo(lat, lng);
+  }
+
+  private playbackPastTrailId(deviceId: string): string {
+    return `${deviceId}:playback-past`;
+  }
+
+  private playbackFutureTrailId(deviceId: string): string {
+    return `${deviceId}:playback-future`;
+  }
+
+  /** Draws up to PLAYBACK_TRAIL_LENGTH events on either side of the current playback step as two
+   *  fading trails — red behind (already happened, same color as the live trail), gray ahead
+   *  (hasn't happened yet) — both fading from PLAYBACK_TRAIL_MIN_OPACITY at their far end up toward
+   *  PLAYBACK_TRAIL_MAX_OPACITY right next to the current step. Either side is simply absent (not
+   *  drawn) once playback is near that end of the device's history. */
+  private updatePlaybackTrails(hit: SearchHit): void {
+    const deviceId = hit.data.id;
+    const index = this.playbackIndex();
+    if (!deviceId || index == null) {
+      return;
+    }
+    this.playbackTrailDeviceId = deviceId;
+    const events = this.playbackEvents();
+    const toPoint = (event: Event) => {
+      const [lng, lat] = event.point.coordinates;
+      return { lat, lng };
+    };
+    // Both ordered farthest-from-the-current-step first, nearest last — trailPointOpacity() (used
+    // inside setDeviceTrail) maps that to low-opacity-far/high-opacity-near for either trail alike.
+    const pastPoints = events.slice(Math.max(0, index - PLAYBACK_TRAIL_LENGTH), index).map(toPoint);
+    const futurePoints = events
+      .slice(index + 1, index + 1 + PLAYBACK_TRAIL_LENGTH)
+      .reverse()
+      .map(toPoint);
+    const trailStyle = { oldestOpacity: PLAYBACK_TRAIL_MIN_OPACITY, newestOpacity: PLAYBACK_TRAIL_MAX_OPACITY };
+    const pastTrailId = this.playbackPastTrailId(deviceId);
+    const futureTrailId = this.playbackFutureTrailId(deviceId);
+    if (pastPoints.length > 0) {
+      this.mapProvider.setDeviceTrail(pastTrailId, pastPoints, { color: DEVICE_TRAIL_COLOR, ...trailStyle });
+    } else {
+      this.mapProvider.clearDeviceTrail(pastTrailId);
+    }
+    if (futurePoints.length > 0) {
+      this.mapProvider.setDeviceTrail(futureTrailId, futurePoints, { color: PLAYBACK_FUTURE_TRAIL_COLOR, ...trailStyle });
+    } else {
+      this.mapProvider.clearDeviceTrail(futureTrailId);
+    }
+  }
+
+  private clearPlaybackTrails(): void {
+    if (!this.playbackTrailDeviceId) {
+      return;
+    }
+    this.mapProvider.clearDeviceTrail(this.playbackPastTrailId(this.playbackTrailDeviceId));
+    this.mapProvider.clearDeviceTrail(this.playbackFutureTrailId(this.playbackTrailDeviceId));
+    this.playbackTrailDeviceId = null;
   }
 
   private loadReviews(locationId: string): void {
@@ -1551,8 +1772,13 @@ export class MapPage implements AfterViewInit, OnDestroy {
     this.reviews.set([]);
     this.reviewsLoadError.set(null);
     this.deviceEvents.set([]);
+    this.visibleEventsCount.set(DEVICE_EVENTS_PAGE_SIZE);
     this.deviceEventsLoadError.set(null);
     this.eventDetailsTarget.set(null);
+    this.stopPlaybackTimer();
+    this.playbackIndex.set(null);
+    this.playbackPayloadExpanded.set(false);
+    this.clearPlaybackTrails();
     if (hit.type === 'DEVICE' && hit.data.id && hit.data.id === this.liveTrackedDeviceId) {
       this.resumeFollowingLiveDevice();
     } else {

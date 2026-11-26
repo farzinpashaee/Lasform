@@ -137,11 +137,21 @@
       "shape": "Shape",
       "devices": "Devices"
     },
-    "viewDeviceEvents": "View device events",
     "deviceEvents": {
       "loading": "Loading events…",
       "empty": "No events recorded for this device yet.",
-      "loadFailed": "Failed to load events. Please try again."
+      "loadFailed": "Failed to load events. Please try again.",
+      "loadingMore": "Loading more…"
+    },
+    "playback": {
+      "stepBack": "Previous event",
+      "stepForward": "Next event",
+      "play": "Play history",
+      "pause": "Pause history",
+      "scrub": "Scrub through event history",
+      "live": "Live",
+      "expandPayload": "Show payload",
+      "collapsePayload": "Hide payload"
     }
   },
   "management": {

@@ -261,15 +261,20 @@ export class GoogleMapsMapProvider implements MapProvider {
     entry.marker.setIcon(deviceIcon(entry.heading, live));
   }
 
-  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {
+  setDeviceTrail(
+    id: string,
+    points: { lat: number; lng: number }[],
+    style?: { color?: string; oldestOpacity?: number; newestOpacity?: number },
+  ): void {
     this.clearDeviceTrail(id);
     if (!this.map || points.length === 0) {
       return;
     }
+    const color = style?.color ?? DEVICE_TRAIL_COLOR;
     const overlays: (google.maps.Marker | google.maps.Polyline)[] = [];
     const last = points.length - 1;
     points.forEach((point, i) => {
-      const opacity = trailPointOpacity(i, last);
+      const opacity = trailPointOpacity(i, last, style?.oldestOpacity, style?.newestOpacity);
       overlays.push(
         new google.maps.Marker({
           position: point,
@@ -279,9 +284,9 @@ export class GoogleMapsMapProvider implements MapProvider {
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 5,
-            fillColor: DEVICE_TRAIL_COLOR,
+            fillColor: color,
             fillOpacity: opacity,
-            strokeColor: DEVICE_TRAIL_COLOR,
+            strokeColor: color,
             strokeOpacity: opacity,
             strokeWeight: 1,
           },
@@ -292,7 +297,7 @@ export class GoogleMapsMapProvider implements MapProvider {
           new google.maps.Polyline({
             path: [points[i - 1], point],
             map: this.map,
-            strokeColor: DEVICE_TRAIL_COLOR,
+            strokeColor: color,
             strokeOpacity: opacity,
             strokeWeight: 3,
           }),

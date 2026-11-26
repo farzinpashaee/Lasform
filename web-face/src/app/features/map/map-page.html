@@ -216,16 +216,6 @@
                 <span class="material-symbols-outlined" aria-hidden="true">sensors</span>
               </button>
             }
-            @if (hit.type === 'DEVICE' && authService.hasPermission('device:read')) {
-              <button
-                type="button"
-                class="icon-action-button"
-                [attr.aria-label]="'map.viewDeviceEvents' | transloco"
-                (click)="openDeviceEvents(hit)"
-              >
-                <span class="material-symbols-outlined" aria-hidden="true">history</span>
-              </button>
-            }
             <button
               type="button"
               class="icon-action-button"
@@ -318,14 +308,86 @@
             } @else if (deviceEvents().length === 0) {
               <div class="results-status">{{ 'map.deviceEvents.empty' | transloco }}</div>
             } @else {
-              <ul class="device-events-list">
-                @for (event of deviceEvents(); track event.id) {
-                  <li class="device-event-item" (click)="openEventDetails(event)">
+              <div class="playback-bar">
+                <div class="playback-controls">
+                  <button
+                    type="button"
+                    class="playback-button"
+                    [disabled]="playbackSliderValue() === 0"
+                    [attr.aria-label]="'map.playback.stepBack' | transloco"
+                    (click)="stepPlayback(-1, hit)"
+                  >
+                    <span class="material-symbols-outlined">skip_previous</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="playback-button playback-play"
+                    [attr.aria-label]="(playbackPlaying() ? 'map.playback.pause' : 'map.playback.play') | transloco"
+                    (click)="togglePlayback(hit)"
+                  >
+                    <span class="material-symbols-outlined">{{ playbackPlaying() ? 'pause' : 'play_arrow' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="playback-button"
+                    [disabled]="playbackSliderValue() === playbackMaxIndex()"
+                    [attr.aria-label]="'map.playback.stepForward' | transloco"
+                    (click)="stepPlayback(1, hit)"
+                  >
+                    <span class="material-symbols-outlined">skip_next</span>
+                  </button>
+                  <input
+                    type="range"
+                    class="playback-slider"
+                    min="0"
+                    [max]="playbackMaxIndex()"
+                    [value]="playbackSliderValue()"
+                    [attr.aria-label]="'map.playback.scrub' | transloco"
+                    (input)="onPlaybackScrub($any($event.target).valueAsNumber, hit)"
+                  />
+                  @if (playbackIndex() != null) {
+                    <button type="button" class="playback-live-button" (click)="exitPlayback(hit)">
+                      {{ 'map.playback.live' | transloco }}
+                    </button>
+                  }
+                </div>
+                @if (playbackEvent(); as activeEvent) {
+                  <div class="playback-status">
+                    <div class="playback-status-header">
+                      <span class="playback-status-time">{{ activeEvent.occurredAt | date: 'short' }}</span>
+                      <span class="playback-status-type">{{ activeEvent.type }}</span>
+                      @if (hasEventPayload(activeEvent)) {
+                        <button
+                          type="button"
+                          class="playback-payload-toggle"
+                          [attr.aria-label]="(playbackPayloadExpanded() ? 'map.playback.collapsePayload' : 'map.playback.expandPayload') | transloco"
+                          (click)="togglePlaybackPayload()"
+                        >
+                          <span class="material-symbols-outlined">{{ playbackPayloadExpanded() ? 'remove' : 'add' }}</span>
+                        </button>
+                      }
+                    </div>
+                    @if (playbackPayloadExpanded() && hasEventPayload(activeEvent)) {
+                      <pre class="playback-status-payload">{{ activeEvent.payload | json }}</pre>
+                    }
+                  </div>
+                }
+              </div>
+              <ul class="device-events-list" (scroll)="onDeviceEventsScroll($event)">
+                @for (event of visibleDeviceEvents(); track event.id) {
+                  <li
+                    class="device-event-item"
+                    [class.active]="isPlaybackEvent(event)"
+                    (click)="openEventDetails(event)"
+                  >
                     <div class="device-event-meta">
                       <span class="device-event-time">{{ event.occurredAt | date: 'short' }}</span>
                       <span class="device-event-type">{{ event.type }}</span>
                     </div>
                   </li>
+                }
+                @if (hasMoreDeviceEvents()) {
+                  <li class="device-events-loading-more">{{ 'map.deviceEvents.loadingMore' | transloco }}</li>
                 }
               </ul>
             }

@@ -10,15 +10,25 @@ export interface MapViewOptions {
 
 /** Shared styling for a live-tracked device's breadcrumb trail — kept in one place so both map providers render it identically. */
 export const DEVICE_TRAIL_COLOR = '#da5050';
+/** The event-playback panel's "upcoming events" trail color — the trailing (already-happened) half
+ *  of a playback trail reuses DEVICE_TRAIL_COLOR instead, same red as the live trail. */
+export const PLAYBACK_FUTURE_TRAIL_COLOR = '#757575';
 const OLDEST_TRAIL_OPACITY = 0.1;
 const NEWEST_TRAIL_OPACITY = 1;
 
-/** Linearly interpolates a trail point's opacity from OLDEST_TRAIL_OPACITY (index 0) to NEWEST_TRAIL_OPACITY (index === lastIndex). */
-export function trailPointOpacity(index: number, lastIndex: number): number {
+/** Linearly interpolates a trail point's opacity from oldestOpacity (index 0) to newestOpacity
+ *  (index === lastIndex) — defaults to the live trail's own 0.1–1 range; the playback trails pass
+ *  their own 0–0.9 bounds instead (see map-page.ts's updatePlaybackTrails()). */
+export function trailPointOpacity(
+  index: number,
+  lastIndex: number,
+  oldestOpacity = OLDEST_TRAIL_OPACITY,
+  newestOpacity = NEWEST_TRAIL_OPACITY,
+): number {
   if (lastIndex <= 0) {
-    return NEWEST_TRAIL_OPACITY;
+    return newestOpacity;
   }
-  return OLDEST_TRAIL_OPACITY + ((NEWEST_TRAIL_OPACITY - OLDEST_TRAIL_OPACITY) * index) / lastIndex;
+  return oldestOpacity + ((newestOpacity - oldestOpacity) * index) / lastIndex;
 }
 
 export interface MapMarkerData {
@@ -96,11 +106,16 @@ export interface MapProvider {
   moveMarker(id: string, lat: number, lng: number, headingDegrees?: number): void;
 
   /**
-   * Renders a live-tracked device's recent path as connected, fading dots — oldest first, newest
-   * last, newest at full opacity fading to faint for the oldest. Replaces any previous trail
-   * under this id.
+   * Renders a path as connected, fading dots — points[0] first, points[last] last, that last point
+   * at full opacity fading to faint for the first. Replaces any previous trail under this id.
+   * `style`, if given, overrides the live trail's own red/0.1–1 defaults — used for the event
+   * playback panel's two trails (see map-page.ts's updatePlaybackTrails()).
    */
-  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void;
+  setDeviceTrail(
+    id: string,
+    points: { lat: number; lng: number }[],
+    style?: { color?: string; oldestOpacity?: number; newestOpacity?: number },
+  ): void;
 
   /** Removes a device's trail, if one is currently shown. */
   clearDeviceTrail(id: string): void;

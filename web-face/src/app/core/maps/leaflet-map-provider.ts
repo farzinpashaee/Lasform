@@ -416,20 +416,25 @@ private map?: L.Map;
     badge?.classList.toggle('live', live);
   }
 
-  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {
+  setDeviceTrail(
+    id: string,
+    points: { lat: number; lng: number }[],
+    style?: { color?: string; oldestOpacity?: number; newestOpacity?: number },
+  ): void {
     this.clearDeviceTrail(id);
     if (!this.trailLayer || points.length === 0) {
       return;
     }
+    const color = style?.color ?? DEVICE_TRAIL_COLOR;
     const group = L.layerGroup();
     const last = points.length - 1;
     points.forEach((point, i) => {
-      const opacity = trailPointOpacity(i, last);
+      const opacity = trailPointOpacity(i, last, style?.oldestOpacity, style?.newestOpacity);
       L.circleMarker([point.lat, point.lng], {
         radius: 5,
-        color: DEVICE_TRAIL_COLOR,
+        color,
         weight: 1,
-        fillColor: DEVICE_TRAIL_COLOR,
+        fillColor: color,
         fillOpacity: opacity,
         opacity,
       }).addTo(group);
@@ -440,7 +445,7 @@ private map?: L.Map;
             [previous.lat, previous.lng],
             [point.lat, point.lng],
           ],
-          { color: DEVICE_TRAIL_COLOR, weight: 3, opacity },
+          { color, weight: 3, opacity },
         ).addTo(group);
       }
     });
