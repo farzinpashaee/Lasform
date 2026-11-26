@@ -10,15 +10,25 @@ export interface MapViewOptions {
 
 /** Shared styling for a live-tracked device's breadcrumb trail — kept in one place so both map providers render it identically. */
 export const DEVICE_TRAIL_COLOR = '#da5050';
+/** The event-playback panel's "upcoming events" trail color — the trailing (already-happened) half
+ *  of a playback trail reuses DEVICE_TRAIL_COLOR instead, same red as the live trail. */
+export const PLAYBACK_FUTURE_TRAIL_COLOR = '#757575';
 const OLDEST_TRAIL_OPACITY = 0.1;
 const NEWEST_TRAIL_OPACITY = 1;
 
-/** Linearly interpolates a trail point's opacity from OLDEST_TRAIL_OPACITY (index 0) to NEWEST_TRAIL_OPACITY (index === lastIndex). */
-export function trailPointOpacity(index: number, lastIndex: number): number {
+/** Linearly interpolates a trail point's opacity from oldestOpacity (index 0) to newestOpacity
+ *  (index === lastIndex) — defaults to the live trail's own 0.1–1 range; the playback trails pass
+ *  their own 0–0.9 bounds instead (see map-page.ts's updatePlaybackTrails()). */
+export function trailPointOpacity(
+  index: number,
+  lastIndex: number,
+  oldestOpacity = OLDEST_TRAIL_OPACITY,
+  newestOpacity = NEWEST_TRAIL_OPACITY,
+): number {
   if (lastIndex <= 0) {
-    return NEWEST_TRAIL_OPACITY;
+    return newestOpacity;
   }
-  return OLDEST_TRAIL_OPACITY + ((NEWEST_TRAIL_OPACITY - OLDEST_TRAIL_OPACITY) * index) / lastIndex;
+  return oldestOpacity + ((newestOpacity - oldestOpacity) * index) / lastIndex;
 }
 
 export interface MapMarkerData {
@@ -33,6 +43,10 @@ export interface MapMarkerData {
   categoryEmoji?: string;
   /** A device's last-known heading in degrees clockwise from north — orients its marker on initial render. Ignored for 'location' markers. */
   heading?: number;
+  /** Whether this device is currently live-tracked — shows the "sensors" broadcast glyph on its
+   *  badge instead of a plain solid circle. Ignored for 'location' markers. See setMarkerLive to
+   *  update this after the marker already exists, without a full setMarkers() re-render. */
+  live?: boolean;
 }
 
 /** A visible-map rectangle in plain lon/lat, vendor-agnostic (mirrors both Leaflet's LatLngBounds and google.maps.LatLngBounds). */
@@ -92,14 +106,24 @@ export interface MapProvider {
   moveMarker(id: string, lat: number, lng: number, headingDegrees?: number): void;
 
   /**
-   * Renders a live-tracked device's recent path as connected, fading dots — oldest first, newest
-   * last, newest at full opacity fading to faint for the oldest. Replaces any previous trail
-   * under this id.
+   * Renders a path as connected, fading dots — points[0] first, points[last] last, that last point
+   * at full opacity fading to faint for the first. Replaces any previous trail under this id.
+   * `style`, if given, overrides the live trail's own red/0.1–1 defaults — used for the event
+   * playback panel's two trails (see map-page.ts's updatePlaybackTrails()).
    */
-  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void;
+  setDeviceTrail(
+    id: string,
+    points: { lat: number; lng: number }[],
+    style?: { color?: string; oldestOpacity?: number; newestOpacity?: number },
+  ): void;
 
   /** Removes a device's trail, if one is currently shown. */
   clearDeviceTrail(id: string): void;
+
+  /** Toggles a device marker's "live" badge — the sensors/broadcast glyph is shown only while
+   *  it's actually being live-tracked; otherwise the badge is a plain solid circle. No-op for a
+   *  marker that doesn't currently exist (e.g. it scrolled out of the last search results). */
+  setMarkerLive(id: string, live: boolean): void;
 
   /** Toggles grouping nearby markers into cluster badges; re-applies to whatever markers are current. */
   setClusteringEnabled(enabled: boolean): void;

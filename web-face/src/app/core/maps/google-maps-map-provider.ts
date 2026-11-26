@@ -37,16 +37,22 @@ const DEVICE_ICON_DIAMETER = DEVICE_ICON_RADIUS * 2;
 /** Heading is rounded to the nearest multiple of this before generating/caching a rotated icon — re-rendering a canvas for every trivial fluctuation buys nothing visible. */
 const HEADING_BUCKET_DEGREES = 5;
 
-/** `null` keys the no-heading-known variant (badge only, no arrow at all). */
-const deviceIconsByHeadingBucket = new Map<number | null, google.maps.Icon>();
+/** Keyed by `"<bucket>|<live>"` — `bucket` null for the no-heading-known variant (badge only, no
+ *  arrow at all); `live` picks whether the broadcast glyph is drawn on the badge at all. */
+const deviceIconsByKey = new Map<string, google.maps.Icon>();
 
 function normalizeHeadingDegrees(degrees: number): number {
   const wrapped = degrees % 360;
   return wrapped < 0 ? wrapped + 360 : wrapped;
 }
 
-/** The round badge's fixed circle + signal glyph, identical in every cached icon regardless of heading — echoes the Material Symbols `sensors` glyph used for the equivalent Leaflet marker (see .device-marker-badge in styles.scss), redrawn as plain vector shapes since a canvas has no access to that icon font. */
-function drawDeviceBadge(context: CanvasRenderingContext2D, center: number): void {
+/**
+ * The round badge's fixed solid circle — a plain dot by default, matching the equivalent Leaflet
+ * marker's default (see .device-marker-badge in styles.scss). Only while `live` is true does it
+ * also draw the signal glyph (echoing Material Symbols' `sensors` — concentric broadcast arcs —
+ * redrawn as plain vector shapes since a canvas has no access to that icon font).
+ */
+function drawDeviceBadge(context: CanvasRenderingContext2D, center: number, live: boolean): void {
   context.save();
   context.shadowColor = 'rgba(0, 0, 0, 0.45)';
   context.shadowBlur = 4;
@@ -56,6 +62,10 @@ function drawDeviceBadge(context: CanvasRenderingContext2D, center: number): voi
   context.fillStyle = '#da5050';
   context.fill();
   context.restore();
+
+  if (!live) {
+    return;
+  }
 
   context.save();
   context.strokeStyle = '#fff';
@@ -102,10 +112,11 @@ function drawDeviceArrow(context: CanvasRenderingContext2D, center: number, head
  * (heading not known yet). Cached per heading "bucket" (nearest 5°) rather than regenerated on
  * every fluctuation.
  */
-function deviceIcon(headingDegrees?: number): google.maps.Icon {
+function deviceIcon(headingDegrees: number | undefined, live: boolean): google.maps.Icon {
   const bucket = headingDegrees === undefined ? null : Math.round(normalizeHeadingDegrees(headingDegrees) / HEADING_BUCKET_DEGREES) * HEADING_BUCKET_DEGREES;
-  const key = bucket === null ? null : bucket % 360;
-  let icon = deviceIconsByHeadingBucket.get(key);
+  const normalizedBucket = bucket === null ? null : bucket % 360;
+  const key = `${normalizedBucket === null ? 'none' : normalizedBucket}|${live}`;
+  let icon = deviceIconsByKey.get(key);
   if (!icon) {
     const size = DEVICE_ICON_DIAMETER;
     const center = DEVICE_ICON_RADIUS;
@@ -116,12 +127,12 @@ function deviceIcon(headingDegrees?: number): google.maps.Icon {
     if (!context) {
       return { url: '', scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(center, center) };
     }
-    drawDeviceBadge(context, center);
-    if (key !== null) {
-      drawDeviceArrow(context, center, key);
+    drawDeviceBadge(context, center, live);
+    if (normalizedBucket !== null) {
+      drawDeviceArrow(context, center, normalizedBucket);
     }
     icon = { url: canvas.toDataURL(), scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(center, center) };
-    deviceIconsByHeadingBucket.set(key, icon);
+    deviceIconsByKey.set(key, icon);
   }
   return icon;
 }
@@ -130,7 +141,10 @@ export class GoogleMapsMapProvider implements MapProvider {
   private map?: google.maps.Map;
   private infoWindow?: google.maps.InfoWindow;
   private markers: google.maps.Marker[] = [];
-  private markersById = new Map<string, { marker: google.maps.Marker; title?: string }>();
+  /** heading/live are only ever set for 'device' markers — kept here (rather than re-derived)
+   *  since moveMarker/setMarkerLive each only learn one of the two at a time and need the other
+   *  to redraw the icon consistently (see deviceIcon). */
+  private markersById = new Map<string, { marker: google.maps.Marker; title?: string; heading?: number; live?: boolean }>();
   private clusterer?: MarkerClusterer;
   private clusteringEnabled = false;
   private userLocationMarker?: google.maps.Marker;
@@ -165,7 +179,7 @@ export class GoogleMapsMapProvider implements MapProvider {
       // provider itself owns adding markers to the map.
       const marker = new google.maps.Marker({
         position: { lat: markerData.lat, lng: markerData.lng },
-        icon: markerData.kind === 'device' ? deviceIcon(markerData.heading) : this.locationMarkerIcon(),
+        icon: markerData.kind === 'device' ? deviceIcon(markerData.heading, !!markerData.live) : this.locationMarkerIcon(),
         label: markerData.kind !== 'device' && markerData.categoryEmoji ? { text: markerData.categoryEmoji, fontSize: '13px' } : undefined,
       });
       if (markerData.title || markerData.id) {
@@ -181,7 +195,7 @@ export class GoogleMapsMapProvider implements MapProvider {
       }
       this.markers.push(marker);
       if (markerData.id) {
-        this.markersById.set(markerData.id, { marker, title: markerData.title });
+        this.markersById.set(markerData.id, { marker, title: markerData.title, heading: markerData.heading, live: markerData.live });
       }
     }
     this.applyClustering();
@@ -230,22 +244,37 @@ export class GoogleMapsMapProvider implements MapProvider {
     }
     entry.marker.setPosition({ lat, lng });
     if (headingDegrees !== undefined) {
-      entry.marker.setIcon(deviceIcon(headingDegrees));
+      entry.heading = headingDegrees;
+      entry.marker.setIcon(deviceIcon(headingDegrees, !!entry.live));
     }
     // Unlike Leaflet's cluster plugin, @googlemaps/markerclusterer doesn't watch marker
     // position on its own — render() is its documented "recalculate and redraw" call.
     this.clusterer?.render();
   }
 
-  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {
+  setMarkerLive(id: string, live: boolean): void {
+    const entry = this.markersById.get(id);
+    if (!entry) {
+      return;
+    }
+    entry.live = live;
+    entry.marker.setIcon(deviceIcon(entry.heading, live));
+  }
+
+  setDeviceTrail(
+    id: string,
+    points: { lat: number; lng: number }[],
+    style?: { color?: string; oldestOpacity?: number; newestOpacity?: number },
+  ): void {
     this.clearDeviceTrail(id);
     if (!this.map || points.length === 0) {
       return;
     }
+    const color = style?.color ?? DEVICE_TRAIL_COLOR;
     const overlays: (google.maps.Marker | google.maps.Polyline)[] = [];
     const last = points.length - 1;
     points.forEach((point, i) => {
-      const opacity = trailPointOpacity(i, last);
+      const opacity = trailPointOpacity(i, last, style?.oldestOpacity, style?.newestOpacity);
       overlays.push(
         new google.maps.Marker({
           position: point,
@@ -255,9 +284,9 @@ export class GoogleMapsMapProvider implements MapProvider {
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 5,
-            fillColor: DEVICE_TRAIL_COLOR,
+            fillColor: color,
             fillOpacity: opacity,
-            strokeColor: DEVICE_TRAIL_COLOR,
+            strokeColor: color,
             strokeOpacity: opacity,
             strokeWeight: 1,
           },
@@ -268,7 +297,7 @@ export class GoogleMapsMapProvider implements MapProvider {
           new google.maps.Polyline({
             path: [points[i - 1], point],
             map: this.map,
-            strokeColor: DEVICE_TRAIL_COLOR,
+            strokeColor: color,
             strokeOpacity: opacity,
             strokeWeight: 3,
           }),

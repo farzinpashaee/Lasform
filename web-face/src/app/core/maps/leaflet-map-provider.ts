@@ -140,16 +140,19 @@ const DEVICE_ICON_ANCHOR: L.PointTuple = [DEVICE_ICON_RADIUS, DEVICE_ICON_RADIUS
 const DEVICE_POPUP_ANCHOR: L.PointTuple = [0, -DEVICE_BADGE_DIAMETER / 2];
 
 /**
- * A round "live device" badge (Material Symbols' `sensors` glyph — concentric broadcast arcs —
- * on a solid circle) with a small arrow that swings around it to point in the device's heading,
- * per the reference design: the badge itself must stay upright and only the arrow rotates. Built
- * as a divIcon (rather than a plain L.icon image) both to render the badge from CSS/an icon
- * glyph instead of a raster asset, and so the arrow can carry its own independent CSS
- * `transform: rotate(...)` (see setMarkerRotation) — Leaflet positions a marker by setting
- * `transform: translate3d(...)` directly on the icon element itself, so rotating that same
- * element (or one sized/positioned to affect the badge along with it) would either fight that
- * positioning transform or rotate the badge too; a separate, zero-size pivot element at the
- * icon's exact center, rotated independently, turns only the arrow around a fixed badge.
+ * A round device badge (a solid circle) with a small arrow that swings around it to point in the
+ * device's heading, per the reference design: the badge itself must stay upright and only the
+ * arrow rotates. The `sensors` glyph (Material Symbols' concentric broadcast arcs) is always
+ * present in the markup but hidden by CSS (see .device-marker-badge in styles.scss) until the
+ * marker actually carries the `.live` class — see setMarkerLive — so a device shows as a plain
+ * dot except while it's being live-tracked. Built as a divIcon (rather than a plain L.icon image)
+ * both to render the badge from CSS/an icon glyph instead of a raster asset, and so the arrow can
+ * carry its own independent CSS `transform: rotate(...)` (see setMarkerRotation) — Leaflet
+ * positions a marker by setting `transform: translate3d(...)` directly on the icon element
+ * itself, so rotating that same element (or one sized/positioned to affect the badge along with
+ * it) would either fight that positioning transform or rotate the badge too; a separate,
+ * zero-size pivot element at the icon's exact center, rotated independently, turns only the arrow
+ * around a fixed badge.
  */
 const DEVICE_ICON = L.divIcon({
   className: 'device-marker-icon',
@@ -328,13 +331,19 @@ private map?: L.Map;
         if (onMarkerClick) {
           leafletMarker.on('click', () => onMarkerClick(marker.id!));
         }
-        if (marker.kind === 'device' && marker.heading !== undefined) {
-          const heading = marker.heading;
-          // The arrow's pivot element only exists once Leaflet actually creates the marker's DOM
-          // element, which for a clustered layer can happen well after this chunk is built (or
-          // never, while it stays bundled inside an unopened cluster) — 'add' fires exactly when
-          // that element is created, whether that's now or much later.
-          leafletMarker.once('add', () => this.setMarkerRotation(leafletMarker, heading));
+        if (marker.kind === 'device') {
+          if (marker.heading !== undefined) {
+            const heading = marker.heading;
+            // The arrow's pivot element only exists once Leaflet actually creates the marker's
+            // DOM element, which for a clustered layer can happen well after this chunk is built
+            // (or never, while it stays bundled inside an unopened cluster) — 'add' fires exactly
+            // when that element is created, whether that's now or much later.
+            leafletMarker.once('add', () => this.setMarkerRotation(leafletMarker, heading));
+          }
+          if (marker.live) {
+            const id = marker.id;
+            leafletMarker.once('add', () => this.setMarkerLive(id, true));
+          }
         }
       }
       chunk.push(leafletMarker);
@@ -401,20 +410,31 @@ private map?: L.Map;
     }
   }
 
-  setDeviceTrail(id: string, points: { lat: number; lng: number }[]): void {
+  setMarkerLive(id: string, live: boolean): void {
+    const marker = this.markersById.get(id);
+    const badge = marker?.getElement()?.querySelector<HTMLElement>('.device-marker-badge');
+    badge?.classList.toggle('live', live);
+  }
+
+  setDeviceTrail(
+    id: string,
+    points: { lat: number; lng: number }[],
+    style?: { color?: string; oldestOpacity?: number; newestOpacity?: number },
+  ): void {
     this.clearDeviceTrail(id);
     if (!this.trailLayer || points.length === 0) {
       return;
     }
+    const color = style?.color ?? DEVICE_TRAIL_COLOR;
     const group = L.layerGroup();
     const last = points.length - 1;
     points.forEach((point, i) => {
-      const opacity = trailPointOpacity(i, last);
+      const opacity = trailPointOpacity(i, last, style?.oldestOpacity, style?.newestOpacity);
       L.circleMarker([point.lat, point.lng], {
         radius: 5,
-        color: DEVICE_TRAIL_COLOR,
+        color,
         weight: 1,
-        fillColor: DEVICE_TRAIL_COLOR,
+        fillColor: color,
         fillOpacity: opacity,
         opacity,
       }).addTo(group);
@@ -425,7 +445,7 @@ private map?: L.Map;
             [previous.lat, previous.lng],
             [point.lat, point.lng],
           ],
-          { color: DEVICE_TRAIL_COLOR, weight: 3, opacity },
+          { color, weight: 3, opacity },
         ).addTo(group);
       }
     });

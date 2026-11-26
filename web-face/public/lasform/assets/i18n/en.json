@@ -112,7 +112,9 @@
     },
     "tabs": {
       "overview": "Overview",
-      "reviews": "Reviews"
+      "reviews": "Reviews",
+      "details": "Details",
+      "events": "Events"
     },
     "reviews": {
       "loading": "Loading reviews…",
@@ -134,6 +136,22 @@
       "lastLocation": "Last location",
       "shape": "Shape",
       "devices": "Devices"
+    },
+    "deviceEvents": {
+      "loading": "Loading events…",
+      "empty": "No events recorded for this device yet.",
+      "loadFailed": "Failed to load events. Please try again.",
+      "loadingMore": "Loading more…"
+    },
+    "playback": {
+      "stepBack": "Previous event",
+      "stepForward": "Next event",
+      "play": "Play history",
+      "pause": "Pause history",
+      "scrub": "Scrub through event history",
+      "live": "Live",
+      "expandPayload": "Show payload",
+      "collapsePayload": "Hide payload"
     }
   },
   "management": {
@@ -243,7 +261,7 @@
     "fieldSpeed": "Speed",
     "fieldHeading": "Heading",
     "fieldLastKnownLocation": "Last known location",
-    "recentEventsTitle": "Recent events",
+    "recentEventsTitle": "Events",
     "eventsLoading": "Loading events…",
     "eventsEmpty": "No events recorded for this device yet.",
     "eventsLoadFailed": "Failed to load events. Please try again.",
@@ -263,7 +281,10 @@
     "eventsRange30d": "Last 30 days",
     "eventsRangeCustom": "Custom range",
     "eventsRangeFrom": "From",
-    "eventsRangeTo": "To"
+    "eventsRangeTo": "To",
+    "eventsShowPayload": "View payload ({{count}} fields)",
+    "eventDetailsTitle": "Event details",
+    "eventsPayloadEmpty": "This event has no payload."
   },
   "locations": {
     "title": "Locations",

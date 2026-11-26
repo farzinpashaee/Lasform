@@ -276,9 +276,123 @@
               {{ 'map.tabs.reviews' | transloco }}
             </button>
           </div>
+        } @else if (hit.type === 'DEVICE' && authService.hasPermission('event:read')) {
+          <div class="details-tabs" role="tablist">
+            <button
+              type="button"
+              class="details-tab"
+              role="tab"
+              [class.active]="detailsTab() === 'overview'"
+              (click)="selectDetailsTab('overview', hit)"
+            >
+              {{ 'map.tabs.details' | transloco }}
+            </button>
+            <button
+              type="button"
+              class="details-tab"
+              role="tab"
+              [class.active]="detailsTab() === 'events'"
+              (click)="selectDetailsTab('events', hit)"
+            >
+              {{ 'map.tabs.events' | transloco }}
+            </button>
+          </div>
         }
 
-        @if (hit.type !== 'LOCATION' || detailsTab() === 'overview' || !featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
+        @if (hit.type === 'DEVICE' && detailsTab() === 'events') {
+          <div class="device-events-panel">
+            @if (loadingDeviceEvents()) {
+              <div class="results-status">{{ 'map.deviceEvents.loading' | transloco }}</div>
+            } @else if (deviceEventsLoadError()) {
+              <div class="results-status results-error">{{ deviceEventsLoadError() }}</div>
+            } @else if (deviceEvents().length === 0) {
+              <div class="results-status">{{ 'map.deviceEvents.empty' | transloco }}</div>
+            } @else {
+              <div class="playback-bar">
+                <div class="playback-controls">
+                  <button
+                    type="button"
+                    class="playback-button"
+                    [disabled]="playbackSliderValue() === 0"
+                    [attr.aria-label]="'map.playback.stepBack' | transloco"
+                    (click)="stepPlayback(-1, hit)"
+                  >
+                    <span class="material-symbols-outlined">skip_previous</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="playback-button playback-play"
+                    [attr.aria-label]="(playbackPlaying() ? 'map.playback.pause' : 'map.playback.play') | transloco"
+                    (click)="togglePlayback(hit)"
+                  >
+                    <span class="material-symbols-outlined">{{ playbackPlaying() ? 'pause' : 'play_arrow' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="playback-button"
+                    [disabled]="playbackSliderValue() === playbackMaxIndex()"
+                    [attr.aria-label]="'map.playback.stepForward' | transloco"
+                    (click)="stepPlayback(1, hit)"
+                  >
+                    <span class="material-symbols-outlined">skip_next</span>
+                  </button>
+                  <input
+                    type="range"
+                    class="playback-slider"
+                    min="0"
+                    [max]="playbackMaxIndex()"
+                    [value]="playbackSliderValue()"
+                    [attr.aria-label]="'map.playback.scrub' | transloco"
+                    (input)="onPlaybackScrub($any($event.target).valueAsNumber, hit)"
+                  />
+                  @if (playbackIndex() != null) {
+                    <button type="button" class="playback-live-button" (click)="exitPlayback(hit)">
+                      {{ 'map.playback.live' | transloco }}
+                    </button>
+                  }
+                </div>
+                @if (playbackEvent(); as activeEvent) {
+                  <div class="playback-status">
+                    <div class="playback-status-header">
+                      <span class="playback-status-time">{{ activeEvent.occurredAt | date: 'short' }}</span>
+                      <span class="playback-status-type">{{ activeEvent.type }}</span>
+                      @if (hasEventPayload(activeEvent)) {
+                        <button
+                          type="button"
+                          class="playback-payload-toggle"
+                          [attr.aria-label]="(playbackPayloadExpanded() ? 'map.playback.collapsePayload' : 'map.playback.expandPayload') | transloco"
+                          (click)="togglePlaybackPayload()"
+                        >
+                          <span class="material-symbols-outlined">{{ playbackPayloadExpanded() ? 'remove' : 'add' }}</span>
+                        </button>
+                      }
+                    </div>
+                    @if (playbackPayloadExpanded() && hasEventPayload(activeEvent)) {
+                      <pre class="playback-status-payload">{{ activeEvent.payload | json }}</pre>
+                    }
+                  </div>
+                }
+              </div>
+              <ul class="device-events-list" (scroll)="onDeviceEventsScroll($event)">
+                @for (event of visibleDeviceEvents(); track event.id) {
+                  <li
+                    class="device-event-item"
+                    [class.active]="isPlaybackEvent(event)"
+                    (click)="openEventDetails(event)"
+                  >
+                    <div class="device-event-meta">
+                      <span class="device-event-time">{{ event.occurredAt | date: 'short' }}</span>
+                      <span class="device-event-type">{{ event.type }}</span>
+                    </div>
+                  </li>
+                }
+                @if (hasMoreDeviceEvents()) {
+                  <li class="device-events-loading-more">{{ 'map.deviceEvents.loadingMore' | transloco }}</li>
+                }
+              </ul>
+            }
+          </div>
+        } @else if (hit.type !== 'LOCATION' || detailsTab() === 'overview' || !featureFlags.isEnabled(FEATURE_FLAGS.locationReviews)) {
           <div class="overview-panel">
             @if (locationDescription(hit); as description) {
               <p class="overview-description">{{ description }}</p>
@@ -901,6 +1015,42 @@
           <span>{{ 'map.appInfoWebsite' | transloco }}</span>
         </a>
       </div>
+    </div>
+  }
+
+  @if (eventDetailsTarget(); as detailEvent) {
+    <div class="modal-backdrop" (click)="closeEventDetails()"></div>
+    <div class="modal event-details-modal">
+      <div class="details-top-actions app-info-close">
+        <button type="button" class="icon-action-button" [attr.aria-label]="'common.close' | transloco" (click)="closeEventDetails()">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <h2 class="modal-title">{{ 'devices.eventDetailsTitle' | transloco }}</h2>
+      <dl class="details-fields">
+        <div class="details-field">
+          <dt>{{ 'devices.eventsColOccurredAt' | transloco }}</dt>
+          <dd>{{ detailEvent.occurredAt | date: 'medium' }}</dd>
+        </div>
+        <div class="details-field">
+          <dt>{{ 'devices.eventsColType' | transloco }}</dt>
+          <dd>{{ detailEvent.type }}</dd>
+        </div>
+        <div class="details-field">
+          <dt>{{ 'devices.eventsColSpeed' | transloco }}</dt>
+          <dd>{{ detailEvent.speed != null ? detailEvent.speed + ' m/s' : '—' }}</dd>
+        </div>
+        <div class="details-field">
+          <dt>{{ 'devices.eventsColHeading' | transloco }}</dt>
+          <dd>{{ detailEvent.heading != null ? detailEvent.heading + '°' : '—' }}</dd>
+        </div>
+      </dl>
+      <h3 class="event-details-payload-title">{{ 'devices.eventsColPayload' | transloco }}</h3>
+      @if (hasEventPayload(detailEvent)) {
+        <code class="event-details-payload">{{ detailEvent.payload | json }}</code>
+      } @else {
+        <p class="results-status">{{ 'devices.eventsPayloadEmpty' | transloco }}</p>
+      }
     </div>
   }
 </div>

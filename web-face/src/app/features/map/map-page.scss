@@ -1,5 +1,40 @@
 $radius: 8px;
 
+@mixin thin-scrollbar {
+  // Deliberately *not* setting scrollbar-width/scrollbar-color here: on current
+  // Chromium/Windows, an element with those standard properties set renders via the
+  // new unified scrollbar model and ignores the ::-webkit-scrollbar-* pseudo-elements
+  // below entirely — which flattens the thumb to a plain flush bar with no radius or
+  // inset gap. Firefox (which only honors the standard properties) falls back to its
+  // default scrollbar; an accepted trade-off for the floating-pill look everywhere else.
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    /* A transparent border + padding-box clip insets the visible pill within the
+       track, so it reads as a floating rounded thumb instead of a flush-edge bar. */
+    background-color: var(--scrollbar-thumb);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover, var(--scrollbar-thumb));
+  }
+}
+
 .map-page {
   --surface: #fff;
   --text-primary: #202124;
@@ -100,6 +135,13 @@ $radius: 8px;
   min-width: 0;
   max-width: 384px;
   pointer-events: auto;
+  /* .top-bar (this column's parent) sits 12px from the viewport top; capping here too, with
+     min-height: 0 so .results-card (a flex child below the never-shrinking .search-bar) can
+     actually be squeezed by this instead of just overflowing it, is what lets that card's own
+     overflow-y: auto take over and scroll rather than the card running off the bottom of the
+     screen — see .results-card's doc comment. */
+  max-height: calc(100dvh - 24px);
+  min-height: 0;
 }
 
 .search-bar {
@@ -112,6 +154,9 @@ $radius: 8px;
   padding: 0 8px 0 16px;
   height: 48px;
   width: 100%;
+  /* Stays full height under .search-column's max-height cap — .results-card is the one meant to
+     give up space (via its own min-height: 0 + overflow-y: auto) when the column runs out of room. */
+  flex-shrink: 0;
 }
 
 .search-icon {
@@ -141,7 +186,17 @@ $radius: 8px;
   background: var(--surface);
   border-radius: $radius;
   box-shadow: var(--shadow);
-  overflow: hidden;
+  /* min-height: 0 overrides a flex item's default min-height: auto (which would otherwise refuse to
+     shrink below its content size, defeating .search-column's max-height cap above it) — together
+     they're what makes this scroll within itself once a long details view (e.g. the events tab's
+     playback bar + list) would otherwise run off the bottom of the screen, under the browser/OS
+     chrome. overflow-x stays hidden (rather than switching the shorthand to auto) so rounded
+     corners still clip content that isn't tall enough to need the vertical scrollbar in the first
+     place. */
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  @include thin-scrollbar;
 }
 
 /* Only shown while looking at the results list itself (searching/error/empty/list — see
@@ -213,41 +268,6 @@ $radius: 8px;
 .results-slider:not(.showing-details) .results-slide:last-child,
 .results-slider.showing-details .results-slide:first-child {
   height: 0;
-}
-
-@mixin thin-scrollbar {
-  // Deliberately *not* setting scrollbar-width/scrollbar-color here: on current
-  // Chromium/Windows, an element with those standard properties set renders via the
-  // new unified scrollbar model and ignores the ::-webkit-scrollbar-* pseudo-elements
-  // below entirely — which flattens the thumb to a plain flush bar with no radius or
-  // inset gap. Firefox (which only honors the standard properties) falls back to its
-  // default scrollbar; an accepted trade-off for the floating-pill look everywhere else.
-  &::-webkit-scrollbar {
-    width: 12px;
-  }
-
-  &::-webkit-scrollbar-button {
-    display: none;
-    width: 0;
-    height: 0;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    /* A transparent border + padding-box clip insets the visible pill within the
-       track, so it reads as a floating rounded thumb instead of a flush-edge bar. */
-    background-color: var(--scrollbar-thumb);
-    background-clip: padding-box;
-    border: 3px solid transparent;
-    border-radius: 999px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: var(--scrollbar-thumb-hover, var(--scrollbar-thumb));
-  }
 }
 
 .results-list {
@@ -638,6 +658,240 @@ $radius: 8px;
 .review-date {
   font-size: 12px;
   color: var(--text-secondary);
+}
+
+.device-events-panel {
+  padding: 12px 16px 16px;
+}
+
+.playback-bar {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--hover);
+}
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.playback-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-bg-hover);
+  }
+
+  &:disabled {
+    color: var(--text-secondary);
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
+.playback-play {
+  background: var(--accent-bg);
+  color: var(--accent);
+
+  &:hover:not(:disabled) {
+    background: var(--accent-bg-hover);
+  }
+}
+
+.playback-slider {
+  flex: 1;
+  margin: 0 4px;
+  accent-color: var(--accent);
+}
+
+.playback-live-button {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--accent-bg);
+  }
+}
+
+.playback-status {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.playback-status-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playback-status-time {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.playback-status-type {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.playback-payload-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--accent-bg-hover);
+    color: var(--text-primary);
+  }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
+.playback-status-payload {
+  display: block;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 160px;
+  overflow-y: auto;
+  font-size: 11px;
+  font-family: monospace;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin: 6px 0 0;
+}
+
+.device-events-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  /* Exactly 5 rows (.device-event-item is 36.8px tall, measured) — the rest scrolls into view
+     instead of growing with however many events are loaded (see visibleDeviceEvents() in the
+     component, which can hold many pages' worth once lazy-loaded). */
+  max-height: 184px;
+  overflow-y: auto;
+  @include thin-scrollbar;
+}
+
+.device-event-item {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+
+  &:first-child {
+    border-top: none;
+  }
+
+  &:hover {
+    background: var(--hover);
+  }
+
+  &.active {
+    background: var(--accent-bg);
+  }
+}
+
+.device-events-loading-more {
+  padding: 10px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.device-event-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.device-event-time {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.device-event-type {
+  font-size: 11px;
+  color: var(--text-secondary);
+  // Breathing room before the list's own scrollbar (.device-events-list), which otherwise sits
+  // flush against this right-aligned text.
+  padding-right: 8px;
+}
+
+.event-details-modal {
+  width: 420px;
+
+  // .details-fields' own padding/max-height assumes it's flush against a side panel (see
+  // .overview-panel); inside a modal (which already has its own 20px padding — see .modal) it
+  // needs resetting, same as .app-info-fields does for the App info modal.
+  .details-fields {
+    padding: 0;
+    margin: 0;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+.event-details-payload-title {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.event-details-payload {
+  display: block;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+  font-size: 12px;
+  font-family: monospace;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--hover);
+  border-radius: 4px;
+  padding: 8px 10px;
 }
 
 .result-item {

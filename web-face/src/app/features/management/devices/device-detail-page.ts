@@ -19,10 +19,10 @@ import { TagService } from '../../../core/services/tag.service';
 
 const DEVICE_TYPES: DeviceType[] = ['GPS_TRACKER', 'MOBILE_PHONE', 'VEHICLE_UNIT', 'WEARABLE', 'IOT_SENSOR', 'OTHER'];
 const DEVICE_STATUSES: DeviceStatus[] = ['ACTIVE', 'INACTIVE', 'OFFLINE', 'MAINTENANCE', 'DECOMMISSIONED'];
-/** The recent-events panel is a quick glance, not a full history browser — EventController#search's
- *  deviceId branch returns the device's entire (already-desc-sorted) event history unbounded, so
- *  this caps what's actually rendered rather than adding pagination for a secondary panel. */
-const RECENT_EVENTS_LIMIT = 20;
+/** EventController#search's deviceId branch returns the device's entire (already-desc-sorted)
+ *  event history in one response, not a paged one — this is the client-side page size the events
+ *  table and chart both work off of (via filteredEvents/pagedEvents, below). */
+const EVENTS_PAGE_SIZE = 10;
 
 interface ChartMetricOption {
   /** A top-level Event field name, or `payload:<key>` for a numeric payload field. */
@@ -72,8 +72,7 @@ const CHART_Y_TICK_COUNT = 4;
 interface TimeRangeOption {
   key: string;
   labelKey: string;
-  /** Milliseconds back from now; null means "all loaded events" (today's default — the full,
-   *  already-bounded RECENT_EVENTS_LIMIT page, not an unbounded history). */
+  /** Milliseconds back from now; null means "all loaded events" (today's default). */
   durationMs: number | null;
 }
 
@@ -192,6 +191,8 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
   protected readonly events = signal<Event[]>([]);
   protected readonly eventsLoading = signal(false);
   protected readonly eventsError = signal<string | null>(null);
+  /** The event whose details modal is open — clicking any row opens it, null closes it. */
+  protected readonly eventDetailsTarget = signal<Event | null>(null);
 
   protected readonly timeRangeOptions = TIME_RANGE_OPTIONS;
   protected readonly selectedRangeKey = signal<string>('all');
@@ -221,6 +222,17 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
     }
     const cutoff = Date.now() - option.durationMs;
     return events.filter((event) => new Date(event.occurredAt).getTime() >= cutoff);
+  });
+
+  /** Paginates the table only — the chart above it still plots every filtered event, not just the
+   *  current page, so the trend line doesn't fragment as you page through. */
+  protected readonly eventsPage = signal(0);
+
+  protected readonly eventsTotalPages = computed(() => Math.ceil(this.filteredEvents().length / EVENTS_PAGE_SIZE));
+
+  protected readonly pagedEvents = computed(() => {
+    const start = this.eventsPage() * EVENTS_PAGE_SIZE;
+    return this.filteredEvents().slice(start, start + EVENTS_PAGE_SIZE);
   });
 
   protected readonly currentRangeLabel = computed(() => {
@@ -316,6 +328,13 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
       this.categories.set(page.content);
     });
     this.loadDevice();
+
+    // Lets a caller land directly on the Recent events tab — e.g. the map page's device details
+    // panel links here with ?tab=events — without inventing a whole separate route for it. Only
+    // honored with event:read, same gate *hasPermission applies to the tab button itself.
+    if (this.route.snapshot.queryParamMap.get('tab') === 'events' && this.authService.hasPermission('event:read')) {
+      this.activeTab.set('events');
+    }
   }
 
   ngOnDestroy(): void {
@@ -361,7 +380,8 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
     this.eventService.search({ deviceId: device.deviceIdentifier }).subscribe({
       next: (events) => {
         this.eventsLoading.set(false);
-        this.events.set(events.slice(0, RECENT_EVENTS_LIMIT));
+        this.events.set(events);
+        this.eventsPage.set(0);
       },
       error: () => {
         this.eventsLoading.set(false);
@@ -391,6 +411,18 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
     return !!event.payload && Object.keys(event.payload).length > 0;
   }
 
+  protected payloadFieldCount(event: Event): number {
+    return Object.keys(event.payload ?? {}).length;
+  }
+
+  protected openEventDetails(event: Event): void {
+    this.eventDetailsTarget.set(event);
+  }
+
+  protected closeEventDetails(): void {
+    this.eventDetailsTarget.set(null);
+  }
+
   protected selectMetric(key: string): void {
     this.selectedMetricKey.set(key);
     this.hoveredIndex.set(null);
@@ -416,15 +448,26 @@ export class DeviceDetailPage implements OnInit, OnDestroy {
 
   protected closeRangeMenu(): void {
     this.rangeMenuOpen.set(false);
+    // Also the custom range's "Apply" — a changed from/to can easily leave the current page past
+    // the new (possibly much shorter) filtered list's end.
+    this.eventsPage.set(0);
   }
 
   protected selectRange(key: string): void {
     this.selectedRangeKey.set(key);
     this.hoveredIndex.set(null);
+    this.eventsPage.set(0);
     // Custom stays open so the from/to inputs are reachable; every other preset is a one-click pick.
     if (key !== 'custom') {
       this.rangeMenuOpen.set(false);
     }
+  }
+
+  protected goToEventsPage(page: number): void {
+    if (page < 0 || page >= this.eventsTotalPages()) {
+      return;
+    }
+    this.eventsPage.set(page);
   }
 
   /** The SVG's own pointermove, not a per-point listener — the crosshair just needs the nearest
