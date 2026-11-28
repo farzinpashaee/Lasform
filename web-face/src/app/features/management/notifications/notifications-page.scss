@@ -1,0 +1,136 @@
+.page-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary, #202124);
+}
+
+.notifications-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+}
+
+.notifications-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border, #e8eaed);
+    white-space: nowrap;
+  }
+
+  td {
+    color: var(--text-primary, #202124);
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--text-secondary, #5f6368);
+    background: var(--hover, #f1f3f4);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: var(--hover, #f1f3f4);
+  }
+
+  tbody tr.unread {
+    background: var(--accent-bg, #fbeaea);
+  }
+}
+
+.actions-column {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.severity-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--hover, #f1f3f4);
+  color: var(--text-secondary, #5f6368);
+
+  &[data-severity='HIGH'],
+  &[data-severity='CRITICAL'] {
+    background: rgba(217, 48, 37, 0.12);
+    color: var(--danger, #d93025);
+  }
+}
+
+.icon-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #202124);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  &:hover {
+    color: var(--accent, #da5050);
+    background: var(--accent-bg, #fbeaea);
+  }
+}
+
+.state-cell {
+  text-align: center;
+  padding: 32px 14px;
+  color: var(--text-secondary, #5f6368);
+  white-space: normal;
+
+  &.error {
+    color: var(--danger, #d93025);
+  }
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.pagination-button {
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #202124);
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--hover, #f1f3f4);
+  }
+
+  &:disabled {
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+  }
+}

@@ -7,6 +7,10 @@ export interface Alert extends Auditable {
   deviceId: string;
   /** Set only for geofence-triggered alerts. */
   geofenceId?: string;
+  /** Set only for rule-triggered alerts (type === 'RULE_TRIGGERED') — see Rule. */
+  ruleId?: string;
+  /** The Event#id that caused this alert to fire, if any. */
+  sourceEventId?: string;
   type: AlertType;
   severity?: AlertSeverity;
   status?: AlertStatus;

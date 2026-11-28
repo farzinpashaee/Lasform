@@ -1,0 +1,64 @@
+<h1 class="page-title">{{ 'notifications.title' | transloco }}</h1>
+
+<div class="notifications-table-wrapper">
+  <table class="notifications-table">
+    <thead>
+      <tr>
+        <th>{{ 'notifications.colMessage' | transloco }}</th>
+        <th>{{ 'notifications.colSeverity' | transloco }}</th>
+        <th>{{ 'notifications.colStatus' | transloco }}</th>
+        <th>{{ 'notifications.colTriggeredAt' | transloco }}</th>
+        <th class="actions-column"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="5" class="state-cell">{{ 'notifications.loading' | transloco }}</td>
+        </tr>
+      } @else if (loadError()) {
+        <tr>
+          <td colspan="5" class="state-cell error">{{ loadError() }}</td>
+        </tr>
+      } @else if (alerts().length === 0) {
+        <tr>
+          <td colspan="5" class="state-cell">{{ 'notifications.empty' | transloco }}</td>
+        </tr>
+      } @else {
+        @for (alert of alerts(); track alert.id) {
+          <tr [class.unread]="alert.status === 'NEW'">
+            <td>{{ alert.message || ('notifications.ruleTriggered' | transloco) }}</td>
+            <td>
+              <span class="severity-chip" [attr.data-severity]="alert.severity">{{ alert.severity }}</span>
+            </td>
+            <td>{{ alert.status }}</td>
+            <td>{{ alert.triggeredAt | date: 'short' }}</td>
+            <td class="actions-column">
+              @if (alert.status !== 'ACKNOWLEDGED') {
+                <button type="button" class="icon-action-button" [attr.aria-label]="'notifications.markRead' | transloco" (click)="markRead(alert)">
+                  <span class="material-symbols-outlined" aria-hidden="true">check</span>
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (!loading() && !loadError() && totalElements() > 0) {
+  <div class="pagination-bar">
+    <span class="pagination-summary">
+      {{ 'common.pageSummary' | transloco: { page: page() + 1, totalPages: totalPages(), total: totalElements() } }}
+    </span>
+    <div class="pagination-controls">
+      <button type="button" class="pagination-button" [disabled]="page() === 0" (click)="goToPage(page() - 1)">
+        {{ 'common.previous' | transloco }}
+      </button>
+      <button type="button" class="pagination-button" [disabled]="page() >= totalPages() - 1" (click)="goToPage(page() + 1)">
+        {{ 'common.next' | transloco }}
+      </button>
+    </div>
+  </div>
+}

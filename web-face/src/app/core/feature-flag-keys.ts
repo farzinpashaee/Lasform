@@ -4,4 +4,5 @@ export const FEATURE_FLAGS = {
   mapClustering: 'lasform.map.clustering',
   locationReviews: 'lasform.location.reviews',
   googleSso: 'lasform.security.googleSso',
+  automations: 'lasform.automations.enabled',
 } as const;

@@ -17,7 +17,8 @@ export type AlertType =
   | 'SPEED_LIMIT_EXCEEDED'
   | 'SOS'
   | 'TAMPER'
-  | 'CUSTOM';
+  | 'CUSTOM'
+  | 'RULE_TRIGGERED';
 
 export type AlertSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -43,3 +44,11 @@ export type EventType =
 export type EventSource = 'DEVICE' | 'USER' | 'SYSTEM';
 
 export type PhoneNumberType = 'MOBILE' | 'LANDLINE' | 'FAX' | 'WHATSAPP' | 'TOLL_FREE' | 'OTHER';
+
+export type RuleTriggerType = 'DEVICE' | 'CATEGORY';
+
+export type RuleLogicalOperator = 'AND' | 'OR';
+
+export type RuleOperator = 'EQ' | 'NE' | 'GT' | 'GTE' | 'LT' | 'LTE' | 'CONTAINS' | 'EXISTS' | 'NOT_EXISTS';
+
+export type RuleActionType = 'NOTIFICATION' | 'WEBHOOK';

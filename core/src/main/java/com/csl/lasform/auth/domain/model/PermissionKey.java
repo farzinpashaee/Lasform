@@ -40,7 +40,15 @@ public enum PermissionKey {
     REVIEW_VIEW("review:view", "View published reviews for a location"),
     REVIEW_DELETE_OWN("review:delete_own", "Delete your own review"),
     REVIEW_DELETE_OTHERS("review:delete_others", "Delete another user's review"),
-    REVIEW_MODERATE("review:moderate", "View the moderation queue and approve or reject pending reviews");
+    REVIEW_MODERATE("review:moderate", "View the moderation queue and approve or reject pending reviews"),
+
+    RULE_READ("rule:read", "View automation rules"),
+    RULE_WRITE("rule:write", "Create and update automation rules"),
+    RULE_DELETE("rule:delete", "Delete automation rules"),
+
+    ALERT_READ("alert:read", "View alerts and rule notifications"),
+    ALERT_WRITE("alert:write", "Create and update alerts"),
+    ALERT_DELETE("alert:delete", "Delete alerts");
 
     private final String key;
     private final String description;

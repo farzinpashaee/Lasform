@@ -29,6 +29,7 @@
           <span class="material-symbols-outlined" aria-hidden="true">{{ darkMode() ? 'dark_mode' : 'light_mode' }}</span>
         </button>
       }
+      <app-notification-center *hasPermission="['alert:read']" />
       <app-account-menu />
     </div>
   </header>
@@ -40,12 +41,14 @@
     <nav class="management-sidebar" [class.open]="sidebarOpen()">
       <ul class="nav-list">
         @for (link of navLinks; track link.path) {
-          <li *hasPermission="link.permission ? [link.permission] : []">
-            <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" (click)="closeSidebar()">
-              <span class="material-symbols-outlined nav-link-icon" aria-hidden="true">{{ link.icon }}</span>
-              <span>{{ link.labelKey | transloco }}</span>
-            </a>
-          </li>
+          @if (!link.featureFlag || featureFlags.isEnabled(link.featureFlag)) {
+            <li *hasPermission="link.permission ? [link.permission] : []">
+              <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" (click)="closeSidebar()">
+                <span class="material-symbols-outlined nav-link-icon" aria-hidden="true">{{ link.icon }}</span>
+                <span>{{ link.labelKey | transloco }}</span>
+              </a>
+            </li>
+          }
         }
       </ul>
 

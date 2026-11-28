@@ -14,4 +14,7 @@ public interface AlertService extends CrudService<Alert, String> {
     List<Alert> findByDeviceIdAndStatus(String deviceId, AlertStatus status);
 
     long countByStatus(AlertStatus status);
+
+    /** Marks an alert read: sets status=ACKNOWLEDGED, acknowledgedByUserId, acknowledgedAt=now(), server-side. */
+    Alert acknowledge(String id, String userId);
 }

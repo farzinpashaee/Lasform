@@ -1,0 +1,366 @@
+<div class="editor-header">
+  <button type="button" class="icon-action-button" [attr.aria-label]="'automations.backToList' | transloco" (click)="cancel()">
+    <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+  </button>
+  <input
+    type="text"
+    class="name-input"
+    [ngModel]="rule().name"
+    (ngModelChange)="rule.update((r) => ({ ...r, name: $event }))"
+    [placeholder]="'automations.namePlaceholder' | transloco"
+  />
+  <div class="header-spacer"></div>
+  @if (saveError()) {
+    <span class="save-error">{{ saveError() }}</span>
+  }
+  <span class="enabled-toggle-label">{{ 'automations.colEnabled' | transloco }}</span>
+  <button
+    type="button"
+    class="toggle-switch"
+    role="switch"
+    [attr.aria-checked]="rule().enabled"
+    [attr.aria-label]="'automations.colEnabled' | transloco"
+    [class.on]="rule().enabled"
+    (click)="rule.update((r) => ({ ...r, enabled: !r.enabled }))"
+  >
+    <span class="toggle-thumb"></span>
+  </button>
+  <button type="button" class="action-button secondary" (click)="cancel()">{{ 'common.cancel' | transloco }}</button>
+  <button type="button" class="action-button primary" [disabled]="!canSave()" (click)="save()">
+    {{ (saving() ? 'common.saving' : 'common.saveChanges') | transloco }}
+  </button>
+</div>
+
+@if (loading()) {
+  <div class="state-cell">{{ 'automations.loading' | transloco }}</div>
+} @else if (loadError()) {
+  <div class="state-cell error">{{ loadError() }}</div>
+} @else {
+  <input
+    type="text"
+    class="description-input"
+    [ngModel]="rule().description"
+    (ngModelChange)="rule.update((r) => ({ ...r, description: $event }))"
+    [placeholder]="'automations.descriptionPlaceholder' | transloco"
+  />
+
+  <div class="editor-body">
+    <div class="canvas" #canvasRef (contextmenu)="openCanvasMenu($event, canvasRef)">
+      <div class="add-menu-wrapper">
+        <button type="button" class="add-button" [attr.aria-label]="'automations.addNodeMenu' | transloco" (click)="toggleAddMenu()">
+          <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+        </button>
+        @if (addMenuOpen()) {
+          <div class="menu-backdrop" (click)="closeAddMenu()" (contextmenu)="closeAddMenu()"></div>
+          <ul class="dropdown-menu">
+            <li>
+              <button type="button" class="dropdown-menu-item" (click)="addConditionFromMenu()">
+                <span class="material-symbols-outlined" aria-hidden="true">filter_alt</span>
+                <span>{{ 'automations.addCondition' | transloco }}</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-menu-item" (click)="addActionFromMenu('NOTIFICATION')">
+                <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+                <span>{{ 'automations.actionType.NOTIFICATION' | transloco }}</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-menu-item" (click)="addActionFromMenu('WEBHOOK')">
+                <span class="material-symbols-outlined" aria-hidden="true">webhook</span>
+                <span>{{ 'automations.actionType.WEBHOOK' | transloco }}</span>
+              </button>
+            </li>
+          </ul>
+        }
+      </div>
+
+      @if (canvasMenu(); as menu) {
+        <div class="menu-backdrop" (click)="closeCanvasMenu()" (contextmenu)="closeCanvasMenu()"></div>
+        <ul class="dropdown-menu canvas-context-menu" [style.left.px]="menu.x" [style.top.px]="menu.y">
+          <li>
+            <button type="button" class="dropdown-menu-item" (click)="addConditionFromMenu()">
+              <span class="material-symbols-outlined" aria-hidden="true">filter_alt</span>
+              <span>{{ 'automations.addCondition' | transloco }}</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="dropdown-menu-item" (click)="addActionFromMenu('NOTIFICATION')">
+              <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+              <span>{{ 'automations.actionType.NOTIFICATION' | transloco }}</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="dropdown-menu-item" (click)="addActionFromMenu('WEBHOOK')">
+              <span class="material-symbols-outlined" aria-hidden="true">webhook</span>
+              <span>{{ 'automations.actionType.WEBHOOK' | transloco }}</span>
+            </button>
+          </li>
+        </ul>
+      }
+
+      <svg class="edges-layer">
+        @for (edge of edges(); track $index) {
+          <path [attr.d]="edge" />
+        }
+      </svg>
+
+      <div class="port-dot" [style.left.px]="edgeEndpoint(triggerPosition(), 'bottom').x" [style.top.px]="edgeEndpoint(triggerPosition(), 'bottom').y"></div>
+
+      <button
+        type="button"
+        class="node trigger-node"
+        [class.selected]="isTriggerSelected()"
+        [style.left.px]="triggerPosition().x - nodeWidth / 2"
+        [style.top.px]="triggerPosition().y - nodeHeight / 2"
+        (pointerdown)="startDrag('trigger', triggerPosition(), $event)"
+        (click)="selectTrigger()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">bolt</span>
+        <span class="node-title">{{ 'automations.triggerNode' | transloco }}</span>
+        <span class="node-subtitle">{{ 'automations.triggerType.' + rule().triggerType | transloco }}</span>
+      </button>
+
+      @for (condition of rule().conditions.conditions; track $index) {
+        <div class="port-dot" [style.left.px]="edgeEndpoint(conditionPosition($index), 'top').x" [style.top.px]="edgeEndpoint(conditionPosition($index), 'top').y"></div>
+        <div class="port-dot" [style.left.px]="edgeEndpoint(conditionPosition($index), 'bottom').x" [style.top.px]="edgeEndpoint(conditionPosition($index), 'bottom').y"></div>
+        <button
+          type="button"
+          class="node condition-node"
+          [class.selected]="isConditionSelected($index)"
+          [style.left.px]="conditionPosition($index).x - nodeWidth / 2"
+          [style.top.px]="conditionPosition($index).y - nodeHeight / 2"
+          (pointerdown)="startDrag('condition-' + $index, conditionPosition($index), $event)"
+          (click)="selectCondition($index)"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">filter_alt</span>
+          <span class="node-title">{{ condition.field || ('automations.conditionsNode' | transloco) }}</span>
+          <span class="node-subtitle">{{ conditionSummary(condition) }}</span>
+        </button>
+      }
+
+      @for (gapIndex of conditionGapIndices(); track gapIndex) {
+        <button
+          type="button"
+          class="operator-chip"
+          [style.left.px]="operatorChipPosition(gapIndex).x"
+          [style.top.px]="operatorChipPosition(gapIndex).y"
+          (click)="toggleConditionsOperator()"
+        >
+          {{ rule().conditions.operator }}
+        </button>
+      }
+
+      <button
+        type="button"
+        class="inline-add-button"
+        [attr.aria-label]="'automations.addNodeMenu' | transloco"
+        [style.left.px]="inlineAddButtonPosition().x"
+        [style.top.px]="inlineAddButtonPosition().y"
+        (click)="openInlineAddMenu()"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      </button>
+
+      @for (action of rule().actions; track $index) {
+        <div class="port-dot" [style.left.px]="edgeEndpoint(actionPosition($index), 'top').x" [style.top.px]="edgeEndpoint(actionPosition($index), 'top').y"></div>
+        <div
+          class="node action-node"
+          [class.selected]="isActionSelected($index)"
+          [style.left.px]="actionPosition($index).x - nodeWidth / 2"
+          [style.top.px]="actionPosition($index).y - nodeHeight / 2"
+          (pointerdown)="startDrag('action-' + $index, actionPosition($index), $event)"
+          (click)="selectAction($index)"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">
+            {{ action.type === 'NOTIFICATION' ? 'notifications' : 'webhook' }}
+          </span>
+          <span class="node-title">{{ 'automations.actionType.' + action.type | transloco }}</span>
+          <div class="node-mini-actions" (pointerdown)="$event.stopPropagation()">
+            <button
+              type="button"
+              [attr.aria-label]="'common.previous' | transloco"
+              (click)="moveActionUp($index); $event.stopPropagation()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span>
+            </button>
+            <button
+              type="button"
+              [attr.aria-label]="'common.next' | transloco"
+              (click)="moveActionDown($index); $event.stopPropagation()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span>
+            </button>
+            <button
+              type="button"
+              [attr.aria-label]="'automations.removeAction' | transloco"
+              (click)="removeAction($index); $event.stopPropagation()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <div class="side-panel">
+      <div class="config-panel">
+        @if (isTriggerSelected()) {
+          <h3>{{ 'automations.triggerNode' | transloco }}</h3>
+          <label class="radio-row">
+            <input
+              type="radio"
+              name="triggerType"
+              [checked]="rule().triggerType === 'DEVICE'"
+              (change)="setTriggerType('DEVICE')"
+            />
+            {{ 'automations.triggerType.DEVICE' | transloco }}
+          </label>
+          <label class="radio-row">
+            <input
+              type="radio"
+              name="triggerType"
+              [checked]="rule().triggerType === 'CATEGORY'"
+              (change)="setTriggerType('CATEGORY')"
+            />
+            {{ 'automations.triggerType.CATEGORY' | transloco }}
+          </label>
+
+          @if (rule().triggerType === 'DEVICE') {
+            <select [ngModel]="rule().triggerDeviceId ?? ''" (ngModelChange)="setTriggerDeviceId($event)">
+              <option value="">{{ 'automations.selectDevice' | transloco }}</option>
+              @for (device of devices(); track device.id) {
+                <option [value]="device.id">{{ device.name }}</option>
+              }
+            </select>
+          } @else {
+            <select [ngModel]="rule().triggerCategoryId ?? ''" (ngModelChange)="setTriggerCategoryId($event)">
+              <option value="">{{ 'automations.selectCategory' | transloco }}</option>
+              @for (category of categories(); track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
+          }
+        } @else if (selectedCondition(); as condition) {
+          <h3>{{ 'automations.conditionsNode' | transloco }}</h3>
+          <input
+            type="text"
+            list="whitelisted-fields"
+            [ngModel]="condition.field"
+            (ngModelChange)="updateCondition(selectedConditionIndex()!, { field: $event })"
+            [placeholder]="'automations.fieldPlaceholder' | transloco"
+          />
+          <select
+            [ngModel]="condition.operator"
+            (ngModelChange)="updateCondition(selectedConditionIndex()!, { operator: $event })"
+          >
+            @for (op of ruleOperators; track op) {
+              <option [value]="op">{{ 'automations.operator.' + op | transloco }}</option>
+            }
+          </select>
+          @if (!valueHidden(condition.operator)) {
+            <input
+              type="text"
+              [ngModel]="condition.value"
+              (ngModelChange)="updateCondition(selectedConditionIndex()!, { value: $event })"
+              [placeholder]="'automations.valuePlaceholder' | transloco"
+            />
+          }
+          <datalist id="whitelisted-fields">
+            @for (field of whitelistedFields; track field) {
+              <option [value]="field"></option>
+            }
+          </datalist>
+          <button
+            type="button"
+            class="add-row-button"
+            (click)="removeCondition(selectedConditionIndex()!)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+            {{ 'automations.removeCondition' | transloco }}
+          </button>
+        } @else if (selectedAction(); as action) {
+          <h3>{{ 'automations.actionNode' | transloco }}</h3>
+          <select
+            [ngModel]="action.type"
+            (ngModelChange)="updateAction(selectedActionIndex()!, { type: $event })"
+          >
+            <option value="NOTIFICATION">{{ 'automations.actionType.NOTIFICATION' | transloco }}</option>
+            <option value="WEBHOOK">{{ 'automations.actionType.WEBHOOK' | transloco }}</option>
+          </select>
+
+          @if (action.type === 'NOTIFICATION') {
+            <label class="field-label">{{ 'common.statusLabel' | transloco }}</label>
+            <select
+              [ngModel]="action.severity ?? 'MEDIUM'"
+              (ngModelChange)="updateAction(selectedActionIndex()!, { severity: $event })"
+            >
+              @for (severity of alertSeverities; track severity) {
+                <option [value]="severity">{{ 'automations.severity.' + severity | transloco }}</option>
+              }
+            </select>
+            <textarea
+              rows="2"
+              [ngModel]="action.message"
+              (ngModelChange)="updateAction(selectedActionIndex()!, { message: $event })"
+              [placeholder]="'automations.messagePlaceholder' | transloco"
+            ></textarea>
+          } @else {
+            <input
+              type="text"
+              [ngModel]="action.webhookUrl"
+              (ngModelChange)="updateAction(selectedActionIndex()!, { webhookUrl: $event })"
+              [placeholder]="'automations.webhookUrlPlaceholder' | transloco"
+            />
+            <input
+              type="text"
+              [ngModel]="action.webhookSecret"
+              (ngModelChange)="updateAction(selectedActionIndex()!, { webhookSecret: $event })"
+              [placeholder]="'automations.webhookSecretPlaceholder' | transloco"
+            />
+            <label class="field-label">{{ 'automations.webhookHeadersLabel' | transloco }}</label>
+            <p class="field-hint">{{ 'automations.webhookHeadersHint' | transloco }}</p>
+            <textarea
+              rows="3"
+              [ngModel]="webhookHeadersText(action)"
+              (ngModelChange)="updateWebhookHeadersText(selectedActionIndex()!, $event)"
+            ></textarea>
+          }
+        }
+      </div>
+
+      <div class="test-panel">
+        <h3>{{ 'automations.testCondition' | transloco }}</h3>
+        <label>{{ 'automations.testSampleEvent' | transloco }}</label>
+        <textarea rows="8" [ngModel]="testSampleEventJson()" (ngModelChange)="testSampleEventJson.set($event)"></textarea>
+        <button type="button" class="add-row-button" [disabled]="testing()" (click)="testConditions()">
+          {{ 'automations.testCondition' | transloco }}
+        </button>
+        @if (testError()) {
+          <p class="test-error">{{ testError() }}</p>
+        }
+        @if (testOutcome(); as outcome) {
+          <p class="test-result" [class.matched]="outcome.matched">
+            {{ 'automations.testResult' | transloco }}:
+            {{ (outcome.matched ? 'automations.testMatched' : 'automations.testNotMatched') | transloco }}
+          </p>
+          @if (outcome.conditionResults.length > 0) {
+            <ul class="test-breakdown">
+              @for (result of outcome.conditionResults; track $index) {
+                <li [class.matched]="result.matched">
+                  {{ result.condition.field }} {{ result.condition.operator }}
+                  @if (!valueHidden(result.condition.operator)) {
+                    {{ result.condition.value }}
+                  }
+                  — {{ (result.matched ? 'automations.testMatched' : 'automations.testNotMatched') | transloco }}
+                </li>
+              }
+            </ul>
+          }
+        }
+      </div>
+    </div>
+  </div>
+}
