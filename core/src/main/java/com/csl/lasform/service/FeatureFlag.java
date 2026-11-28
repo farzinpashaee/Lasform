@@ -35,6 +35,12 @@ public enum FeatureFlag {
             "Security Features",
             "Google SSO Login",
             "Lets users sign in or sign up with their Google account.",
+            false),
+    AUTOMATIONS(
+            "lasform.automations.enabled",
+            "Automation Features",
+            "Rule Engine",
+            "Lets admins build device/category automations with conditions and actions.",
             false);
 
     private final String key;

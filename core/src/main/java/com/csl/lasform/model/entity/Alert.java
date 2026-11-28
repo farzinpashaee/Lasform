@@ -47,6 +47,12 @@ public class Alert extends Auditable implements Identifiable {
     /** Set only for geofence-triggered alerts. */
     private String geofenceId;
 
+    /** Set only for rule-triggered alerts (type == RULE_TRIGGERED) — see Rule. */
+    private String ruleId;
+
+    /** The Event#id that caused this alert to fire, if any — for a "why did this fire" link. */
+    private String sourceEventId;
+
     @NotNull(message = "{validation.alert.type.required}")
     private AlertType type;
 

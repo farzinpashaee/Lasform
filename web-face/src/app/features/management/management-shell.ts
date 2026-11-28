@@ -6,6 +6,7 @@ import { HasPermissionDirective } from '../../core/auth/has-permission.directive
 import { FEATURE_FLAGS } from '../../core/feature-flag-keys';
 import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { AccountMenu } from '../../shared/account-menu/account-menu';
+import { NotificationCenter } from '../../shared/notification-center/notification-center';
 
 const DARK_MODE_STORAGE_KEY = 'lasform.darkMode';
 
@@ -17,6 +18,8 @@ interface NavLeaf {
   icon: string;
   /** Omitted for leaves that only require being logged in (enforced by the route's canActivateChild already). */
   permission?: string;
+  /** Omitted for leaves always shown regardless of any feature flag. */
+  featureFlag?: string;
 }
 
 interface NavGroup {
@@ -29,7 +32,7 @@ interface NavGroup {
 
 @Component({
   selector: 'app-management-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslocoPipe, HasPermissionDirective, AccountMenu],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslocoPipe, HasPermissionDirective, AccountMenu, NotificationCenter],
   templateUrl: './management-shell.html',
   styleUrl: './management-shell.scss',
 })
@@ -68,6 +71,13 @@ export class ManagementShell {
     { labelKey: 'management.navCategories', path: 'categories', icon: 'category' },
     { labelKey: 'management.navUsers', path: 'users', icon: 'group', permission: 'user:read' },
     { labelKey: 'management.navGeofences', path: 'geofences', icon: 'draw', permission: 'geofence:read' },
+    {
+      labelKey: 'management.navAutomations',
+      path: 'automations',
+      icon: 'bolt',
+      permission: 'rule:read',
+      featureFlag: FEATURE_FLAGS.automations,
+    },
   ];
 
   protected toggleGroup(group: NavGroup): void {

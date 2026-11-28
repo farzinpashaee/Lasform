@@ -1,11 +1,14 @@
 import { Routes } from '@angular/router';
 
+import { AutomationsPage } from './features/management/automations/automations-page';
+import { RuleEditorPage } from './features/management/automations/rule-editor-page';
 import { CategoriesPage } from './features/management/categories/categories-page';
 import { DeviceDetailPage } from './features/management/devices/device-detail-page';
 import { DevicesPage } from './features/management/devices/devices-page';
 import { GeofencesPage } from './features/management/geofences/geofences-page';
 import { LocationsPage } from './features/management/locations/locations-page';
 import { ManagementShell } from './features/management/management-shell';
+import { NotificationsPage } from './features/management/notifications/notifications-page';
 import { FeatureManagementPage } from './features/management/settings/feature-management-page';
 import { GeneralSettings } from './features/management/settings/general-settings';
 import { MapProviderSettings } from './features/management/settings/map-provider-settings';
@@ -62,6 +65,10 @@ export const routes: Routes = [
           { path: 'devices/:id', component: DeviceDetailPage, data: { permissions: 'device:read' } },
           { path: 'categories', component: CategoriesPage },
           { path: 'geofences', component: GeofencesPage, data: { permissions: 'geofence:read' } },
+          { path: 'automations', component: AutomationsPage, data: { permissions: 'rule:read' } },
+          { path: 'automations/new', component: RuleEditorPage, data: { permissions: 'rule:write' } },
+          { path: 'automations/:id', component: RuleEditorPage, data: { permissions: 'rule:write' } },
+          { path: 'notifications', component: NotificationsPage, data: { permissions: 'alert:read' } },
         ],
       },
     ],

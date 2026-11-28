@@ -1,0 +1,49 @@
+<div class="notification-wrapper">
+  <button
+    type="button"
+    class="bell-button"
+    [attr.aria-label]="'notifications.bellLabel' | transloco"
+    [attr.aria-expanded]="panelOpen()"
+    (click)="togglePanel()"
+  >
+    <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+    @if (alertService.unreadCount() > 0) {
+      <span class="unread-badge">{{ alertService.unreadCount() > 9 ? '9+' : alertService.unreadCount() }}</span>
+    }
+  </button>
+
+  @if (panelOpen()) {
+    <div class="notification-backdrop" (click)="closePanel()" (contextmenu)="closePanel()"></div>
+    <div class="notification-panel">
+      @if (loading()) {
+        <p class="panel-status">{{ 'notifications.loading' | transloco }}</p>
+      } @else if (loadError()) {
+        <p class="panel-status error">{{ 'notifications.loadFailed' | transloco }}</p>
+      } @else if (alerts().length === 0) {
+        <p class="panel-status">{{ 'notifications.emptyUnread' | transloco }}</p>
+      } @else {
+        <ul class="notification-list">
+          @for (alert of alerts(); track alert.id) {
+            <li class="notification-item" [class.unread]="alert.status === 'NEW'">
+              <div class="notification-item-body">
+                <span class="notification-message">{{ alert.message || ('notifications.ruleTriggered' | transloco) }}</span>
+                <span class="notification-time">{{ alert.triggeredAt | date: 'short' }}</span>
+              </div>
+              @if (alert.status !== 'ACKNOWLEDGED') {
+                <button
+                  type="button"
+                  class="mark-read-button"
+                  [attr.aria-label]="'notifications.markRead' | transloco"
+                  (click)="markRead(alert, $event)"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">check</span>
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+      <button type="button" class="view-all-button" (click)="viewAll()">{{ 'notifications.viewAll' | transloco }}</button>
+    </div>
+  }
+</div>

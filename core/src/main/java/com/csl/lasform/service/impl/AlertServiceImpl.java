@@ -1,5 +1,6 @@
 package com.csl.lasform.service.impl;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -39,6 +40,15 @@ public class AlertServiceImpl extends AbstractCrudService<Alert, String> impleme
     @Override
     public long countByStatus(AlertStatus status) {
         return alertRepository.countByStatus(status);
+    }
+
+    @Override
+    public Alert acknowledge(String id, String userId) {
+        Alert alert = getById(id);
+        alert.setStatus(AlertStatus.ACKNOWLEDGED);
+        alert.setAcknowledgedByUserId(userId);
+        alert.setAcknowledgedAt(Instant.now());
+        return alertRepository.save(alert);
     }
 
     @Override

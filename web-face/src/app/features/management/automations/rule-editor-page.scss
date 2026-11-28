@@ -1,0 +1,588 @@
+$radius: 8px;
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.header-spacer {
+  flex: 1 1 auto;
+}
+
+.name-input {
+  flex: 0 1 320px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #202124);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: transparent;
+
+  &:hover,
+  &:focus {
+    border-color: var(--border, #e8eaed);
+    outline: none;
+  }
+}
+
+.description-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 16px;
+  background: transparent;
+
+  &:hover,
+  &:focus {
+    border-color: var(--border, #e8eaed);
+    outline: none;
+  }
+}
+
+.enabled-toggle-label {
+  font-size: 13px;
+  color: var(--text-secondary, #5f6368);
+  white-space: nowrap;
+}
+
+// Mirrors the Feature Management page's own toggle-switch exactly (see feature-management-page.scss).
+.toggle-switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border: none;
+  border-radius: 11px;
+  background: var(--disabled-bg, #dadce0);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &.on {
+    background: var(--accent, #da5050);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent, #da5050);
+    outline-offset: 2px;
+  }
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+
+  .toggle-switch.on & {
+    transform: translateX(18px);
+  }
+}
+
+.save-error {
+  font-size: 13px;
+  color: var(--danger, #d93025);
+}
+
+.action-button {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.action-button.secondary {
+  background: transparent;
+  color: var(--text-secondary, #5f6368);
+
+  &:hover {
+    background: var(--hover, #f1f3f4);
+  }
+}
+
+.action-button.primary {
+  background: var(--accent, #da5050);
+  color: #fff;
+
+  &:hover {
+    opacity: 0.92;
+  }
+
+  &:disabled {
+    background: var(--disabled-bg, #dadce0);
+    color: var(--disabled-text, #80868b);
+    cursor: default;
+    opacity: 1;
+  }
+}
+
+.icon-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #202124);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--accent, #da5050);
+    background: var(--accent-bg, #fbeaea);
+  }
+}
+
+.state-cell {
+  text-align: center;
+  padding: 32px 14px;
+  color: var(--text-secondary, #5f6368);
+
+  &.error {
+    color: var(--danger, #d93025);
+  }
+}
+
+// --- canvas ---
+
+.editor-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+// A large, scrollable, dot-gridded surface (n8n-style) that nodes float freely on — the canvas
+// itself doesn't grow with its content since nodes are absolutely positioned, so it's given a
+// generous fixed size with its own scrollbars instead.
+.canvas {
+  position: relative;
+  flex: 1 1 auto;
+  height: 640px;
+  overflow: auto;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: $radius;
+  background-color: var(--hover, #f1f3f4);
+  background-image:
+    radial-gradient(var(--border, #cfd2d6) 1px, transparent 1px),
+    radial-gradient(var(--border, #cfd2d6) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position:
+    0 0,
+    12px 12px;
+}
+
+// Sized larger than the visible viewport so there's room to drag a node anywhere and still have
+// the canvas scroll to follow it, rather than clipping at the edge.
+.edges-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1400px;
+  height: 1000px;
+  pointer-events: none;
+
+  path {
+    fill: none;
+    stroke: var(--border, #cfd2d6);
+    stroke-width: 2;
+  }
+}
+
+// The small circle every connector visibly starts/ends at (an output dot at a node's bottom, an
+// input dot at its top) — purely decorative, matching n8n's own node ports.
+.port-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--surface, #fff);
+  border: 2px solid var(--text-secondary, #9aa0a6);
+  pointer-events: none;
+}
+
+// width/height here must stay in lockstep with NODE_WIDTH/NODE_HEIGHT in rule-editor-page.ts —
+// every dot/connector/button position is computed from those constants, so box-sizing: border-box
+// (the border doesn't silently add to the rendered size) and a fixed height (content never grows
+// it — title/subtitle are single-line/ellipsized, see below) keep this box exactly that size.
+.node {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 160px;
+  height: 96px;
+  padding: 10px;
+  overflow: hidden;
+  border: 2px solid var(--border, #e8eaed);
+  border-radius: $radius;
+  background: var(--surface, #fff);
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.15));
+  cursor: grab;
+  font: inherit;
+  color: var(--text-primary, #202124);
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  .material-symbols-outlined {
+    font-size: 22px;
+    color: var(--text-secondary, #5f6368);
+  }
+
+  &.selected {
+    border-color: var(--accent, #da5050);
+
+    .material-symbols-outlined {
+      color: var(--accent, #da5050);
+    }
+  }
+}
+
+.node-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.node-subtitle {
+  font-size: 11px;
+  color: var(--text-secondary, #5f6368);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+// The shared AND/OR operator, shown as a small pill sitting on the connector between two
+// condition nodes — clicking it flips AND/OR for the whole group (it's one value, so every chip
+// always shows and toggles the same thing).
+.operator-chip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 999px;
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #5f6368);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--accent, #da5050);
+    color: var(--accent, #da5050);
+  }
+}
+
+// The n8n-style inline "+" sitting right on the connector after the conditions chain — a quick,
+// visually-obvious way to append the next step without hunting for the top-right/right-click menus.
+.inline-add-button {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--accent, #da5050);
+  border-radius: 50%;
+  background: var(--surface, #fff);
+  color: var(--accent, #da5050);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background: var(--accent-bg, #fbeaea);
+  }
+}
+
+.node-mini-actions {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary, #5f6368);
+    cursor: pointer;
+
+    .material-symbols-outlined {
+      font-size: 14px;
+    }
+
+    &:hover {
+      background: var(--hover, #f1f3f4);
+      color: var(--text-primary, #202124);
+    }
+  }
+}
+
+// --- add menus (top-right dropdown + right-click canvas menu) ---
+
+.add-menu-wrapper {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.add-button {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: 6px;
+  padding: 7px 8px;
+  background: var(--surface, #fff);
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.15));
+  color: var(--text-primary, #202124);
+  cursor: pointer;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: var(--accent, #da5050);
+  }
+}
+
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
+
+.dropdown-menu {
+  position: absolute;
+  z-index: 901;
+  width: 200px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface, #fff);
+  border-radius: $radius;
+  box-shadow: var(--shadow, 0 1px 4px rgba(0, 0, 0, 0.3));
+}
+
+// The top-right button's own menu hangs from it via normal flow; the right-click one is instead
+// positioned at the click point (inline [style.left.px]/[style.top.px] on the element itself).
+.add-menu-wrapper .dropdown-menu {
+  top: calc(100% + 6px);
+  right: 0;
+}
+
+.dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text-primary, #202124);
+  font-size: 14px;
+  text-align: left;
+
+  .material-symbols-outlined {
+    flex: 0 0 auto;
+    font-size: 18px;
+    color: var(--text-secondary, #5f6368);
+  }
+
+  &:hover {
+    background: var(--hover, #f1f3f4);
+  }
+}
+
+// --- side panel (config + test, stacked) ---
+
+.side-panel {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.config-panel,
+.test-panel {
+  padding: 16px;
+  border: 1px solid var(--border, #e8eaed);
+  border-radius: $radius;
+  background: var(--surface, #fff);
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #202124);
+  }
+
+  input,
+  select,
+  textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text-primary, #202124);
+    border: 1px solid var(--border, #e8eaed);
+    border-radius: 4px;
+    padding: 7px 9px;
+    margin-bottom: 10px;
+    background: var(--surface, #fff);
+    resize: vertical;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent, #da5050);
+    }
+  }
+}
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-primary, #202124);
+  margin-bottom: 8px;
+
+  input {
+    width: auto;
+    margin: 0;
+  }
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #5f6368);
+  margin-bottom: 4px;
+}
+
+.field-hint {
+  margin: -6px 0 6px;
+  font-size: 11px;
+  color: var(--text-secondary, #5f6368);
+}
+
+.add-row-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  justify-content: center;
+  border: 1px dashed var(--border, #e8eaed);
+  background: transparent;
+  padding: 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-secondary, #5f6368);
+  cursor: pointer;
+  margin-bottom: 10px;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--hover, #f1f3f4);
+    color: var(--accent, #da5050);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.test-panel {
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary, #5f6368);
+    margin-bottom: 4px;
+  }
+
+  textarea {
+    font-family: monospace;
+    font-size: 11px;
+  }
+}
+
+.test-error {
+  font-size: 12px;
+  color: var(--danger, #d93025);
+}
+
+.test-result {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #5f6368);
+
+  &.matched {
+    color: var(--success-text, #1e8e3e);
+  }
+}
+
+.test-breakdown {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-secondary, #5f6368);
+
+  li {
+    padding: 2px 0;
+
+    &.matched {
+      color: var(--success-text, #1e8e3e);
+    }
+  }
+}

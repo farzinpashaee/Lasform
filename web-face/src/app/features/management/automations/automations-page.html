@@ -1,0 +1,93 @@
+<h1 class="page-title">{{ 'automations.title' | transloco }}</h1>
+
+<div class="toolbar">
+  <span class="toolbar-note">{{ 'automations.note' | transloco }}</span>
+  <button type="button" class="add-button" (click)="addRule()">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    <span>{{ 'automations.addNew' | transloco }}</span>
+  </button>
+</div>
+
+<div class="automations-table-wrapper">
+  <table class="automations-table">
+    <thead>
+      <tr>
+        <th>{{ 'common.nameColumn' | transloco }}</th>
+        <th>{{ 'automations.colTrigger' | transloco }}</th>
+        <th>{{ 'automations.colActions' | transloco }}</th>
+        <th>{{ 'automations.colEnabled' | transloco }}</th>
+        <th class="actions-column">{{ 'geofences.colActions' | transloco }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="5" class="state-cell">{{ 'automations.loading' | transloco }}</td>
+        </tr>
+      } @else if (loadError()) {
+        <tr>
+          <td colspan="5" class="state-cell error">{{ loadError() }}</td>
+        </tr>
+      } @else if (rules().length === 0) {
+        <tr>
+          <td colspan="5" class="state-cell">{{ 'automations.empty' | transloco }}</td>
+        </tr>
+      } @else {
+        @for (rule of rules(); track rule.id) {
+          <tr>
+            <td>
+              <div class="name-cell">{{ rule.name }}</div>
+              @if (rule.description) {
+                <div class="description-cell">{{ rule.description }}</div>
+              }
+            </td>
+            <td>{{ triggerSummary(rule) }}</td>
+            <td>{{ rule.actions.length }}</td>
+            <td>
+              <label class="enabled-toggle">
+                <input type="checkbox" [checked]="rule.enabled" (change)="toggleEnabled(rule)" />
+              </label>
+            </td>
+            <td class="actions-column">
+              <button
+                type="button"
+                class="icon-action-button"
+                [attr.aria-label]="'common.edit' | transloco"
+                (click)="editRule(rule)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              </button>
+              <button
+                type="button"
+                class="icon-action-button icon-action-button-danger"
+                [attr.aria-label]="'common.delete' | transloco"
+                (click)="openDeleteConfirm(rule)"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (deleteTarget(); as rule) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirm()"></div>
+  <div class="modal">
+    <h2 class="modal-title">{{ 'automations.deleteTitle' | transloco }}</h2>
+    <p class="modal-subtitle">"{{ rule.name }}" {{ 'common.confirmDeleteSuffix' | transloco }}</p>
+    @if (deleteError()) {
+      <p class="modal-error">{{ deleteError() }}</p>
+    }
+    <div class="modal-actions">
+      <button type="button" class="modal-button modal-button-secondary" (click)="closeDeleteConfirm()">
+        {{ 'common.cancel' | transloco }}
+      </button>
+      <button type="button" class="modal-button modal-button-danger" [disabled]="deletingRule()" (click)="confirmDelete()">
+        {{ (deletingRule() ? 'common.deleting' : 'common.delete') | transloco }}
+      </button>
+    </div>
+  </div>
+}

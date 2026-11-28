@@ -10,6 +10,7 @@ import com.csl.lasform.model.entity.Event;
 import com.csl.lasform.repository.DeviceRepository;
 import com.csl.lasform.service.DeviceLiveUpdatesService;
 import com.csl.lasform.service.EventService;
+import com.csl.lasform.service.RuleEvaluationService;
 
 /**
  * What happens to a batch of {@link Event}s once some {@link EventIngestAdapter} has translated
@@ -23,16 +24,19 @@ public class EventIngestionService {
     private final DeviceRepository deviceRepository;
     private final AuditorAware<String> auditorAware;
     private final DeviceLiveUpdatesService deviceLiveUpdatesService;
+    private final RuleEvaluationService ruleEvaluationService;
 
     public EventIngestionService(
             EventService eventService,
             DeviceRepository deviceRepository,
             AuditorAware<String> auditorAware,
-            DeviceLiveUpdatesService deviceLiveUpdatesService) {
+            DeviceLiveUpdatesService deviceLiveUpdatesService,
+            RuleEvaluationService ruleEvaluationService) {
         this.eventService = eventService;
         this.deviceRepository = deviceRepository;
         this.auditorAware = auditorAware;
         this.deviceLiveUpdatesService = deviceLiveUpdatesService;
+        this.ruleEvaluationService = ruleEvaluationService;
     }
 
     public List<Event> ingest(List<Event> events) {
@@ -63,6 +67,7 @@ public class EventIngestionService {
             device.setUpdatedBy(auditorAware.getCurrentAuditor().orElse(null));
             deviceRepository.save(device);
             deviceLiveUpdatesService.publish(device);
+            ruleEvaluationService.evaluate(event, device);
         });
     }
 

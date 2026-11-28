@@ -165,7 +165,8 @@
     "navLocations": "Locations",
     "navDevices": "Devices",
     "navCategories": "Categories",
-    "navGeofences": "Geofences"
+    "navGeofences": "Geofences",
+    "navAutomations": "Automations"
   },
   "comingSoon": {
     "text": "This section is coming soon."
@@ -364,6 +365,91 @@
       "CIRCLE": "Circle",
       "POLYGON": "Polygon"
     }
+  },
+  "automations": {
+    "title": "Automations",
+    "note": "Fire a notification or webhook automatically when a device's events match conditions you set.",
+    "addNew": "Add rule",
+    "addNodeMenu": "Add a condition or action",
+    "colTrigger": "Trigger",
+    "colActions": "Actions",
+    "colEnabled": "Enabled",
+    "loading": "Loading rules…",
+    "empty": "No automation rules yet.",
+    "loadFailed": "Failed to load rules. Please try again.",
+    "saveFailed": "Failed to save the rule. Please try again.",
+    "deleteFailed": "Failed to delete the rule. Please try again.",
+    "deleteTitle": "Delete rule?",
+    "namePlaceholder": "Rule name",
+    "descriptionPlaceholder": "What is this rule for?",
+    "triggerNode": "Trigger",
+    "conditionsNode": "Conditions",
+    "actionNode": "Action",
+    "addAction": "Add action",
+    "removeAction": "Remove action",
+    "triggerType": {
+      "DEVICE": "Device",
+      "CATEGORY": "Category"
+    },
+    "selectDevice": "Select a device…",
+    "selectCategory": "Select a category…",
+    "conditionLogic": {
+      "AND": "All conditions match (AND)",
+      "OR": "Any condition matches (OR)"
+    },
+    "addCondition": "Add condition",
+    "removeCondition": "Remove condition",
+    "fieldPlaceholder": "e.g. speed or payload.fuelLevelPercent",
+    "valuePlaceholder": "Value",
+    "operator": {
+      "EQ": "equals",
+      "NE": "does not equal",
+      "GT": "is greater than",
+      "GTE": "is at least",
+      "LT": "is less than",
+      "LTE": "is at most",
+      "CONTAINS": "contains",
+      "EXISTS": "is present",
+      "NOT_EXISTS": "is absent"
+    },
+    "testCondition": "Test",
+    "testSampleEvent": "Sample event JSON",
+    "testResult": "Result",
+    "testMatched": "Matches",
+    "testNotMatched": "Does not match",
+    "testFailed": "Couldn't evaluate — check the sample event JSON.",
+    "actionType": {
+      "NOTIFICATION": "Notification",
+      "WEBHOOK": "Webhook"
+    },
+    "severity": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "CRITICAL": "Critical"
+    },
+    "messagePlaceholder": "Custom message (optional)",
+    "webhookUrlPlaceholder": "https://example.com/webhook",
+    "webhookSecretPlaceholder": "Signing secret (optional)",
+    "webhookHeadersLabel": "Extra headers",
+    "webhookHeadersHint": "One per line, as \"Header-Name: value\".",
+    "backToList": "Back to automations"
+  },
+  "notifications": {
+    "bellLabel": "Notifications",
+    "empty": "No notifications yet.",
+    "emptyUnread": "No new notifications.",
+    "markRead": "Mark as read",
+    "viewAll": "View all",
+    "unreadCount": "{{count}} unread",
+    "title": "Notifications",
+    "colMessage": "Message",
+    "colSeverity": "Severity",
+    "colStatus": "Status",
+    "colTriggeredAt": "Triggered at",
+    "loading": "Loading notifications…",
+    "loadFailed": "Failed to load notifications. Please try again.",
+    "ruleTriggered": "Rule triggered"
   },
   "auth": {
     "invalidEmailFormat": "Please enter a valid email address.",

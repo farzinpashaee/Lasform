@@ -9,5 +9,7 @@ public enum AlertType {
     SPEED_LIMIT_EXCEEDED,
     SOS,
     TAMPER,
-    CUSTOM
+    CUSTOM,
+    /** Fired by the rule engine — see {@link com.csl.lasform.model.entity.Rule}, Alert#ruleId. */
+    RULE_TRIGGERED
 }
